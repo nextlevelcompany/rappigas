@@ -1,0 +1,23 @@
+-- V11: Soporte, Disputas y Mensajes
+CREATE TABLE tickets_soporte (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    public_id UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+    tenant_id BIGINT REFERENCES empresas(id),
+    usuario_id BIGINT NOT NULL REFERENCES usuarios(id),
+    pedido_id BIGINT REFERENCES pedidos(id),
+    asunto VARCHAR(150) NOT NULL,
+    estado VARCHAR(20) DEFAULT 'ABIERTO' NOT NULL CHECK (estado IN ('ABIERTO', 'EN_PROCESO', 'RESUELTO', 'CERRADO')),
+    prioridad VARCHAR(20) DEFAULT 'MEDIA' NOT NULL CHECK (prioridad IN ('BAJA', 'MEDIA', 'ALTA', 'URGENTE')),
+    version INTEGER DEFAULT 0 NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE TABLE mensajes_ticket (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    ticket_id BIGINT NOT NULL REFERENCES tickets_soporte(id) ON DELETE CASCADE,
+    remitente_id BIGINT NOT NULL REFERENCES usuarios(id),
+    mensaje TEXT NOT NULL,
+    adjunto_url VARCHAR(255),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+);

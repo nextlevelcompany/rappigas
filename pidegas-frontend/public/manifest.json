@@ -1,0 +1,24 @@
+{
+  "name": "PideGas - Pedidos de Balones de Gas GLP",
+  "short_name": "PideGas",
+  "description": "Plataforma líder para pedir balones de gas de cocina a domicilio con rastreo en vivo y pago seguro.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/avatar.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/avatar.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
