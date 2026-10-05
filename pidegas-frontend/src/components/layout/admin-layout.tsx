@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/sidebar"
 
 import { Button } from "@/components/ui/button"
+import { Truck, Navigation, ShoppingBag } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -35,6 +36,14 @@ function LayoutContent({
   scrolled: boolean
 }) {
   const { toggleSidebar } = useSidebar()
+  const { usuario } = useAuthStore()
+  const [montado, setMontado] = useState(false)
+
+  useEffect(() => {
+    setMontado(true)
+  }, [])
+
+  const rol = montado ? usuario?.rol : null
 
   return (
     <SidebarInset>
@@ -60,9 +69,26 @@ function LayoutContent({
           <GlobalSearch />
         </div>
 
-        {/* Center: Role Switcher for seamless demo & multi-role testing */}
+        {/* Center: Contextual Role Badge or Admin Role Switcher */}
         <div className="mx-auto hidden md:block">
-          <RoleSwitcher />
+          {rol === "ADMIN" ? (
+            <RoleSwitcher />
+          ) : rol === "EMPRESA" ? (
+            <div className="flex items-center gap-2 text-xs font-semibold text-orange-600 bg-orange-50 dark:bg-orange-950/60 dark:text-orange-400 px-3 py-1 rounded-full border border-orange-200 dark:border-orange-800">
+              <Truck className="w-3.5 h-3.5" />
+              <span>Panel de Distribuidora</span>
+            </div>
+          ) : rol === "REPARTIDOR" ? (
+            <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 bg-blue-50 dark:bg-blue-950/60 dark:text-blue-400 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800">
+              <Navigation className="w-3.5 h-3.5" />
+              <span>Ruta de Reparto</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>Área de Clientes • PideGas</span>
+            </div>
+          )}
         </div>
 
         {/* Right */}

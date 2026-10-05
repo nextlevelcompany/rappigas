@@ -39,11 +39,22 @@ export function LoginForm({
       const respuesta = await authApi.login({ email, password });
       establecerSesion(respuesta);
 
-      // Redirección según rol
-      if (respuesta.rol === "ADMIN" || respuesta.rol === "EMPRESA") {
-        router.push("/dashboard/analytics");
-      } else {
-        router.push("/dashboard/analytics");
+      // Redirección inteligente segmentada según el rol del usuario
+      switch (respuesta.rol) {
+        case "CLIENTE":
+          router.push("/cliente/pedidos");
+          break;
+        case "EMPRESA":
+          router.push("/empresa/dashboard");
+          break;
+        case "REPARTIDOR":
+          router.push("/repartidor/pedidos");
+          break;
+        case "ADMIN":
+          router.push("/admin/dashboard");
+          break;
+        default:
+          router.push("/");
       }
     } catch (err: unknown) {
       if (err instanceof Error) {

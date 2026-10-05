@@ -1,9 +1,9 @@
 # Plan de Implementación Consolidado - PideGas MVP
 
-**Versión:** 1.3.0 (PROYECTO COMPLETADO AL 100%)  
+**Versión:** 1.4.0 (PORTAL WEB PÚBLICO & FASES 1-13 COMPLETADAS AL 100%)  
 **Fecha:** 04 de octubre de 2026  
 **Stack Principal:**  
-- **Frontend Backoffice:** Next.js 16 + React 19 + Tailwind CSS 4 + Shadcn UI (Basado en Syndron)  
+- **Frontend Backoffice & Web Pública:** Next.js 16 + React 19 + Tailwind CSS 4 + Shadcn UI (Basado en Syndron)  
 - **Frontend Cliente / Repartidor:** Next.js App Router (Layouts PWA ultraligeros)  
 - **Backend:** Java 21 + Spring Boot 3 (Monolito Modular)  
 - **Persistencia & Geo:** PostgreSQL 16 + PostGIS + Flyway  
@@ -11,7 +11,7 @@
 
 ---
 
-## Estado Actual: Fases 1 a 12 Completadas al 100% (LISTO PARA PRODUCCIÓN)
+## Estado Actual: Fases 1 a 13 Completadas al 100% (LISTO PARA PRODUCCIÓN)
 - [x] Inspección del repositorio y descarte de plantillas obsoletas (Bootstrap 5 y eCommerce HTML puro).
 - [x] Activación e integración de la plantilla administrativa oficial: `pidegas-frontend` (Next.js + Tailwind CSS + Shadcn).
 - [x] Eliminación de restricciones de demo estática (`basePath` y `output: 'export'`) en `next.config.ts`.
@@ -143,4 +143,24 @@
 - [x] Tabla y módulo de auditoría de eventos sensibles (`auditoria_eventos`, Flyway `V15__auditoria.sql`, captura forense de inicios de sesión, cambios de estado, IP y User-Agent).
 - [x] Interfaz de visualización de bitácora forense para Super Admin (`/admin/auditoria`) con métricas en tiempo real y filtrado de eventos.
 - [x] Ajuste final de directivas de caché estática y rate-limiting en `nginx/nginx.conf` (`limit_req_zone`, `burst=20 nodelay`, `Cache-Control` inmutable para `/_next/static/`).
+
+### FASE 13 — Portal Web Informativo y Comercial Público (COMPLETADA)
+- [x] Portal web corporativo en `/` con Hero interactivo, selector rápido de balones de cocina (10kg, 15kg, 45kg, Click-On vs Rosca) y cotizador en vivo.
+- [x] Buscador de cobertura distrital y distribuidoras aliadas OSINERGMIN con tiempos de entrega en tiempo real y unidades activas.
+- [x] Páginas públicas institucionales y comerciales:
+  - `/nosotros`: Misión, visión, comparativa de mercado informal vs estándar PideGas, y pilares de seguridad.
+  - `/productos`: Catálogo público con especificaciones técnicas (peso neto, tara, válvulas compatibles, precios sugeridos).
+  - `/contacto`: Formulario interactivo, central telefónica, WhatsApp y protocolo de emergencias por fugas (116 Bomberos).
+- [x] Páginas de cumplimiento normativo y marco legal:
+  - `/terminos-servicio`: Régimen de intercambio de cilindros y verificación de tara en balanza digital.
+  - `/terminos-condiciones`: Medios de pago (Yape/Plin/POS/Efectivo), tiempos de despacho, cancelaciones y puntos de recompensa.
+  - `/politica-privacidad`: Protección de datos personales conforme a la Ley N° 29733 y Decreto Supremo 003-2013-JUS.
+  - `/libro-reclamaciones`: Libro de reclamaciones virtual conforme a las exigencias de INDECOPI (Ley N° 29571).
+- [x] Componentes de interfaz pública (`PublicNavbar` y `PublicFooter`) con redirección inteligente segmentada por rol:
+  - **Cliente (`CLIENTE`):** Botón "Mi Cuenta" accede a `/cliente/pedidos` (ve **únicamente sus propios datos**, pedidos y puntos).
+  - **Distribuidora (`EMPRESA`):** Botón "Panel Distribuidora" accede a `/empresa/dashboard` (ve **sus datos comerciales**, stock, flota y los clientes que le compran).
+  - **Repartidor (`REPARTIDOR`):** Botón "Mis Entregas" accede a `/repartidor/pedidos` (ve rutas y pedidos asignados para entrega con PIN).
+  - **Super Admin (`ADMIN`):** Botón "Panel Global Admin" accede a `/admin/dashboard` (puede **ver todo**: red de empresas, finanzas y auditoría).
+- [x] Compilación de producción en Next.js 16 (`npm run build`) validada con 101/101 rutas generadas con código 0.
+
 
