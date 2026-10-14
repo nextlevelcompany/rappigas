@@ -169,9 +169,9 @@ export default function LibroReclamacionesPage() {
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-slate-300">Producto o Servicio *</label>
                       <select className="w-full text-sm bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
-                        <option>Balón de Gas GLP 10 KG Doméstico</option>
-                        <option>Balón de Gas GLP 15 KG Familiar</option>
-                        <option>Balón de Gas GLP 45 KG Comercial</option>
+                        <option>Balón de Gas 10 KG (Cocina / Doméstico)</option>
+                        <option>Balón de Gas 15 KG Familiar</option>
+                        <option>Balón de Gas 45 KG Comercial</option>
                         <option>Válvula Reguladora Click-On o Rosca</option>
                         <option>Servicio de Entrega / Repartidor</option>
                         <option>Otro</option>

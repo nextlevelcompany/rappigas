@@ -134,7 +134,7 @@ export default function AdminEmpresasPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 w-full space-y-6">
       {errorPermisos && (
         <RoleGuardAlert
           rolRequerido="ADMIN"
@@ -153,7 +153,7 @@ export default function AdminEmpresasPage() {
             <span className="text-xs text-neutral-500">Super Admin</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white mt-1">
-            Gestión de Distribuidoras de GLP
+            Gestión de Distribuidoras de Gas
           </h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Aprobación, supervisión y auditoría de empresas en la plataforma PideGas.

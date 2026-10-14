@@ -204,7 +204,7 @@ export default function FlotaRepartidoresPage() {
             </h1>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 dark:bg-orange-950/30 dark:text-orange-400">
               <Truck className="w-3.5 h-3.5 text-orange-500" />
-              Logística GLP
+              Logística y Reparto
             </span>
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -486,7 +486,7 @@ export default function FlotaRepartidoresPage() {
                 >
                   <option value="MOTO_FURGON">Moto Furgón (Ideal balones 10kg/15kg)</option>
                   <option value="CAMIONETA">Camioneta Distribuidora</option>
-                  <option value="CAMION_GLP">Camión Pesado GLP (45kg)</option>
+                  <option value="CAMION_GLP">Camión de Balones Pesados (45kg)</option>
                 </select>
               </div>
 

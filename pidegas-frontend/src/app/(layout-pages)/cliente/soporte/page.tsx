@@ -167,7 +167,7 @@ export default function ClienteSoportePage() {
         <div>
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-orange-500/10 text-orange-600 border border-orange-500/20 flex items-center gap-1">
-              <LifeBuoy className="w-3.5 h-3.5" /> Garantía y Seguridad GLP
+              <LifeBuoy className="w-3.5 h-3.5" /> Garantía y Seguridad de tu Balón
             </span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mt-1">

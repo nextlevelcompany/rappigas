@@ -59,7 +59,7 @@ export default function PoliticaPrivacidadPage() {
                 Los datos personales se procesan estrictamente con las siguientes finalidades:
               </p>
               <ul className="list-disc pl-6 space-y-1.5 text-slate-400 text-xs">
-                <li>Gestionar y despachar pedidos de gas GLP hasta la puerta del cliente.</li>
+                <li>Gestionar y despachar pedidos de gas de cocina y balones domésticos hasta la puerta del cliente.</li>
                 <li>Verificar la identidad del usuario y generar el código de seguridad PIN.</li>
                 <li>Emitir boletas o facturas electrónicas requeridas por la SUNAT.</li>
                 <li>Atender reclamos, emergencias o solicitudes de asistencia a través del canal de soporte.</li>

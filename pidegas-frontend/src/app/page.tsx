@@ -75,7 +75,7 @@ export default function HomePage() {
                 </h1>
 
                 <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                  Pide balones de GLP de 10kg, 15kg o 45kg con balanza digital en puerta, precinto intacto de planta y pago fácil con Yape, Plin o Tarjeta.
+                  Pide balones de gas de cocina de 10kg, 15kg o 45kg con balanza digital en puerta, precinto intacto de planta y pago fácil con Yape, Plin o Tarjeta.
                 </p>
 
                 {/* Badges de Beneficios Rápidos */}
@@ -424,7 +424,7 @@ export default function HomePage() {
                       <CheckCircle2 className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-white">Repartidores Capacitados en GLP</h4>
+                      <h4 className="text-sm font-bold text-white">Repartidores Capacitados en Balones de Cocina</h4>
                       <p className="text-xs text-slate-400">Personal entrenado en manipulación segura y correcta instalación de reguladores.</p>
                     </div>
                   </div>
@@ -488,7 +488,7 @@ export default function HomePage() {
                 </Badge>
 
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
-                  ¿Tienes una distribuidora de gas o camión GLP?
+                  ¿Tienes una distribuidora de gas o camión de reparto?
                 </h2>
 
                 <p className="text-base sm:text-lg text-slate-300 leading-relaxed">
@@ -561,7 +561,7 @@ export default function HomePage() {
               },
               {
                 q: "¿Cómo sé si el balón contiene los kilogramos exactos de gas?",
-                a: "Nuestros repartidores cuentan con balanzas certificadas. Puedes solicitarle el pesaje en puerta antes de recibir el cilindro: el peso total debe ser igual al peso de la tara grabada en el collarín del balón más los 10kg, 15kg o 45kg de GLP neto.",
+                a: "Nuestros repartidores cuentan con balanzas certificadas. Puedes solicitarle el pesaje en puerta antes de recibir el cilindro: el peso total debe ser igual al peso de la tara grabada en el collarín del balón más los 10kg, 15kg o 45kg de gas neto.",
               },
               {
                 q: "¿Qué medios de pago puedo utilizar?",

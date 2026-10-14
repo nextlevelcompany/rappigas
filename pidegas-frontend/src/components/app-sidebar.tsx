@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { NavMain } from "@/components/nav-main";
+import { NavPlain } from "@/components/nav-plain";
 import { NavSecondary } from "@/components/nav-secondary";
 import {
   Sidebar,
@@ -18,34 +19,98 @@ import {
   HomeAlt,
   MessageCircleQuestionMark,
 } from "@boxicons/react";
-import { Truck, ShoppingBag, Navigation, Globe } from "lucide-react";
+import { Truck, ShoppingBag, Navigation, ChartBar, Building, CreditCard, ClipboardList, HelpCircle } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 
 // Secciones modulares de navegación PideGas
-const seccionSuperAdmin = {
-  title: "Super Admin",
+//--- Dashboard Section
+
+const seccionDashboard = {
+  title: "DASHBOARD",
   url: "#",
-  icon: <BuildingHouse />,
+  icon: <ChartBar className="w-5 h-5" />, // using lucide icon
   isActive: true,
   items: [
     {
-      title: "Panel Global (BI)",
+      title: "Panel Global",
       url: "/admin/dashboard",
     },
     {
-      title: "Distribuidoras GLP",
-      url: "/admin/empresas",
-    },
-    {
-      title: "Mediación PQRS",
-      url: "/admin/soporte",
-    },
-    {
-      title: "Auditoría Forense",
-      url: "/admin/auditoria",
+      title: "Análisis",
+      url: "/admin/dashboard/analytics",
     },
   ],
 };
+
+//--- CRM y Empresas Section
+const seccionCRM = {
+  title: "CRM",
+  url: "#",
+  icon: <Building className="w-5 h-5" />, // lucide Building
+  isActive: true,
+  items: [
+    { title: "Empresas", url: "/admin/empresas" },
+    { title: "Contactos", url: "/admin/contactos" },
+    { title: "Contratos y Adendas", url: "/admin/contratos" },
+  ],
+};
+
+//--- Finanzas Section
+const seccionFinanzas = {
+  title: "FINANZAS",
+  url: "#",
+  icon: <CreditCard className="w-5 h-5" />, // lucide CreditCard
+  isActive: true,
+  items: [
+    { title: "Planes", url: "/admin/suscripciones" },
+    { title: "Facturación", url: "/admin/facturacion" },
+    { title: "Transacciones", url: "/admin/transacciones" },
+  ],
+};
+
+//--- Monitoreo Operativo Section
+const seccionMonitoreo = {
+  title: "MONITOREO ",
+  url: "#",
+  icon: <ClipboardList className="w-5 h-5" />, // lucide ClipboardList
+  isActive: true,
+  items: [
+    { title: "Distribuidora", url: "/empresa/dashboard" },
+    { title: "Flotas", url: "/empresa/flota" },
+    { title: "Kardex", url: "/empresa/inventario" },
+  ],
+};
+
+//--- Soporte y Atención Section
+const seccionEstadisticas = {
+  title: "ESTADISTICAS",
+  url: "#",
+  icon: <ChartBar className="w-5 h-5" />, // lucide ChartBar
+  isActive: true,
+  items: [
+    { title: "Resumen global", url: "/admin/estadisticas/resumen" },
+    { title: "Ingresos por plan", url: "/admin/estadisticas/ingresos" },
+    { title: "Uso de la plataforma", url: "/admin/estadisticas/uso" },
+    { title: "Auditoría", url: "/admin/estadisticas/auditoria" },
+  ],
+};
+
+//--- Soporte y Atención Section
+const seccionSoporteMenu = {
+  title: "SOPORTE",
+  url: "#",
+  icon: <HelpCircle className="w-5 h-5" />, // lucide HelpCircle
+  isActive: true,
+  items: [
+    { title: "Soporte", url: "/admin/soporte" },
+    { title: "Comunicaciones", url: "/admin/comunicaciones" },
+    { title: "Base de Conocimientos", url: "/admin/knowledge-base" },
+  ],
+};
+
+
+//--- Portales Web Section (already defined later as seccionWebPublica)
+
 
 const seccionSupervisionAdmin = {
   title: "Supervisión Operativa",
@@ -155,30 +220,7 @@ const seccionCliente = {
   ],
 };
 
-const seccionWebPublica = {
-  title: "Web Informativa",
-  url: "#",
-  icon: <Globe className="w-5 h-5 text-slate-400" />,
-  isActive: false,
-  items: [
-    {
-      title: "Página de Inicio",
-      url: "/",
-    },
-    {
-      title: "Catálogo de Balones",
-      url: "/productos",
-    },
-    {
-      title: "Nosotros",
-      url: "/nosotros",
-    },
-    {
-      title: "Contacto",
-      url: "/contacto",
-    },
-  ],
-};
+
 
 const navSecondary = [
   {
@@ -211,17 +253,17 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
   let itemsNavegacion = [];
 
   if (rol === "ADMIN") {
-    // Super Admin ve administración global y supervisión
-    itemsNavegacion = [seccionSuperAdmin, seccionSupervisionAdmin, seccionWebPublica];
+    // Super Admin sees the new structured menu
+    itemsNavegacion = [seccionDashboard, seccionCRM, seccionFinanzas, seccionMonitoreo, seccionSoporteMenu, seccionEstadisticas];
   } else if (rol === "EMPRESA") {
     // Dueño de distribuidora ve únicamente las opciones operativas de su negocio
-    itemsNavegacion = [seccionEmpresa, seccionWebPublica];
+    itemsNavegacion = [seccionEmpresa];
   } else if (rol === "REPARTIDOR") {
     // Repartidor ve únicamente sus rutas y pedidos
-    itemsNavegacion = [seccionRepartidor, seccionWebPublica];
+    itemsNavegacion = [seccionRepartidor];
   } else {
     // Cliente o visitante en /cliente/tienda: VE ÚNICAMENTE OPCIONES DE CLIENTE
-    itemsNavegacion = [seccionCliente, seccionWebPublica];
+    itemsNavegacion = [seccionCliente];
   }
 
   const rutaLogo = rol === "ADMIN"
@@ -271,7 +313,11 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
         <SidebarContent className="overflow-hidden">
           <ScrollArea className="h-full">
             <div className="flex min-h-full flex-col">
-              <NavMain items={itemsNavegacion} />
+                {rol === "ADMIN" ? (
+                  <NavMain items={itemsNavegacion} />
+                ) : (
+                  <NavMain items={itemsNavegacion} />
+                )}
 
               <NavSecondary
                 items={navSecondary}

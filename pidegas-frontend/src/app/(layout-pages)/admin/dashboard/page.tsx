@@ -50,7 +50,7 @@ export default function AdminDashboardPage() {
 
   if (errorPermisos) {
     return (
-      <div className="container max-w-7xl mx-auto py-8 px-4">
+      <div className="w-full py-8 px-6">
         <RoleGuardAlert
           rolRequerido="ADMIN"
           mensaje="Para ver el panel de inteligencia de plataforma y GMV global, debes iniciar sesión como Super Administrador."
@@ -69,7 +69,7 @@ export default function AdminDashboardPage() {
     : 0;
 
   return (
-    <div className="container max-w-7xl mx-auto py-8 px-4 space-y-8">
+    <div className="w-full py-6 px-6 space-y-6">
       {/* Encabezado */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -80,7 +80,7 @@ export default function AdminDashboardPage() {
             <h1 className="text-3xl font-bold tracking-tight">Super Admin - Inteligencia de Plataforma</h1>
           </div>
           <p className="text-muted-foreground mt-1">
-            Supervisión global de PideGas: transacciones GLP, red de distribución y salud del ecosistema
+            Supervisión global de PideGas: pedidos de gas de cocina, red de distribución y salud del ecosistema
           </p>
         </div>
         <Button
@@ -131,7 +131,7 @@ export default function AdminDashboardPage() {
         {/* Red de Distribuidoras */}
         <Card className="border-l-4 border-l-blue-500 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Distribuidoras GLP</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Distribuidoras de Gas</CardTitle>
             <Building2 className="w-5 h-5 text-blue-500" />
           </CardHeader>
           <CardContent>
@@ -256,7 +256,7 @@ export default function AdminDashboardPage() {
             <div className="space-y-2 pt-2">
               <Link href="/admin/empresas" className="w-full block">
                 <Button variant="outline" className="w-full justify-between text-xs">
-                  <span>Revisar Distribuidoras GLP</span>
+                  <span>Revisar Distribuidoras de Gas</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Button>
               </Link>

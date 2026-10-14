@@ -8,10 +8,12 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 RUN apk add --no-cache curl
-RUN addgroup -S pidegas && adduser -S pidegas -G pidegas
-USER pidegas
+RUN addgroup -S pidegas && adduser -S pidegas -G pidegas \
+    && mkdir -p /app/uploads /var/pidegas/uploads \
+    && chown -R pidegas:pidegas /app /var/pidegas
 
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build --chown=pidegas:pidegas /app/target/*.jar app.jar
+USER pidegas
 
 EXPOSE 8080
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD curl -f http://localhost:8080/actuator/health || exit 1

@@ -48,7 +48,7 @@ export default function EmpresaDashboardPage() {
 
   if (errorPermisos) {
     return (
-      <div className="container max-w-7xl mx-auto py-8 px-4">
+      <div className="w-full py-8 px-6">
         <RoleGuardAlert
           rolRequerido="EMPRESA"
           mensaje="Para ver el panel y analítica de tu distribuidora, debes iniciar sesión con una cuenta de Distribuidora."
@@ -68,7 +68,7 @@ export default function EmpresaDashboardPage() {
     : 0;
 
   return (
-    <div className="container max-w-7xl mx-auto py-8 px-4 space-y-8">
+    <div className="w-full py-6 px-6 space-y-6">
       {/* Encabezado */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -79,7 +79,7 @@ export default function EmpresaDashboardPage() {
             <h1 className="text-3xl font-bold tracking-tight">Panel de Control y Analítica</h1>
           </div>
           <p className="text-muted-foreground mt-1">
-            Métricas operativas y de ventas de balones de gas GLP en tiempo real
+            Métricas operativas y de ventas de balones de gas de cocina en tiempo real
           </p>
         </div>
         <Button
@@ -223,7 +223,7 @@ export default function EmpresaDashboardPage() {
               <span>
                 {datos?.balonesStockBajo === 0 && datos?.productosAgotados === 0
                   ? "Nivel de abastecimiento óptimo en almacén central."
-                  : "Se recomienda reabastecer stock desde la planta de GLP."}
+                  : "Se recomienda reabastecer stock desde la planta de envasado."}
               </span>
             </div>
           </CardContent>
@@ -314,7 +314,7 @@ export default function EmpresaDashboardPage() {
               <Flame className="w-5 h-5 text-orange-500" />
               Balones de Cocina más Vendidos
             </CardTitle>
-            <CardDescription>Demanda por tamaño y modelo de válvula GLP</CardDescription>
+            <CardDescription>Demanda por tamaño y modelo de válvula de gas</CardDescription>
           </CardHeader>
           <CardContent>
             {datos?.ventasPorProducto && datos.ventasPorProducto.length > 0 ? (

@@ -18,7 +18,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("PideGas API")
-                        .description("API REST para Marketplace B2B2C de Distribución de GLP")
+                        .description("API REST para Marketplace B2B2C de Distribución de Gas de Cocina")
                         .version("1.0.0")
                         .contact(new Contact().name("PideGas Tech Team").email("soporte@pidegas.pe")))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))

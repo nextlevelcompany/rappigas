@@ -181,7 +181,7 @@ export function LoginForm({
                 className="text-xs h-8"
                 onClick={() => rellenarCredencialPrueba("empresa@pidegas.pe", "EmpresaPassword123!")}
               >
-                Empresa GLP
+                Distribuidora de Gas
               </Button>
               <Button
                 type="button"

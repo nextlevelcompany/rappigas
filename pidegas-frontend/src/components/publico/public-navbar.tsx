@@ -112,7 +112,7 @@ export function PublicNavbar() {
                   Pide<span className="text-orange-500">Gas</span>
                 </span>
                 <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[10px] py-0 px-1.5 font-bold">
-                  GLP Perú
+                  Gas Perú
                 </Badge>
               </div>
               <p className="text-[10px] text-slate-400 tracking-wider font-medium uppercase -mt-0.5">
@@ -306,7 +306,7 @@ export function PublicNavbar() {
             >
               <Link href="/auth/registro-empresa" onClick={() => setMenuAbierto(false)}>
                 <Store className="w-4 h-4 mr-2 text-orange-400" />
-                Afiliar mi Distribuidora GLP
+                Afiliar mi Distribuidora de Gas
               </Link>
             </Button>
 

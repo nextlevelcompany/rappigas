@@ -224,7 +224,7 @@ export default function TiendaClienteGasPage() {
         <div className="relative z-10 max-w-2xl space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider">
             <Flame className="w-4 h-4 text-amber-200 animate-pulse" />
-            Marketplace Oficial de Balones de Gas GLP
+            Marketplace Oficial de Balones de Gas de Cocina
           </div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
             Pide tu Balón de Gas a Domicilio

@@ -96,7 +96,7 @@ export function UserDropdown() {
               <DropdownMenuItem asChild className="gap-2 h-9 cursor-pointer">
                 <Link href="/admin/empresas">
                   <Building className="size-4" />
-                  <span>Distribuidoras GLP</span>
+                  <span>Distribuidoras de Gas</span>
                 </Link>
               </DropdownMenuItem>
             )}

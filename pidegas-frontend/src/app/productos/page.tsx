@@ -27,12 +27,12 @@ export default function ProductosPage() {
   const PRODUCTOS = [
     {
       id: "GLP_10KG",
-      nombre: "Balón GLP 10 KG Doméstico",
+      nombre: "Balón de Gas 10 KG (Cocina / Doméstico)",
       categoria: "BALONES",
       destacado: true,
       etiqueta: "El Más Solicitado",
       precioRef: "S/ 48.00",
-      pesoNeto: "10.00 kg de GLP",
+      pesoNeto: "10.00 kg de gas neto",
       taraPromedio: "11.20 - 11.80 kg",
       pesoBrutoTotal: "Aprox. 21.50 kg",
       valvulas: ["Click-On (Premium)", "Rosca Tradicional"],
@@ -42,12 +42,12 @@ export default function ProductosPage() {
     },
     {
       id: "GLP_15KG",
-      nombre: "Balón GLP 15 KG Familiar",
+      nombre: "Balón de Gas 15 KG Familiar",
       categoria: "BALONES",
       destacado: false,
       etiqueta: "Mayor Rendimiento",
       precioRef: "S/ 72.00",
-      pesoNeto: "15.00 kg de GLP",
+      pesoNeto: "15.00 kg de gas neto",
       taraPromedio: "14.50 - 15.20 kg",
       pesoBrutoTotal: "Aprox. 29.80 kg",
       valvulas: ["Click-On (Premium)", "Rosca Tradicional"],
@@ -57,12 +57,12 @@ export default function ProductosPage() {
     },
     {
       id: "GLP_45KG",
-      nombre: "Balón GLP 45 KG Comercial e Industrial",
+      nombre: "Balón de Gas 45 KG Comercial e Industrial",
       categoria: "BALONES",
       destacado: false,
       etiqueta: "Uso Gastronómico",
       precioRef: "S/ 215.00",
-      pesoNeto: "45.00 kg de GLP",
+      pesoNeto: "45.00 kg de gas neto",
       taraPromedio: "38.00 - 41.00 kg",
       pesoBrutoTotal: "Aprox. 84.00 kg",
       valvulas: ["Rosca Comercial POL"],
@@ -98,11 +98,11 @@ export default function ProductosPage() {
       valvulas: ["Rosca manual convencional"],
       idealPara: "Instalaciones tradicionales de balón a rosca con visor de nivel de presión.",
       duracionEstimada: "Vida útil recomendada: 5 años",
-      descripcion: "Incluye manómetro con aguja indicadora de presión interna para anticipar cuándo se está agotando el GLP.",
+      descripcion: "Incluye manómetro con aguja indicadora de presión interna para anticipar cuándo se está agotando el gas.",
     },
     {
       id: "KIT_MANGUERA",
-      nombre: "Kit de Manguera Flexible de Alta Presión GLP",
+      nombre: "Kit de Manguera Flexible de Alta Presión para Gas",
       categoria: "ACCESORIOS",
       destacado: false,
       etiqueta: "Norma Técnica",
@@ -110,7 +110,7 @@ export default function ProductosPage() {
       pesoNeto: "N/A (Accesorio)",
       taraPromedio: "Caucho sintético reforzado",
       pesoBrutoTotal: "0.35 kg",
-      valvulas: ["Universal para GLP"],
+      valvulas: ["Universal para Cocina / Balón"],
       idealPara: "Reemplazo preventivo periódico entre el regulador y la cocina.",
       duracionEstimada: "Cambio obligatorio cada 2 a 3 años",
       descripcion: "Manguera con triple capa y malla interna de poliéster resistente al gas licuado. Incluye dos abrazaderas de acero inoxidable.",
@@ -136,7 +136,7 @@ export default function ProductosPage() {
             Balones de Cocina y Accesorios Certificados
           </h1>
           <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            Conoce nuestras presentaciones de gas GLP doméstico y comercial. Precios referenciales en Soles (S/) con entrega rápida a domicilio.
+            Conoce nuestras presentaciones de gas para cocina doméstico y comercial. Precios referenciales en Soles (S/) con entrega rápida a domicilio.
           </p>
 
           {/* Filtros de Categoría */}
@@ -155,7 +155,7 @@ export default function ProductosPage() {
               onClick={() => setFiltroCategoria("BALONES")}
               className={filtroCategoria === "BALONES" ? "bg-orange-600 hover:bg-orange-500 text-white font-bold" : "border-slate-800 bg-slate-900 text-slate-400"}
             >
-              Balones de Gas GLP
+              Balones de Gas
             </Button>
             <Button
               variant={filtroCategoria === "ACCESORIOS" ? "default" : "outline"}
@@ -268,7 +268,7 @@ export default function ProductosPage() {
 
             <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs text-slate-300 leading-relaxed font-mono">
               <strong>Fórmula del Peso Exacto:</strong><br />
-              Peso Total en Balanza = Peso de la Tara (Cilindro Vacío) + 10.00 kg de GLP.<br />
+              Peso Total en Balanza = Peso de la Tara (Cilindro Vacío) + 10.00 kg de Gas Neto.<br />
               <span className="text-amber-400 text-[11px]">
                 Ejemplo: Si la tara grabada indica 11.5 kg, el balón lleno debe marcar exactamente 21.5 kg en la balanza.
               </span>

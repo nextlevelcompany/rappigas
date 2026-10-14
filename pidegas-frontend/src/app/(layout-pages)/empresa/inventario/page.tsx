@@ -185,7 +185,7 @@ export default function InventarioEmpresaPage() {
             </h1>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 dark:bg-orange-950/30 dark:text-orange-400">
               <Flame className="w-3.5 h-3.5 text-orange-500" />
-              Gas GLP Cocina
+              Gas de Cocina
             </span>
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400">

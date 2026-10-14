@@ -11,6 +11,7 @@ import { LanguageDropdown } from "@/components/language-dropdown"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { GlobalSearch } from "@/components/global-search"
 import { UserDropdown } from "@/components/UserDropdown"
+import { AdminConfigDropdown } from "@/components/AdminConfigDropdown"
 import { CartDropdown } from "@/components/CartDropdown"
 import { RoleSwitcher } from "@/components/layout/role-switcher"
 import { useAuthStore } from "@/store/auth-store"
@@ -98,11 +99,12 @@ function LayoutContent({
           <AppLauncherDropdown />
           <NotificationDropdown />
           <CartDropdown />
+          <AdminConfigDropdown />
           <UserDropdown />
         </div>
       </header>
 
-      <div className="flex flex-1 flex-col p-6 bg-muted">
+      <div className="flex flex-1 flex-col bg-muted w-full mx-0">
         {children}
       </div>
 

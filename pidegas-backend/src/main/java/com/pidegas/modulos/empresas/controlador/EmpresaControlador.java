@@ -17,7 +17,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1")
-@Tag(name = "Empresas", description = "Endpoints de distribuidoras de GLP y operaciones multi-tenant")
+@Tag(name = "Empresas", description = "Endpoints de distribuidoras de gas y operaciones multi-tenant")
 public class EmpresaControlador {
 
     private final EmpresaServicio empresaServicio;

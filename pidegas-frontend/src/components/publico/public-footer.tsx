@@ -54,7 +54,7 @@ export function PublicFooter() {
             </div>
 
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-              La plataforma tecnológica líder en el Perú para la distribución formal, segura y transparente de balones de gas GLP de cocina (10kg, 15kg y 45kg) con balanza calibrada, precinto de seguridad y válvula Premium Click-On.
+              La plataforma tecnológica líder en el Perú para la distribución formal, segura y transparente de balones de gas de cocina (10kg, 15kg y 45kg) con balanza calibrada, precinto de seguridad y válvula Premium Click-On.
             </p>
 
             <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
@@ -76,17 +76,17 @@ export function PublicFooter() {
               </li>
               <li>
                 <Link href="/productos" className="hover:text-white transition-colors">
-                  Balón GLP 10kg Doméstico
+                  Balón de Gas 10kg Doméstico
                 </Link>
               </li>
               <li>
                 <Link href="/productos" className="hover:text-white transition-colors">
-                  Balón GLP 15kg Familiar
+                  Balón de Gas 15kg Familiar
                 </Link>
               </li>
               <li>
                 <Link href="/productos" className="hover:text-white transition-colors">
-                  Balón GLP 45kg Comercial
+                  Balón de Gas 45kg Comercial
                 </Link>
               </li>
               <li>

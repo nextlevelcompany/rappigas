@@ -24,13 +24,15 @@ import java.util.UUID;
 @Tag(name = "Archivos y Evidencias", description = "Subida y descarga de fotos de balones y comprobantes para tickets")
 public class ArchivosControlador {
 
-    private final Path directorioSubidas = Paths.get("uploads").toAbsolutePath().normalize();
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ArchivosControlador.class);
+    private final Path directorioSubidas;
 
-    public ArchivosControlador() {
+    public ArchivosControlador(@org.springframework.beans.factory.annotation.Value("${app.storage.path:uploads}") String rutaConfigurada) {
+        this.directorioSubidas = Paths.get(rutaConfigurada).toAbsolutePath().normalize();
         try {
-            Files.createDirectories(directorioSubidas);
-        } catch (IOException e) {
-            throw new RuntimeException("No se pudo inicializar el directorio de subidas", e);
+            Files.createDirectories(this.directorioSubidas);
+        } catch (Exception e) {
+            log.warn("No se pudo inicializar el directorio de subidas '{}': {}", this.directorioSubidas, e.getMessage());
         }
     }
 
@@ -51,6 +53,7 @@ public class ArchivosControlador {
         Path destino = this.directorioSubidas.resolve(nombreGuardado);
 
         try {
+            Files.createDirectories(this.directorioSubidas);
             Files.copy(archivo.getInputStream(), destino, StandardCopyOption.REPLACE_EXISTING);
             String urlDescarga = "/api/v1/archivos/ver/" + nombreGuardado;
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(

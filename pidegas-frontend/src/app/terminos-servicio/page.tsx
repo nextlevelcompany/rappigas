@@ -31,7 +31,7 @@ export default function TerminosServicioPage() {
                 1. Naturaleza de la Plataforma PideGas
               </h2>
               <p>
-                PideGas Perú S.A.C. opera una plataforma tecnológica de intermediación digital que conecta a consumidores finales (domésticos, comerciales e industriales) con distribuidoras de gas licuado de petróleo (GLP) formalmente constituidas y debidamente autorizadas con Registro de Hidrocarburos vigente ante el Organismo Supervisor de la Inversión en Energía y Minería (OSINERGMIN).
+                PideGas Perú S.A.C. opera una plataforma tecnológica de intermediación digital que conecta a consumidores finales (domésticos, comerciales e industriales) con distribuidoras autorizadas de gas envasado para cocina y uso doméstico formalmente constituidas y debidamente autorizadas con Registro de Hidrocarburos vigente ante el Organismo Supervisor de la Inversión en Energía y Minería (OSINERGMIN).
               </p>
             </div>
 
@@ -59,7 +59,7 @@ export default function TerminosServicioPage() {
                 Es derecho irrenunciable del usuario solicitar al repartidor la verificación del peso del cilindro en balanza calibrada antes de la entrega final. La conformidad del peso se rige por:
               </p>
               <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs text-amber-300">
-                Peso Balanza = Tara Grabada en Collarín + Contenido Neto de GLP (Margen de tolerancia según Norma Técnica Peruana: ± 100 gramos).
+                Peso Balanza = Tara Grabada en Collarín + Contenido Neto de Gas (Margen de tolerancia según Norma Técnica Peruana: ± 100 gramos).
               </div>
             </div>
 

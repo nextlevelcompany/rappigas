@@ -77,7 +77,7 @@ export default function RegistroEmpresaPage() {
           </span>
         </div>
         <h2 className="mt-4 text-center text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
-          Afiliación de Distribuidora de GLP
+          Afiliación de Distribuidora de Gas
         </h2>
         <p className="mt-1 text-center text-sm text-neutral-600 dark:text-neutral-400">
           Únete a la red digital de gas y gestiona pedidos, rutas y repartidores en tiempo real.

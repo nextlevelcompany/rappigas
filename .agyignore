@@ -1,0 +1,11 @@
+# Antigravity ignore file
+# Exclude directories that are not part of the production UI
+src/app/(layout-pages)/charts/
+src/app/(layout-pages)/forms/
+src/app/(layout-pages)/icons/
+src/app/(layout-pages)/ui-components/
+src/app/(layout-pages)/pricing-tables/
+src/app/(layout-pages)/tables/
+src/app/(layout-pages)/widgets/statistics/
+# Also ignore the temporary unused folder
+src/unused/

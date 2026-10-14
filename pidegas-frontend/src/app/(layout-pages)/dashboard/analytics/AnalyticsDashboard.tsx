@@ -28,7 +28,7 @@ function CardSkeleton({ height = 300 }: { height?: number }) {
 
 export default function AnalyticsDashboard() {
   return (
-    <div className="dashboard-analytics">
+    <div className="dashboard-analytics w-full p-6">
       <div className="grid grid-cols-12 gap-6">
 
         <div className="col-span-12 xl:col-span-12">

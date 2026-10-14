@@ -31,7 +31,7 @@ export default function NosotrosPage() {
             Nuestra Historia y Propósito
           </Badge>
           <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-            Formalizando el mercado de gas GLP en el Perú
+            Formalizando el mercado de gas para cocina en el Perú
           </h1>
           <p className="text-slate-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
             Nacimos con una misión clara: erradicar el gas adulterado, los cilindros oxidados y el desabastecimiento, conectando a los hogares y negocios gastronómicos con distribuidoras formales y autorizadas.
@@ -47,7 +47,7 @@ export default function NosotrosPage() {
               </div>
               <h2 className="text-2xl font-bold text-white">Nuestra Misión</h2>
               <p className="text-sm text-slate-300 leading-relaxed">
-                Brindar a cada hogar y restaurante peruano un suministro de gas doméstico y comercial transparente, puntual y 100% seguro, garantizando el pesaje exacto del GLP mediante balanzas calibradas y el uso de cilindros normados por OSINERGMIN con válvulas de autobloqueo térmico.
+                Brindar a cada hogar y restaurante peruano un suministro de gas de cocina transparente, puntual y 100% seguro, garantizando el pesaje exacto del balón mediante balanzas calibradas y el uso de cilindros normados por OSINERGMIN con válvulas de autobloqueo térmico.
               </p>
             </Card>
 
@@ -57,7 +57,7 @@ export default function NosotrosPage() {
               </div>
               <h2 className="text-2xl font-bold text-white">Nuestra Visión</h2>
               <p className="text-sm text-slate-300 leading-relaxed">
-                Consolidarnos como el estándar digital nacional para la distribución de energía limpia y gas GLP en el Perú, empoderando a miles de distribuidoras locales independientes con tecnología de vanguardia para competir formalmente con honestidad y calidad.
+                Consolidarnos como el estándar digital nacional para la distribución de gas de cocina y energía para el hogar en el Perú, empoderando a miles de distribuidoras locales independientes con tecnología de vanguardia para competir formalmente con honestidad y calidad.
               </p>
             </Card>
           </div>
@@ -109,7 +109,7 @@ export default function NosotrosPage() {
                 <ul className="space-y-3 text-xs sm:text-sm text-slate-300">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                    <span><strong>Peso exacto verificado:</strong> Balanza digital en puerta para constatar tara + GLP neto.</span>
+                    <span><strong>Peso exacto verificado:</strong> Balanza digital en puerta para constatar tara + contenido neto exacto.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />

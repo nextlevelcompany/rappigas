@@ -34,7 +34,7 @@ public class FlotaControlador {
     }
 
     @PostMapping("/vehiculos")
-    @Operation(summary = "Registrar un nuevo vehículo de reparto (moto furgón, camioneta, camión GLP)")
+    @Operation(summary = "Registrar un nuevo vehículo de reparto (moto furgón, camioneta, camión de reparto pesado)")
     public ResponseEntity<VehiculoDetalleDto> crearVehiculo(@Valid @RequestBody CrearVehiculoDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(flotaServicio.crearVehiculo(dto));
     }
