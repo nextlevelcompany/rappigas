@@ -1,4 +1,5 @@
 import { peticionHttp } from "./cliente-http";
+import { DashboardEmpresaDto } from "./analytics.api";
 
 export type EstadoEmpresa = "PENDIENTE" | "APROBADA" | "SUSPENDIDA" | "RECHAZADA";
 
@@ -36,6 +37,9 @@ export interface EmpresaDetalle {
   estado: EstadoEmpresa;
   createdAt: string;
   updatedAt: string;
+  adminNombre?: string;
+  adminEmail?: string;
+  adminTelefono?: string;
 }
 
 export const empresasApi = {
@@ -69,6 +73,11 @@ export const empresasApi = {
   // Super Admin: Obtener detalle por publicId
   obtenerEmpresaAdmin: async (publicId: string): Promise<EmpresaDetalle> => {
     return peticionHttp<EmpresaDetalle>(`/admin/empresas/${publicId}`);
+  },
+
+  // Super Admin: Obtener métricas y estadísticas de una distribuidora
+  obtenerMetricasEmpresaAdmin: async (publicId: string): Promise<DashboardEmpresaDto> => {
+    return peticionHttp<DashboardEmpresaDto>(`/admin/empresas/${publicId}/metricas`);
   },
 
   // Super Admin: Cambiar estado (Aprobar, Suspender, Rechazar)

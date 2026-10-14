@@ -141,6 +141,13 @@ public class EmpresaServicio {
     }
 
     @Transactional(readOnly = true)
+    public Long obtenerIdPorPublicId(UUID publicId) {
+        return empresaRepositorio.findByPublicId(publicId)
+                .map(Empresa::getId)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró la empresa con ID público " + publicId));
+    }
+
+    @Transactional(readOnly = true)
     public EmpresaDetalleDto obtenerPorPublicId(UUID publicId) {
         Empresa empresa = empresaRepositorio.findByPublicId(publicId)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró la empresa con ID público " + publicId));
@@ -148,6 +155,19 @@ public class EmpresaServicio {
     }
 
     private EmpresaDetalleDto mapearADetalleDto(Empresa empresa) {
+        String adminNombre = null;
+        String adminEmail = null;
+        String adminTelefono = null;
+
+        if (empresa.getUsuarioAdminId() != null) {
+            Usuario admin = usuarioRepositorio.findById(empresa.getUsuarioAdminId()).orElse(null);
+            if (admin != null) {
+                adminNombre = (admin.getNombres() + " " + admin.getApellidos()).trim();
+                adminEmail = admin.getEmail();
+                adminTelefono = admin.getTelefono();
+            }
+        }
+
         return new EmpresaDetalleDto(
                 empresa.getPublicId(),
                 empresa.getRuc(),
@@ -158,7 +178,10 @@ public class EmpresaServicio {
                 empresa.getDireccionFiscal(),
                 empresa.getLogoUrl(),
                 empresa.getEstado(),
-                empresa.getCreatedAt()
+                empresa.getCreatedAt(),
+                adminNombre,
+                adminEmail,
+                adminTelefono
         );
     }
 }

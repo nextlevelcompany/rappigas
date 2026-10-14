@@ -112,6 +112,7 @@ export function AppLauncherDropdown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
+          id="header-applauncher-trigger"
           variant="ghost"
           size="icon"
           className="rounded-full w-10 h-10"

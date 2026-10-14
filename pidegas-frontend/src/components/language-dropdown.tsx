@@ -34,6 +34,7 @@ export function LanguageDropdown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
+          id="header-language-trigger"
           variant="ghost"
           size="icon"
           className="rounded-full w-10 h-10 hidden md:flex"

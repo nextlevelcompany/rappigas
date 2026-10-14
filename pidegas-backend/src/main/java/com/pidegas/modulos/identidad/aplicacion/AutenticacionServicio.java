@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -211,5 +212,27 @@ public class AutenticacionServicio {
                 usuario.getEstado().name(),
                 usuario.getCreatedAt()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<UsuarioDetalleDto> listarUsuariosAdmin(RolUsuario rol) {
+        List<Usuario> lista;
+        if (rol != null) {
+            lista = usuarioRepositorio.findByRolOrderByCreatedAtDesc(rol);
+        } else {
+            lista = usuarioRepositorio.findAllByOrderByCreatedAtDesc();
+        }
+        return lista.stream()
+                .map(u -> new UsuarioDetalleDto(
+                        u.getPublicId(),
+                        u.getEmail(),
+                        u.getNombres(),
+                        u.getApellidos(),
+                        u.getTelefono(),
+                        u.getRol().name(),
+                        u.getEstado().name(),
+                        u.getCreatedAt()
+                ))
+                .toList();
     }
 }

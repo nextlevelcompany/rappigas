@@ -109,16 +109,7 @@ function NavItem({ item, pathname }: { item: any; pathname: string }) {
 }
 
 export function NavMain({ items }: { items: any[] }) {
-  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null; // Render nothing on the server to avoid mismatched markup
-  }
 
   return (
     <SidebarMenu className="space-y-1">

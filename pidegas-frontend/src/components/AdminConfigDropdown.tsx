@@ -1,4 +1,4 @@
-// "use client"
+"use client";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -9,20 +9,26 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Settings, Users, Shield, Database, RefreshCcw, FileCog, Code, Key, Server } from "lucide-react";
+import { Settings, Users, Shield, Database, RefreshCcw, FileCog, Code, Key, Server, Palette } from "lucide-react";
 import Link from "next/link";
 
 export function AdminConfigDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-10 w-10">
+        <Button id="header-adminconfig-trigger" variant="ghost" size="icon" className="h-10 w-10">
           <Settings className="size-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 p-2 rounded-xl shadow-xl">
         <DropdownMenuLabel className="font-semibold">Configuración</DropdownMenuLabel>
         {/* Primary items */}
+        <DropdownMenuItem asChild>
+          <Link href="/admin/configuracion" className="flex items-center gap-2">
+            <Palette className="size-4 text-primary" />
+            <span className="font-semibold text-primary">Temas y Colores</span>
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/admin/usuarios" className="flex items-center gap-2">
             <Users className="size-4" />

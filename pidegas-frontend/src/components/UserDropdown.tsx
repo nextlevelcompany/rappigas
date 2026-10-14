@@ -19,6 +19,7 @@ import {
   Building,
   LogOut,
   LogIn,
+  Palette,
 } from "lucide-react";
 
 export function UserDropdown() {
@@ -49,7 +50,7 @@ export function UserDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="flex items-center gap-3 cursor-pointer px-3 border-r border-l h-16 ml-3 hover:bg-muted/50 transition">
+        <div id="header-user-trigger" className="flex items-center gap-3 cursor-pointer px-3 border-r border-l h-16 ml-3 hover:bg-muted/50 transition">
           <Avatar className="h-9 w-9 bg-orange-600 text-white font-bold text-xs flex items-center justify-center">
             <AvatarFallback className="bg-orange-600 text-white">
               {iniciales}
@@ -109,6 +110,13 @@ export function UserDropdown() {
                 </Link>
               </DropdownMenuItem>
             )}
+
+            <DropdownMenuItem asChild className="gap-2 h-9 cursor-pointer">
+              <Link href="/admin/configuracion">
+                <Palette className="size-4 text-primary" />
+                <span>Personalizar Temas</span>
+              </Link>
+            </DropdownMenuItem>
 
             <DropdownMenuSeparator className="my-2" />
 

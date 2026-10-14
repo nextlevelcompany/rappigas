@@ -1,9 +1,11 @@
 package com.pidegas.modulos.identidad.repositorio;
 
+import com.pidegas.modulos.identidad.dominio.RolUsuario;
 import com.pidegas.modulos.identidad.dominio.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,5 +18,9 @@ public interface UsuarioRepositorio extends JpaRepository<Usuario, Long> {
 
     boolean existsByEmail(String email);
 
-    long countByRol(com.pidegas.modulos.identidad.dominio.RolUsuario rol);
+    long countByRol(RolUsuario rol);
+
+    List<Usuario> findAllByOrderByCreatedAtDesc();
+
+    List<Usuario> findByRolOrderByCreatedAtDesc(RolUsuario rol);
 }

@@ -46,6 +46,7 @@ export function GlobalSearch() {
     <>
       {/* Mobile */}
       <Button
+        id="global-search-mobile-trigger"
         variant="ghost"
         size="icon"
         className="rounded-full h-10 w-10 flex xl:hidden"
@@ -56,6 +57,7 @@ export function GlobalSearch() {
 
       {/* Desktop */}
       <Button
+        id="global-search-desktop-trigger"
         variant="ghost"
         className="hidden xl:flex items-center w-[240px] rounded-full gap-2 h-9 px-4 justify-between"
         onClick={() => setOpen(true)}

@@ -59,6 +59,7 @@ function LayoutContent({
         {/* Left */}
         <div className="flex items-center gap-1">
           <Button
+            id="sidebar-toggle-button"
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}

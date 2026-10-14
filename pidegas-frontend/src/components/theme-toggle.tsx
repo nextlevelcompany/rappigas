@@ -22,41 +22,52 @@ export function ThemeToggle() {
     setMounted(true)
   }, [])
 
-  if (!mounted) return null
+  if (!mounted) {
+    return (
+      <Button
+        id="header-theme-toggle"
+        variant="ghost"
+        size="icon"
+        className="rounded-full w-10 h-10"
+        aria-label="Toggle theme"
+      >
+        <span className="size-5 rounded-full bg-muted/60" />
+      </Button>
+    )
+  }
 
   const isDark = theme === "dark"
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full w-10 h-10"
-             onClick={() => {
-              setCustomTheme("")              // ✅ REMOVE custom theme
-              setTheme(isDark ? "light" : "dark") // ✅ APPLY system theme
-            }}
-            aria-label="Toggle theme"
-          >
-            <Sun
-              className={`transition-all size-6 ${
-                isDark ? "rotate-90 scale-0" : "rotate-0 scale-100"
-              }`}
-            />
-            <Moon
-              className={`absolute size-6 transition-all ${
-                isDark ? "rotate-0 scale-100" : "-rotate-90 scale-0"
-              }`}
-            />
-          </Button>
-        </TooltipTrigger>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          id="header-theme-toggle"
+          variant="ghost"
+          size="icon"
+          className="rounded-full w-10 h-10"
+          onClick={() => {
+            setCustomTheme("")              // ✅ REMOVE custom theme
+            setTheme(isDark ? "light" : "dark") // ✅ APPLY system theme
+          }}
+          aria-label="Toggle theme"
+        >
+          <Sun
+            className={`transition-all size-6 ${
+              isDark ? "rotate-90 scale-0" : "rotate-0 scale-100"
+            }`}
+          />
+          <Moon
+            className={`absolute size-6 transition-all ${
+              isDark ? "rotate-0 scale-100" : "-rotate-90 scale-0"
+            }`}
+          />
+        </Button>
+      </TooltipTrigger>
 
-        <TooltipContent side="bottom">
-          {isDark ? "Switch to light mode" : "Switch to dark mode"}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+      <TooltipContent side="bottom">
+        {isDark ? "Switch to light mode" : "Switch to dark mode"}
+      </TooltipContent>
+    </Tooltip>
   )
 }

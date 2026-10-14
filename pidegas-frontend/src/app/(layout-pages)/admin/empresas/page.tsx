@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   empresasApi,
   EmpresaDetalle,
@@ -18,6 +20,7 @@ import {
 import { RoleGuardAlert } from "@/components/auth/role-guard-alert";
 
 export default function AdminEmpresasPage() {
+  const router = useRouter();
   const { usuario } = useAuthStore();
   const [empresas, setEmpresas] = useState<EmpresaDetalle[]>([]);
   const [filtroEstado, setFiltroEstado] = useState<EstadoEmpresa | "TODAS">("TODAS");
@@ -297,26 +300,50 @@ export default function AdminEmpresasPage() {
                   <tr
                     key={emp.publicId}
                     className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/50 transition cursor-pointer"
-                    onClick={() => setEmpresaSeleccionada(emp)}
+                    onClick={() => router.push(`/admin/empresas/${emp.publicId}`)}
                   >
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-neutral-900 dark:text-neutral-100">
+                      <div className="font-semibold text-neutral-900 dark:text-neutral-100 hover:text-orange-600 transition">
                         {emp.nombreComercial}
                       </div>
                       <div className="text-xs text-neutral-500">{emp.razonSocial || "—"}</div>
                     </td>
                     <td className="px-6 py-4 font-mono text-xs">{emp.ruc}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <div className="text-xs text-neutral-900 dark:text-neutral-200">
-                        {emp.emailContacto}
+                        <a href={`mailto:${emp.emailContacto}`} className="hover:text-orange-600 hover:underline">
+                          {emp.emailContacto}
+                        </a>
                       </div>
-                      <div className="text-xs text-neutral-500">{emp.telefono || "—"}</div>
+                      {emp.telefono ? (
+                        <div className="flex items-center gap-1.5 pt-0.5">
+                          <a href={`tel:${emp.telefono}`} className="text-xs text-neutral-500 hover:text-emerald-600 font-medium">
+                            {emp.telefono}
+                          </a>
+                          <a
+                            href={`https://wa.me/${(emp.telefono || "").replace(/\D/g, "").length === 9 ? "51" + (emp.telefono || "").replace(/\D/g, "") : (emp.telefono || "").replace(/\D/g, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold hover:bg-emerald-200 transition"
+                          >
+                            WhatsApp
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-neutral-400">—</div>
+                      )}
                     </td>
                     <td className="px-6 py-4">{getBadgeEstado(emp.estado)}</td>
                     <td className="px-6 py-4 text-xs text-neutral-500">
                       {new Date(emp.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
+                      <Link
+                        href={`/admin/empresas/${emp.publicId}`}
+                        className="px-3 py-1 text-xs font-semibold rounded bg-orange-600 text-white hover:bg-orange-700 transition inline-block"
+                      >
+                        Ver Estadísticas & Ficha
+                      </Link>
                       {emp.estado === "PENDIENTE" && (
                         <>
                           <button
@@ -418,13 +445,29 @@ export default function AdminEmpresasPage() {
                   {empresaSeleccionada.razonSocial || "—"}
                 </span>
               </div>
-              <div className="pt-2 flex justify-between">
+              <div className="pt-2 flex justify-between items-center">
                 <span className="text-neutral-500">Email Contacto:</span>
-                <span>{empresaSeleccionada.emailContacto}</span>
+                <a href={`mailto:${empresaSeleccionada.emailContacto}`} className="text-orange-600 hover:underline font-medium">
+                  {empresaSeleccionada.emailContacto}
+                </a>
               </div>
-              <div className="pt-2 flex justify-between">
-                <span className="text-neutral-500">Teléfono:</span>
-                <span>{empresaSeleccionada.telefono || "—"}</span>
+              <div className="pt-2 flex justify-between items-center">
+                <span className="text-neutral-500">Teléfono / WhatsApp:</span>
+                <div className="flex items-center gap-2">
+                  <a href={`tel:${empresaSeleccionada.telefono}`} className="font-semibold hover:underline">
+                    {empresaSeleccionada.telefono || "—"}
+                  </a>
+                  {empresaSeleccionada.telefono && (
+                    <a
+                      href={`https://wa.me/${(empresaSeleccionada.telefono || "").replace(/\D/g, "").length === 9 ? "51" + (empresaSeleccionada.telefono || "").replace(/\D/g, "") : (empresaSeleccionada.telefono || "").replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2 py-0.5 rounded text-xs bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
+                    >
+                      WhatsApp
+                    </a>
+                  )}
+                </div>
               </div>
               <div className="pt-2 flex justify-between">
                 <span className="text-neutral-500">Dirección Fiscal:</span>
@@ -451,6 +494,12 @@ export default function AdminEmpresasPage() {
               >
                 Cerrar
               </button>
+              <Link
+                href={`/admin/empresas/${empresaSeleccionada.publicId}`}
+                className="px-4 py-2 text-xs font-semibold rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition"
+              >
+                Ver Ficha, Estadísticas & Contactos &rarr;
+              </Link>
             </div>
           </div>
         </div>

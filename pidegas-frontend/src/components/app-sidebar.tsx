@@ -19,7 +19,7 @@ import {
   HomeAlt,
   MessageCircleQuestionMark,
 } from "@boxicons/react";
-import { Truck, ShoppingBag, Navigation, ChartBar, Building, CreditCard, ClipboardList, HelpCircle } from "lucide-react";
+import { Truck, ShoppingBag, Navigation, ChartBar, Building, CreditCard, ClipboardList, HelpCircle, Palette, Settings } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 
 // Secciones modulares de navegación PideGas
@@ -105,6 +105,18 @@ const seccionSoporteMenu = {
     { title: "Soporte", url: "/admin/soporte" },
     { title: "Comunicaciones", url: "/admin/comunicaciones" },
     { title: "Base de Conocimientos", url: "/admin/knowledge-base" },
+  ],
+};
+
+//--- Configuración y Apariencia Section
+const seccionConfiguracion = {
+  title: "CONFIGURACIÓN",
+  url: "#",
+  icon: <Palette className="w-5 h-5" />,
+  isActive: true,
+  items: [
+    { title: "Temas y Colores", url: "/admin/configuracion" },
+    { title: "Auditoría Forense", url: "/admin/auditoria" },
   ],
 };
 
@@ -224,6 +236,11 @@ const seccionCliente = {
 
 const navSecondary = [
   {
+    title: "Temas y Colores",
+    url: "/admin/configuracion",
+    icon: <Palette className="w-5 h-5 text-primary" />,
+  },
+  {
     title: "Web Principal PideGas",
     url: "/",
     icon: <HomeAlt />,
@@ -254,7 +271,7 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
 
   if (rol === "ADMIN") {
     // Super Admin sees the new structured menu
-    itemsNavegacion = [seccionDashboard, seccionCRM, seccionFinanzas, seccionMonitoreo, seccionSoporteMenu, seccionEstadisticas];
+    itemsNavegacion = [seccionDashboard, seccionCRM, seccionFinanzas, seccionMonitoreo, seccionSoporteMenu, seccionEstadisticas, seccionConfiguracion];
   } else if (rol === "EMPRESA") {
     // Dueño de distribuidora ve únicamente las opciones operativas de su negocio
     itemsNavegacion = [seccionEmpresa];

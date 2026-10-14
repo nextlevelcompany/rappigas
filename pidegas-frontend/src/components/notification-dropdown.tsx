@@ -91,7 +91,7 @@ export function NotificationDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="relative hidden md:flex">
+        <div id="header-notification-trigger" className="relative hidden md:flex">
           <Button
             variant="outline"
             size="icon"

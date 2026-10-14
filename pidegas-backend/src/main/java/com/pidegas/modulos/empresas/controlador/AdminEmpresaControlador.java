@@ -1,5 +1,7 @@
 package com.pidegas.modulos.empresas.controlador;
 
+import com.pidegas.modulos.analytics.aplicacion.AnalyticsServicio;
+import com.pidegas.modulos.analytics.dto.DashboardEmpresaDto;
 import com.pidegas.modulos.empresas.aplicacion.EmpresaServicio;
 import com.pidegas.modulos.empresas.dominio.EstadoEmpresa;
 import com.pidegas.modulos.empresas.dto.CambiarEstadoEmpresaDto;
@@ -21,9 +23,11 @@ import java.util.UUID;
 public class AdminEmpresaControlador {
 
     private final EmpresaServicio empresaServicio;
+    private final AnalyticsServicio analyticsServicio;
 
-    public AdminEmpresaControlador(EmpresaServicio empresaServicio) {
+    public AdminEmpresaControlador(EmpresaServicio empresaServicio, AnalyticsServicio analyticsServicio) {
         this.empresaServicio = empresaServicio;
+        this.analyticsServicio = analyticsServicio;
     }
 
     @GetMapping
@@ -37,6 +41,13 @@ public class AdminEmpresaControlador {
     @Operation(summary = "Detalle administrativo de empresa", description = "Obtiene los detalles completos de una empresa por su UUID.")
     public ResponseEntity<EmpresaDetalleDto> obtenerEmpresa(@PathVariable UUID publicId) {
         return ResponseEntity.ok(empresaServicio.obtenerPorPublicId(publicId));
+    }
+
+    @GetMapping("/{publicId}/metricas")
+    @Operation(summary = "Métricas y estadísticas de una distribuidora", description = "Obtiene las métricas de ventas, pedidos y stock de una empresa específica para supervisión.")
+    public ResponseEntity<DashboardEmpresaDto> obtenerMetricasEmpresa(@PathVariable UUID publicId) {
+        Long tenantId = empresaServicio.obtenerIdPorPublicId(publicId);
+        return ResponseEntity.ok(analyticsServicio.obtenerDashboardEmpresa(tenantId));
     }
 
     @PatchMapping("/{publicId}/estado")
