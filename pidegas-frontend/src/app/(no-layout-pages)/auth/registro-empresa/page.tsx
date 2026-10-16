@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
   empresasApi,
@@ -49,7 +51,21 @@ import {
   ExternalLink,
   ChevronDown,
   Plus,
+  Play,
 } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
+
+const SelectorUbicacionMapa = dynamic(
+  () => import("@/components/mapa/selector-ubicacion-mapa").then((mod) => mod.SelectorUbicacionMapa),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-8 text-center text-xs text-slate-500 bg-slate-50 dark:bg-neutral-800 rounded-3xl border border-dashed border-slate-200 dark:border-neutral-700 animate-pulse">
+        Cargando mapa interactivo...
+      </div>
+    ),
+  }
+);
 
 const MARCAS_DISPONIBLES = [
   { id: "Solgas", nombre: "Solgas", color: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-900" },
@@ -69,6 +85,7 @@ export default function RegistroEmpresaPage() {
   const [exito, setExito] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [mostrarMapa, setMostrarMapa] = useState(false);
 
   // Form State
   const [form, setForm] = useState({
@@ -87,6 +104,8 @@ export default function RegistroEmpresaPage() {
     distrito: "",
     codigoInei: "",
     direccionCalle: "",
+    latitud: null as number | null,
+    longitud: null as number | null,
     registroOsinergmin: "",
     unidadesFlota: "1 a 3 unidades",
     capacidadStock: "100 a 300 balones",
@@ -300,6 +319,7 @@ export default function RegistroEmpresaPage() {
     if (form.departamento) partesDireccion.push(form.departamento);
     if (form.codigoInei) partesDireccion.push(`(Ubigeo: ${form.codigoInei})`);
     if (form.registroOsinergmin.trim()) partesDireccion.push(`[DGH: ${form.registroOsinergmin.trim()}]`);
+    if (form.latitud && form.longitud) partesDireccion.push(`[GPS: ${form.latitud}, ${form.longitud}]`);
 
     const marcasStr = form.marcasGas.join("/");
     const metaStr = `[Tipo: ${form.tipoDistribuidora} | Marcas: ${marcasStr} | Horario: ${form.horaApertura}-${form.horaCierre} | Cargo: ${form.adminCargo}]`;
@@ -340,32 +360,37 @@ export default function RegistroEmpresaPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-800 dark:text-neutral-100 font-sans selection:bg-orange-500 selection:text-white">
       {/* ========================================================
-          1. HEADER TOP UTILITY BAR (Estilo WoodMart / GYA Solution)
+          1. HEADER TOP UTILITY BAR (Estilo Mediplace index.html)
          ======================================================== */}
-      <div className="bg-neutral-900 text-neutral-300 text-xs py-2 px-4 border-b border-neutral-800">
+      <div className="bg-[#03246b] text-white text-xs py-2.5 px-4 sm:px-6 lg:px-8 border-b border-blue-900/40">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
           <div className="flex items-center gap-4 text-[11px] sm:text-xs">
-            <span className="flex items-center gap-1.5 text-neutral-300 font-medium">
-              <Phone className="w-3.5 h-3.5 text-orange-500" />
-              Central de Afiliaciones: <strong className="text-white">+51 922 767 224</strong>
+            <span className="flex items-center gap-1.5 text-white font-medium">
+              <Phone className="w-3.5 h-3.5 text-orange-400" />
+              Central de Afiliaciones: <strong className="text-orange-400 font-bold">+51 922 767 224</strong>
             </span>
-            <span className="hidden md:inline-block text-neutral-600">|</span>
-            <span className="hidden md:flex items-center gap-1 text-neutral-400">
+            <span className="hidden md:inline-block text-blue-300/40">|</span>
+            <span className="hidden md:flex items-center gap-1.5 text-slate-200">
+              <Mail className="w-3.5 h-3.5 text-orange-400" />
+              empresas@pidegas.pe
+            </span>
+            <span className="hidden lg:inline-block text-blue-300/40">|</span>
+            <span className="hidden lg:flex items-center gap-1.5 text-slate-200">
               <Clock className="w-3.5 h-3.5 text-orange-400" />
-              Atención: Lunes a Domingo 07:00 AM - 08:00 PM
+              Lunes a Sábado 07:00 AM - 08:00 PM
             </span>
           </div>
           <div className="flex items-center gap-4 text-[11px]">
-            <Link
+            <a
               href="#asesoria"
-              className="hover:text-orange-400 transition"
+              className="hover:text-orange-400 text-slate-200 transition"
             >
               Asesoría de Operaciones
-            </Link>
-            <span className="text-neutral-700">|</span>
+            </a>
+            <span className="text-blue-300/40">|</span>
             <Link
               href="/auth/login"
-              className="text-orange-400 font-semibold hover:text-orange-300 transition flex items-center gap-1"
+              className="text-orange-400 font-bold hover:text-orange-300 transition flex items-center gap-1"
             >
               <User className="w-3.5 h-3.5" />
               Acceso a Socios
@@ -375,282 +400,289 @@ export default function RegistroEmpresaPage() {
       </div>
 
       {/* ========================================================
-          2. NAVEGACIÓN PRINCIPAL (Barra Blanca Limpia)
+          2. NAVEGACIÓN PRINCIPAL (Estilo main-header de Mediplace)
          ======================================================== */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 shadow-xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          {/* Logo PideGas */}
+          {/* Logo PideGas Corporativo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/25 group-hover:scale-105 transition">
-              <Flame className="w-6 h-6 fill-white/20" />
-            </div>
-            <div>
-              <span className="text-2xl font-black tracking-tight text-neutral-900 dark:text-white flex items-center">
-                Pide<span className="text-orange-600">Gas</span>
-                <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-950/80 dark:text-orange-400 border border-orange-200 dark:border-orange-800">
-                  Socio Red
-                </span>
-              </span>
-              <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 -mt-0.5">
-                Red Peruana de Distribución de Gas de Cocina
-              </p>
-            </div>
+            <BrandLogo variant="dark" />
           </Link>
 
-          {/* Menú de Enlaces */}
-          <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold text-neutral-600 dark:text-neutral-300">
+          {/* Menú de Enlaces Estilo Mediplace */}
+          <nav className="hidden lg:flex items-center gap-8 text-sm font-semibold text-[#03246b]">
             <Link href="/" className="hover:text-orange-600 transition">
               Inicio
             </Link>
             <a href="#beneficios" className="hover:text-orange-600 transition">
-              Beneficios de la Red
+              Beneficios Red
             </a>
-            <a href="#formulario" className="hover:text-orange-600 transition">
-              Formulario de Afiliación
+            <a href="#formulario" className="hover:text-orange-600 transition text-orange-600 font-bold">
+              Afiliar Empresa
             </a>
             <a href="#asesoria" className="hover:text-orange-600 transition">
-              Asesoría Técnica
+              Asesoría
             </a>
             <a href="#contacto" className="hover:text-orange-600 transition">
               Contacto
             </a>
           </nav>
 
-          {/* Botones de Acción */}
-          <div className="flex items-center gap-3">
+          {/* Botones de Acción Estilo Mediplace thm-btn */}
+          <div className="flex items-center gap-4">
             <Link
               href="/auth/login"
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:text-orange-600 transition"
+              className="hidden sm:inline-flex items-center font-bold text-xs uppercase tracking-wider text-[#03246b] hover:text-orange-600 transition px-3 py-2"
             >
-              Iniciar Sesión
+              Ingresar
             </Link>
             <button
               type="button"
               onClick={() => scrollToSection("formulario")}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-md shadow-orange-600/20 transition active:scale-95"
+              className="group relative inline-flex items-center gap-2.5 bg-[#03246b] hover:bg-orange-600 text-white rounded-full p-1 pr-4.5 font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-sm hover:shadow-md hover:shadow-orange-600/20 cursor-pointer"
             >
-              Afiliar mi Distribuidora
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span className="w-7 h-7 rounded-full bg-[#1c58d5] group-hover:bg-white text-white group-hover:text-orange-600 flex items-center justify-center transition-all duration-300 shrink-0">
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+              <span>Afiliar mi Empresa</span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* ========================================================
-          3. HERO / BREADCRUMB BANNER (Idéntico a GYA Solution)
-         ======================================================== */}
-      <section className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 py-10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-black text-neutral-900 dark:text-white tracking-tight">
-              Afiliación de Empresas Distribuidoras
-            </h1>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-              Incorpore su almacén a la red líder de reparto de gas en el Perú y aumente sus ventas distritales.
-            </p>
-          </div>
-          <nav className="flex items-center gap-2 text-xs font-medium text-neutral-500 dark:text-neutral-400">
-            <Link href="/" className="hover:text-orange-600 transition">
-              Home
-            </Link>
-            <span>/</span>
-            <span className="text-neutral-400">Afiliación</span>
-            <span>/</span>
-            <span className="text-orange-600 font-semibold">Registro de Empresa</span>
-          </nav>
-        </div>
-      </section>
 
       {/* ========================================================
-          4. SECCIÓN 1: SOLUCIONES & BENEFICIOS (Layout GYA Solution)
+          4. SECCIÓN 1: ABOUT ONE (Adaptado fielmente de Mediplace index.html)
          ======================================================== */}
-      <section id="beneficios" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center">
-          {/* Columna Izquierda: Showcase Visual Collage + Badge Flotante "15+ Años" */}
+      <section id="beneficios" className="py-20 lg:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+          
+          {/* Columna Izquierda: Composición de Imágenes Mediplace (about-one__left) */}
           <div className="lg:col-span-5 relative">
-            <div className="relative mx-auto max-w-md lg:max-w-none">
-              {/* Card Gráfica Principal */}
-              <div className="rounded-3xl overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-900 relative aspect-4/5 flex flex-col justify-between p-6">
-                {/* Background Decorativo con Gradiente e Ilustración de Flota y Cilindros */}
-                <div className="absolute inset-0 bg-gradient-to-br from-neutral-900 via-neutral-900/90 to-orange-950/70" />
-                <div className="absolute inset-0 bg-[radial-gradient(#ea580c_1px,transparent_1px)] [background-size:16px_16px] opacity-20" />
+            <div className="relative mx-auto max-w-md lg:max-w-none pb-14 sm:pb-20 lg:pb-10">
+              
+              {/* Imagen 1 (about-one__img-one) */}
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-100 dark:border-neutral-800 aspect-4/5 w-full bg-slate-100 dark:bg-neutral-800">
+                <Image
+                  src="/mediplace/images/resources/about-one-img-1.jpg?v=2"
+                  alt="Operaciones y distribución de gas PideGas"
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+              </div>
 
-                <div className="relative z-10 space-y-2">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[11px] font-bold uppercase tracking-wider">
-                    <Sparkles className="w-3.5 h-3.5 text-orange-400" />
-                    Tecnología Logística Oficial
-                  </div>
-                  <h3 className="text-2xl font-black text-white leading-tight">
-                    Despacho Seguro con Balanza Calibrada
-                  </h3>
-                  <p className="text-xs text-neutral-300">
-                    Garantizamos la confianza de las familias peruanas verificando el peso del cilindro en cada entrega.
-                  </p>
-                </div>
+              {/* Imagen 2 Superpuesta (about-one__img-two) */}
+              <div className="absolute -bottom-6 -right-4 sm:-bottom-8 sm:-right-6 w-48 sm:w-60 aspect-4/3 rounded-3xl overflow-hidden shadow-2xl border-6 sm:border-8 border-white dark:border-neutral-900 bg-slate-200 dark:bg-neutral-800 z-10">
+                <Image
+                  src="/mediplace/images/resources/about-one-img-2.jpg?v=2"
+                  alt="Pesaje exacto y balanza digital"
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+              </div>
 
-                {/* Ilustración de Estado de Balón / Operación */}
-                <div className="relative z-10 bg-white/10 dark:bg-neutral-800/60 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-white space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-neutral-300">Cobertura en Ruta:</span>
-                    <span className="font-bold text-orange-400">Lima Metropolitana & Provincias</span>
-                  </div>
-                  <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
-                    <div className="bg-gradient-to-r from-orange-500 to-amber-400 h-full w-[85%] rounded-full" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-center text-[11px] pt-1 border-t border-white/10">
-                    <div>
-                      <span className="text-neutral-400 block">Tiempo Promedio</span>
-                      <strong className="text-white text-xs">18 minutos</strong>
-                    </div>
-                    <div>
-                      <span className="text-neutral-400 block">Satisfacción</span>
-                      <strong className="text-emerald-400 text-xs">99.4% Positiva</strong>
-                    </div>
+              {/* Círculo Rotativo / Overlay Badge (about-one__circle-text) */}
+              <div className="absolute top-1/2 -left-4 sm:-left-8 -translate-y-1/2 z-20 hidden sm:flex items-center justify-center">
+                <div className="relative w-36 h-36 rounded-full bg-orange-600 text-white shadow-2xl p-2 flex items-center justify-center border-4 border-white dark:border-neutral-900">
+                  {/* Texto Curvado SVG con rotación continua */}
+                  <svg className="w-full h-full animate-spin-slow pointer-events-none" viewBox="0 0 100 100">
+                    <path
+                      id="curvedCirclePath"
+                      d="M 50, 50 m -37, 0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0"
+                      fill="none"
+                    />
+                    <text className="text-[9px] font-black uppercase tracking-[2.8px] fill-white">
+                      <textPath href="#curvedCirclePath" startOffset="0%">
+                        • PIDEGAS PERÚ • GAS DE COCINA •
+                      </textPath>
+                    </text>
+                  </svg>
+
+                  {/* Icono Central con acción interactiva */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection("formulario")}
+                      className="w-12 h-12 rounded-full bg-[#03246b] hover:bg-white text-white hover:text-orange-600 flex items-center justify-center transition-all duration-300 shadow-md group cursor-pointer"
+                      title="Comenzar Afiliación"
+                    >
+                      <Play className="w-4 h-4 fill-current ml-0.5" />
+                    </button>
                   </div>
                 </div>
               </div>
 
-              {/* Badge Flotante Idéntico al de GYA Solution ("15+ Años de Experiencia") */}
-              <div className="absolute -bottom-6 -right-4 sm:-right-6 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 shadow-xl flex items-center gap-3.5 max-w-[240px]">
-                <div className="w-12 h-12 rounded-xl bg-orange-600 text-white flex items-center justify-center font-black text-lg shadow-md shadow-orange-600/30 shrink-0">
-                  +15
+            </div>
+          </div>
+
+          {/* Columna Derecha: Contenido Mediplace (about-one__right) */}
+          <div className="lg:col-span-7 space-y-6">
+            
+            {/* Tagline estilo Mediplace (section-title__tagline-box) */}
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 text-orange-600 text-xs font-black uppercase tracking-widest bg-orange-50 dark:bg-orange-950/40 px-3.5 py-1.5 rounded-full border border-orange-200 dark:border-orange-900">
+                <Store className="w-3.5 h-3.5 text-orange-600" />
+                <span>Alianza Estratégica B2B</span>
+              </div>
+
+              {/* Título Principal Mediplace (section-title__title title-animation) */}
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#03246b] dark:text-white tracking-tight leading-[1.15]">
+                Soluciones Avanzadas para <br />
+                <span className="text-orange-600 underline decoration-orange-600/30 underline-offset-8">
+                  Distribuidoras
+                </span>{" "}
+                de Gas de Cocina
+              </h2>
+            </div>
+
+            {/* Párrafo descriptivo (about-one__text) */}
+            <p className="text-sm sm:text-base text-slate-600 dark:text-neutral-400 leading-relaxed font-normal">
+              Incorpore sus locales comerciales, camiones y repartidores a la plataforma digital líder en el Perú. Optimice sus rutas de entrega, fiscalice el pesaje exacto frente a sus clientes y aumente su volumen de venta diario con tecnología de asignación automática por GPS.
+            </p>
+
+            {/* Bloque de Puntos y Experiencia juntos (about-one__points-and-experience-box) */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center pt-2">
+              
+              {/* Lista de Puntos con Check (about-one__points-box) */}
+              <ul className="sm:col-span-7 space-y-3.5 text-xs sm:text-sm font-bold text-[#03246b] dark:text-white">
+                <li className="flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs shrink-0 shadow-sm">
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  </span>
+                  <span>Enrutamiento GPS Inteligente por geocercas</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs shrink-0 shadow-sm">
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  </span>
+                  <span>Balanzas digitales calibradas con tolerancia 0g</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs shrink-0 shadow-sm">
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  </span>
+                  <span>Facturación y boleta electrónica SUNAT al instante</span>
+                </li>
+              </ul>
+
+              {/* Caja de Experiencia (about-one__experience-box) */}
+              <div className="sm:col-span-5 bg-[#03246b] text-white rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden flex items-center justify-between border border-blue-900">
+                <div className="space-y-0.5 relative z-10">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl sm:text-5xl font-black text-orange-400 leading-none">
+                      +15
+                    </span>
+                    <span className="text-xs font-black uppercase text-slate-300">
+                      Años
+                    </span>
+                  </div>
+                  <div className="text-xs font-bold text-white leading-tight pt-1">
+                    De Experiencia
+                  </div>
+                  <p className="text-[10px] text-slate-300 font-normal">
+                    Liderando distribución de gas de cocina
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 text-orange-400 flex items-center justify-center shrink-0">
+                  <Award className="w-6 h-6" />
+                </div>
+              </div>
+
+            </div>
+
+            {/* Segunda Fila de Puntos Destacados con Iconos Grandes (about-one__points-points-two-box) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 hover:border-orange-500/40 hover:shadow-md transition group">
+                <div className="w-14 h-14 rounded-2xl bg-[#03246b] group-hover:bg-orange-600 text-white flex items-center justify-center shrink-0 shadow-md transition">
+                  <Truck className="w-7 h-7 text-orange-400 group-hover:text-white transition" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-neutral-900 dark:text-white leading-tight">
-                    Años de Experiencia
-                  </div>
-                  <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-                    En distribución de gas y soporte comercial
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Columna Derecha: Título, Subtítulo y Grid 2x2 de Icon Boxes (Idéntico a GYA Solution) */}
-          <div className="lg:col-span-7 space-y-6">
-            <div>
-              <span className="text-xs font-extrabold uppercase tracking-widest text-orange-600 dark:text-orange-400 block mb-2">
-                Red Nacional de Distribución de GLP
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-black text-neutral-900 dark:text-white tracking-tight leading-tight">
-                Determinamos y cubrimos las necesidades de su distribuidora con precisión y cuidado.
-              </h2>
-              <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400 mt-3 leading-relaxed">
-                Soluciones de soporte comercial y tecnología logística de primer nivel para garantizar el crecimiento constante de sus ventas de balones de cocina. Conectamos su almacén y choferes con miles de hogares que piden gas en tiempo real.
-              </p>
-            </div>
-
-            {/* Grid 2x2 de Icon-Boxes estilo GYA Solution */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
-              {/* Box 1: Diagnóstico / Enrutamiento */}
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 hover:border-orange-500/40 transition">
-                <div className="w-12 h-12 rounded-full bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400 flex items-center justify-center shrink-0">
-                  <Truck className="w-5 h-5" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-neutral-900 dark:text-white">
-                    Enrutamiento Inteligente GPS
+                  <h4 className="text-sm font-black text-[#03246b] dark:text-white">
+                    Flota Monitoreada
                   </h4>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-normal">
-                    Asignación automática de pedidos al chofer más próximo en el distrito, bajando tiempos a menos de 18 min.
+                  <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5 leading-snug">
+                    Despacho en 25 - 35 min con trazabilidad en vivo.
                   </p>
                 </div>
               </div>
 
-              {/* Box 2: Mantenimiento Preventivo / Balanza */}
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 hover:border-orange-500/40 transition">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                  <Scale className="w-5 h-5" />
+              <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800 hover:border-orange-500/40 hover:shadow-md transition group">
+                <div className="w-14 h-14 rounded-2xl bg-[#03246b] group-hover:bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md transition">
+                  <ShieldCheck className="w-7 h-7 text-orange-400 group-hover:text-white transition" />
                 </div>
-                <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-neutral-900 dark:text-white">
-                    Sello de Balanza Calibrada
+                <div>
+                  <h4 className="text-sm font-black text-[#03246b] dark:text-white">
+                    Respaldo Legal DGH
                   </h4>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-normal">
-                    Pesaje exacto certificado en presencia del cliente, garantizando transparencia y alta recompra mensual.
-                  </p>
-                </div>
-              </div>
-
-              {/* Box 3: Informe Técnico / Facturación */}
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 hover:border-orange-500/40 transition">
-                <div className="w-12 h-12 rounded-full bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center shrink-0">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-neutral-900 dark:text-white">
-                    Gestión & Liquidación SUNAT
-                  </h4>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-normal">
-                    Emisión automática de boletas y facturas electrónicas en ruta con control de stock de balones vacíos.
-                  </p>
-                </div>
-              </div>
-
-              {/* Box 4: Mantenimiento Correctivo / Respaldo DGH */}
-              <div className="flex items-start gap-4 p-4 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800 hover:border-orange-500/40 transition">
-                <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-neutral-900 dark:text-white">
-                    Respaldo Técnico & DGH
-                  </h4>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-normal">
-                    Asesoría para cumplimiento normativo Osinergmin y capacitaciones continuas en seguridad y manipulación de GLP.
+                  <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5 leading-snug">
+                    100% formal y fiscalizado según Osinergmin.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Fila de Botón de Acción y Teléfono Directo (Idéntico a GYA Solution) */}
-            <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-5">
+            {/* Botón de Acción y Llamada Directa (about-one__btn-and-call-box) */}
+            <div className="pt-3 flex flex-col sm:flex-row sm:items-center gap-6">
               <button
                 type="button"
                 onClick={() => scrollToSection("formulario")}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm shadow-lg shadow-orange-600/25 transition active:scale-95"
+                className="group relative inline-flex items-center gap-3 bg-[#03246b] hover:bg-orange-600 text-white rounded-full p-2 pr-7 font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-orange-600/20 cursor-pointer"
               >
-                Solicitar Afiliación / Cotización
-                <ArrowRight className="w-4 h-4" />
+                <span className="w-9 h-9 rounded-full bg-[#1c58d5] group-hover:bg-white text-white group-hover:text-orange-600 flex items-center justify-center transition-all duration-300 shrink-0">
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </span>
+                <span>Comenzar Afiliación</span>
               </button>
 
-              <div className="flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
-                <div className="w-9 h-9 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-orange-600">
-                  <Phone className="w-4 h-4" />
+              <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
+                <div className="w-11 h-11 rounded-2xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 flex items-center justify-center border border-orange-200 dark:border-orange-900">
+                  <Phone className="w-5 h-5" />
                 </div>
-                <div className="text-xs">
-                  <span className="text-neutral-400 block text-[10px]">Atención Comercial</span>
-                  <a href="tel:+51922767224" className="font-extrabold text-sm hover:text-orange-600 transition">
-                    +51 922 767 224
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+                    ¿Consultas o Dudas?
+                  </span>
+                  <a
+                    href="tel:51926131677"
+                    className="font-black text-sm text-[#03246b] dark:text-white hover:text-orange-600 transition"
+                  >
+                    +51 926 131 677
                   </a>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </section>
 
       {/* ========================================================
-          5. SECCIÓN 2: FORMULARIO OFICIAL (Estilo Cotización GYA)
+          5. SECCIÓN 2: FORMULARIO OFICIAL (Estilo Appointment Three de Mediplace index.html)
          ======================================================== */}
-      <section id="formulario" className="py-16 sm:py-20 bg-neutral-50 dark:bg-neutral-900/50 border-y border-neutral-200 dark:border-neutral-800 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Encabezado Centrado de la Sección (Idéntico a "¿Necesitas un Producto o Servicio urgente? Solicita una Cotización") */}
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <span className="text-xs font-extrabold uppercase tracking-widest text-orange-600 dark:text-orange-400">
-              ¿Necesitas hacer crecer tu distribuidora de gas?
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-neutral-900 dark:text-white tracking-tight">
-              Solicita tu Afiliación a la Red PideGas
+      <section id="formulario" className="py-20 bg-slate-50 dark:bg-neutral-900/50 border-y border-slate-200/80 dark:border-neutral-800 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto space-y-10">
+          
+          {/* Encabezado Centrado estilo Mediplace (section-title text-center) */}
+          <div className="text-center space-y-3 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 text-orange-600 text-xs font-black uppercase tracking-widest bg-orange-50 px-3.5 py-1.5 rounded-full border border-orange-200">
+              <Store className="w-3.5 h-3.5" />
+              <span>Registro de Afiliación Inmediata</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#03246b] dark:text-white tracking-tight">
+              Solicite la Afiliación de su <br />
+              <span className="text-orange-600 underline decoration-orange-600/30 underline-offset-8">
+                Empresa Distribuidora
+              </span>
             </h2>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
-              Ingresa tus datos para que nuestros coordinadores comerciales habiliten tu cuenta y comiences a recibir pedidos en tu distrito inmediatamente.
+            <p className="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed font-normal">
+              Complete los datos en 3 sencillos pasos. Nuestros coordinadores de plataforma activarán su cuenta comercial y geocercas de reparto en menos de 24 horas.
             </p>
           </div>
 
-          {/* Tarjeta del Formulario (Estilo Elementor Form) */}
-          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-xl p-6 sm:p-10 relative">
+          {/* Tarjeta del Formulario estilo Mediplace Appointment Form */}
+          <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200/90 dark:border-neutral-800 shadow-xl p-7 sm:p-12 relative">
             {exito ? (
               /* PANTALLA DE ÉXITO */
               <div className="text-center py-10 space-y-5 animate-in fade-in zoom-in-95 duration-300">
@@ -1126,11 +1158,28 @@ export default function RegistroEmpresaPage() {
                       </div>
                     </div>
 
-                    {/* Dirección Almacén */}
-                    <div>
-                      <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                        Dirección del Almacén / Sede Principal *
-                      </label>
+                    {/* Dirección Almacén & Selector en Mapa */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+                          Dirección del Almacén / Sede Principal *
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setMostrarMapa(!mostrarMapa)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/60 dark:hover:bg-orange-950 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 text-xs font-bold transition shadow-2xs cursor-pointer"
+                        >
+                          <MapPin className="w-3.5 h-3.5 text-orange-600" />
+                          <span>
+                            {mostrarMapa
+                              ? "Ocultar Mapa"
+                              : form.latitud
+                              ? "Modificar en Mapa"
+                              : "📍 Colocar Ubicación en Mapa"}
+                          </span>
+                        </button>
+                      </div>
+
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
                           <MapPin className="w-4 h-4" />
@@ -1145,6 +1194,49 @@ export default function RegistroEmpresaPage() {
                           className="w-full pl-10 pr-3.5 py-2.5 text-xs rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900 transition focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
                         />
                       </div>
+
+                      {/* Notificación de Georreferenciación fijada en el mapa */}
+                      {form.latitud && form.longitud && !mostrarMapa && (
+                        <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 animate-in fade-in duration-200">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>
+                              <strong>Ubicación georreferenciada:</strong>{" "}
+                              <span className="font-mono">{form.latitud}, {form.longitud}</span>
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setMostrarMapa(true)}
+                            className="font-bold underline hover:text-emerald-900 dark:hover:text-emerald-200 text-[11px] cursor-pointer"
+                          >
+                            Ver en mapa
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Selector Interactivo de Ubicación en Mapa Leaflet */}
+                      {mostrarMapa && (
+                        <div className="pt-2">
+                          <SelectorUbicacionMapa
+                            latitudInicial={form.latitud}
+                            longitudInicial={form.longitud}
+                            distritoNombre={form.distrito}
+                            departamentoNombre={form.departamento}
+                            direccionActual={form.direccionCalle}
+                            onUbicacionSeleccionada={(coords) => {
+                              setForm((prev) => ({
+                                ...prev,
+                                latitud: coords.lat,
+                                longitud: coords.lng,
+                                direccionCalle: prev.direccionCalle || coords.direccionSugerida || prev.direccionCalle,
+                              }));
+                              setMostrarMapa(false);
+                            }}
+                            onCerrar={() => setMostrarMapa(false)}
+                          />
+                        </div>
+                      )}
                     </div>
 
                     {/* Marcas de Balones */}
@@ -1552,38 +1644,53 @@ export default function RegistroEmpresaPage() {
       </section>
 
       {/* ========================================================
-          6. SECCIÓN 3: BANNER CTA DUAL (Estilo GYA Solution)
+          6. SECCIÓN 3: BANNER CTA DE ASESORÍA (Estilo slogan-one de Mediplace)
          ======================================================== */}
       <section id="asesoria" className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="rounded-3xl bg-neutral-900 text-white p-10 sm:p-14 text-center relative overflow-hidden shadow-2xl border border-neutral-800">
-          {/* Acentos decorativos de fondo */}
-          <div className="absolute top-0 right-1/4 w-96 h-96 bg-orange-600/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="rounded-[2.5rem] bg-gradient-to-br from-[#021849] via-[#03246b] to-[#021849] text-white p-10 sm:p-16 text-center relative overflow-hidden shadow-2xl border border-blue-900/60">
+          {/* Formas y brillos decorativos estilo Mediplace */}
+          <div className="absolute top-0 right-10 w-96 h-96 bg-orange-600/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 left-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px] opacity-5 pointer-events-none" />
 
-          <div className="relative z-10 max-w-3xl mx-auto space-y-4">
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
-              Agende una Asesoría de Operaciones con Nuestros Expertos
+          <div className="relative z-10 max-w-3xl mx-auto space-y-5">
+            {/* Tagline Pill */}
+            <div className="inline-flex items-center gap-2 text-orange-400 text-xs font-bold uppercase tracking-widest bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20">
+              <Sparkles className="w-3.5 h-3.5 text-orange-400" />
+              <span>Asesoría Estratégica para Distribuidoras</span>
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
+              Agende una Asesoría de Operaciones con <br className="hidden sm:inline" />
+              <span className="text-orange-400 underline decoration-orange-400/40 underline-offset-8">
+                Nuestros Expertos
+              </span>
             </h2>
-            <p className="text-neutral-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-              Optimice las rutas de sus repartidores y encuentre la solución de distribución perfecta para su zona de cobertura. Guía experta y personalizada a su alcance.
+
+            <p className="text-slate-200 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto font-normal">
+              Optimice las rutas de sus repartidores, reduzca mermas operativas y acelere el despacho en su zona con soporte tecnológico de nivel corporativo.
             </p>
 
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm shadow-lg shadow-orange-600/30 transition active:scale-95"
+              <button
+                type="button"
+                onClick={() => scrollToSection("formulario")}
+                className="group relative inline-flex items-center gap-3 bg-orange-600 hover:bg-orange-500 text-white rounded-full p-2.5 pr-8 font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-xl shadow-orange-600/30 cursor-pointer"
               >
-                Conocer la Plataforma
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+                <span className="w-9 h-9 rounded-full bg-white/20 text-white flex items-center justify-center group-hover:bg-white group-hover:text-orange-600 transition">
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </span>
+                <span>Afiliar mi Empresa Ahora</span>
+              </button>
+
               <a
                 href="https://wa.me/51922767224?text=Hola%20PideGas!%20Deseo%20coordinar%20una%20asesor%C3%ADa%20para%20afiliar%20mi%20distribuidora."
                 target="_blank"
                 rel="noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl border border-neutral-700 hover:border-neutral-500 bg-neutral-800/80 hover:bg-neutral-800 text-white font-bold text-sm transition active:scale-95"
+                className="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full border-2 border-white/30 hover:border-white text-white font-bold text-xs uppercase tracking-wider transition backdrop-blur-xs bg-white/10 hover:bg-white/20"
               >
                 <MessageCircle className="w-4 h-4 text-emerald-400" />
-                Contactar por WhatsApp
+                <span>Contactar por WhatsApp</span>
               </a>
             </div>
           </div>
@@ -1591,70 +1698,76 @@ export default function RegistroEmpresaPage() {
       </section>
 
       {/* ========================================================
-          7. SECCIÓN 4: SOPORTE TÉCNICO Y CONTACTO (Layout GYA)
+          7. SECCIÓN 4: SOPORTE TÉCNICO Y CONTACTO (Estilo Mediplace)
          ======================================================== */}
-      <section id="contacto" className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-neutral-200 dark:border-neutral-800">
+      <section id="contacto" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-slate-200 dark:border-neutral-800">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Columna Izquierda: Visual Card con Soporte y Cobertura */}
+          
+          {/* Columna Izquierda: Tarjeta Corporativa Navy estilo Mediplace */}
           <div className="lg:col-span-5 relative">
-            <div className="rounded-3xl p-8 bg-neutral-900 text-white shadow-xl border border-neutral-800 relative overflow-hidden space-y-6">
-              <div className="w-14 h-14 rounded-2xl bg-orange-600/20 text-orange-500 border border-orange-500/30 flex items-center justify-center">
+            <div className="rounded-[2rem] p-8 sm:p-10 bg-[#03246b] text-white shadow-2xl border border-blue-900 relative overflow-hidden space-y-6">
+              
+              {/* Círculo decorativo de fondo */}
+              <div className="absolute top-0 right-0 w-48 h-48 bg-[#1c58d5]/40 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="w-14 h-14 rounded-2xl bg-orange-500/20 text-orange-400 border border-orange-400/30 flex items-center justify-center">
                 <Headphones className="w-7 h-7" />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 relative z-10">
                 <span className="text-xs uppercase font-extrabold tracking-widest text-orange-400">
                   Mesa de Ayuda Continua
                 </span>
-                <h3 className="text-2xl font-black text-white leading-tight">
+                <h3 className="text-2xl sm:text-3xl font-black text-white leading-tight">
                   Soporte Especializado al Distribuidor
                 </h3>
-                <p className="text-xs text-neutral-300 leading-relaxed">
-                  Contamos con un equipo de coordinadores técnicos y comerciales listos para resolver incidencias de reparto, sincronización de precios y asistencia en la app del chofer.
+                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-normal">
+                  Contamos con un equipo de ingenieros y coordinadores zonales listos para resolver incidencias de reparto, sincronización de precios y asistencia en la app del chofer.
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-neutral-800 grid grid-cols-2 gap-4 text-xs">
+              <div className="pt-4 border-t border-blue-800/80 grid grid-cols-2 gap-4 text-xs relative z-10">
                 <div>
-                  <span className="text-neutral-400 block text-[10px]">Tiempo de Respuesta</span>
-                  <strong className="text-white">Menos de 5 min</strong>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Tiempo de Respuesta</span>
+                  <strong className="text-white text-sm">Menos de 5 min</strong>
                 </div>
                 <div>
-                  <span className="text-neutral-400 block">Canal Directo</span>
-                  <strong className="text-emerald-400">WhatsApp & Teléfono</strong>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Canal Directo</span>
+                  <strong className="text-emerald-400 text-sm">WhatsApp & Teléfono</strong>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Columna Derecha: Tarjetas de Información de Contacto (Idéntico a GYA Solution) */}
+          {/* Columna Derecha: Tarjetas de Información de Contacto */}
           <div className="lg:col-span-7 space-y-6">
-            <div>
-              <span className="text-xs font-extrabold uppercase tracking-widest text-orange-600 dark:text-orange-400 block mb-2">
-                ¿Necesita asesoría?
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-black text-neutral-900 dark:text-white tracking-tight leading-tight">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 text-orange-600 text-xs font-black uppercase tracking-widest bg-orange-50 px-3.5 py-1.5 rounded-full border border-orange-200">
+                <Phone className="w-3.5 h-3.5" />
+                <span>¿Necesita Asistencia Inmediata?</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-[#03246b] dark:text-white tracking-tight leading-tight">
                 Contacte con Nuestro Soporte Técnico Especializado
               </h2>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2 leading-relaxed">
-                Comuníquese con nuestro equipo de ingenieros y coordinadores zonales para recibir orientación experta y un respaldo comercial confiable, diseñado a la medida de su empresa.
+              <p className="text-sm text-slate-600 dark:text-neutral-400 leading-relaxed font-normal">
+                Comuníquese con nuestra central para recibir orientación en el proceso de afiliación, activación de geocercas o integración de balanzas digitales.
               </p>
             </div>
 
             {/* Listado de Contacto con Rounded Icon Boxes */}
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {/* Item 1: Área Comercial */}
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                <div className="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400 flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-4 p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-orange-500/40 hover:shadow-md transition group">
+                <div className="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-600 group-hover:bg-orange-600 group-hover:text-white flex items-center justify-center shrink-0 transition">
                   <Phone className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 block">
-                    Área Comercial & Afiliaciones
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                    Área Comercial & Afiliaciones B2B
                   </span>
                   <a
                     href="tel:+51934861839"
-                    className="text-base font-extrabold text-neutral-900 dark:text-white hover:text-orange-600 transition"
+                    className="text-base font-extrabold text-[#03246b] dark:text-white hover:text-orange-600 transition"
                   >
                     +51 934 861 839
                   </a>
@@ -1662,143 +1775,180 @@ export default function RegistroEmpresaPage() {
               </div>
 
               {/* Item 2: Soporte al Afiliado */}
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-4 p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-blue-500/40 hover:shadow-md transition group">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 group-hover:bg-[#1c58d5] group-hover:text-white flex items-center justify-center shrink-0 transition">
                   <Headphones className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 block">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
                     Mesa de Ayuda al Afiliado & Chofer
                   </span>
-                  <a
-                    href="tel:+51922767224"
-                    className="text-base font-extrabold text-neutral-900 dark:text-white hover:text-orange-600 transition"
-                  >
-                    +51 922 767 224
-                  </a>
-                  <span className="text-xs text-neutral-400 ml-2">/ central@pidegas.pe</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <a
+                      href="tel:+51922767224"
+                      className="text-base font-extrabold text-[#03246b] dark:text-white hover:text-orange-600 transition"
+                    >
+                      +51 922 767 224
+                    </a>
+                    <span className="text-xs text-slate-400">/ central@pidegas.pe</span>
+                  </div>
                 </div>
               </div>
 
               {/* Item 3: Horarios de Atención */}
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-4 p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 hover:border-emerald-500/40 hover:shadow-md transition group">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center shrink-0 transition">
                   <Clock className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 block">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
                     Horario de Atención de Operaciones
                   </span>
-                  <span className="text-sm font-bold text-neutral-900 dark:text-white">
+                  <span className="text-sm font-bold text-[#03246b] dark:text-white">
                     Lunes a Domingo: 06:00 AM – 09:00 PM
                   </span>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </section>
 
       {/* ========================================================
-          8. FOOTER CORPORATIVO (Estilo WoodMart / GYA Solution)
+          8. FOOTER CORPORATIVO (Estilo site-footer de Mediplace)
          ======================================================== */}
-      <footer className="bg-neutral-900 text-neutral-400 text-xs border-t border-neutral-800 pt-16 pb-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-neutral-800">
-          {/* Columna 1: Branding */}
-          <div className="space-y-3">
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-600 text-white">
-                <Flame className="w-5 h-5" />
+      <footer className="bg-[#021849] text-white pt-16 pb-8 border-t border-blue-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-blue-900/60">
+            
+            {/* Columna 1: Info y Logo */}
+            <div className="space-y-4">
+              <Link href="/" className="inline-block">
+                <BrandLogo variant="light" />
+              </Link>
+              <p className="text-xs text-slate-300 leading-relaxed font-normal">
+                Plataforma tecnológica peruana líder en despacho y distribución de gas de cocina con balanzas calibradas certificadas y monitoreo en tiempo real.
+              </p>
+              <div className="text-xs text-orange-400 font-bold">
+                SCOP Registro Nº 20491-GLP
               </div>
-              <span className="text-xl font-black text-white">
-                Pide<span className="text-orange-500">Gas</span>
-              </span>
-            </Link>
-            <p className="text-neutral-400 leading-relaxed text-[11px]">
-              Plataforma tecnológica peruana líder en despacho y distribución de gas de cocina GLP con balanzas calibradas certificadas y monitoreo en tiempo real.
-            </p>
+            </div>
+
+            {/* Columna 2: Enlaces Rápidos */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">Enlaces Rápidos</h4>
+              <ul className="space-y-2 text-xs text-slate-300">
+                <li>
+                  <Link href="/" className="hover:text-orange-400 transition">
+                    Inicio
+                  </Link>
+                </li>
+                <li>
+                  <a href="#beneficios" className="hover:text-orange-400 transition">
+                    Beneficios para Distribuidoras
+                  </a>
+                </li>
+                <li>
+                  <a href="#formulario" className="hover:text-orange-400 transition">
+                    Solicitar Registro de Empresa
+                  </a>
+                </li>
+                <li>
+                  <Link href="/auth/login" className="hover:text-orange-400 transition">
+                    Iniciar Sesión
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Columna 3: Seguridad & Regulación */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">Seguridad & Regulación</h4>
+              <ul className="space-y-2 text-xs text-slate-300">
+                <li>Conforme a normativa Osinergmin</li>
+                <li>Registro DGH de Hidrocarburos</li>
+                <li>Balanza Calibrada NTP 350.011</li>
+                <li>
+                  <Link href="/libro-reclamaciones" className="hover:text-orange-400 transition">
+                    Libro de Reclamaciones
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Columna 4: Galería de Despacho (Estilo Mediplace) */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">Galería de Despacho</h4>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="relative h-16 rounded-xl overflow-hidden bg-blue-900 border border-blue-800">
+                  <Image
+                    src="/mediplace/images/resources/footer-widget-two-gallery-1-1.jpg"
+                    alt="Despacho 1"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="relative h-16 rounded-xl overflow-hidden bg-blue-900 border border-blue-800">
+                  <Image
+                    src="/mediplace/images/resources/footer-widget-two-gallery-1-2.jpg"
+                    alt="Despacho 2"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="relative h-16 rounded-xl overflow-hidden bg-blue-900 border border-blue-800">
+                  <Image
+                    src="/mediplace/images/resources/footer-widget-two-gallery-1-3.jpg"
+                    alt="Despacho 3"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="relative h-16 rounded-xl overflow-hidden bg-blue-900 border border-blue-800">
+                  <Image
+                    src="/mediplace/images/resources/footer-widget-two-gallery-1-4.jpg"
+                    alt="Despacho 4"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="relative h-16 rounded-xl overflow-hidden bg-blue-900 border border-blue-800">
+                  <Image
+                    src="/mediplace/images/resources/footer-widget-two-gallery-1-5.jpg"
+                    alt="Despacho 5"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="relative h-16 rounded-xl overflow-hidden bg-blue-900 border border-blue-800">
+                  <Image
+                    src="/mediplace/images/resources/footer-widget-two-gallery-1-6.jpg"
+                    alt="Despacho 6"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          {/* Columna 2: Enlaces Rápidos */}
-          <div className="space-y-3">
-            <h5 className="text-xs font-bold uppercase tracking-wider text-white">
-              Enlaces Rápidos
-            </h5>
-            <ul className="space-y-2 text-[11px]">
-              <li>
-                <Link href="/" className="hover:text-orange-400 transition">
-                  Inicio
-                </Link>
-              </li>
-              <li>
-                <a href="#beneficios" className="hover:text-orange-400 transition">
-                  Beneficios para Distribuidoras
-                </a>
-              </li>
-              <li>
-                <a href="#formulario" className="hover:text-orange-400 transition">
-                  Solicitar Registro de Empresa
-                </a>
-              </li>
-              <li>
-                <Link href="/auth/login" className="hover:text-orange-400 transition">
-                  Iniciar Sesión
-                </Link>
-              </li>
-            </ul>
+          {/* Subfooter */}
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+            <p>© {new Date().getFullYear()} PideGas Perú S.A.C. Todos los derechos reservados.</p>
+            <div className="flex items-center gap-4">
+              <Link href="/terminos-servicio" className="hover:text-slate-300 transition">
+                Términos del Servicio
+              </Link>
+              <span>•</span>
+              <Link href="/politica-privacidad" className="hover:text-slate-300 transition">
+                Políticas de Privacidad
+              </Link>
+            </div>
           </div>
 
-          {/* Columna 3: Normativa & Seguridad */}
-          <div className="space-y-3">
-            <h5 className="text-xs font-bold uppercase tracking-wider text-white">
-              Seguridad & Regulación
-            </h5>
-            <ul className="space-y-2 text-[11px]">
-              <li>Conforme a normativa Osinergmin</li>
-              <li>Registro DGH de Hidrocarburos</li>
-              <li>Balanza Calibrada NTP 350.011</li>
-              <li>
-                <Link href="/libro-reclamaciones" className="hover:text-orange-400 transition">
-                  Libro de Reclamaciones
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Columna 4: Contacto */}
-          <div className="space-y-3">
-            <h5 className="text-xs font-bold uppercase tracking-wider text-white">
-              Contacto Central
-            </h5>
-            <ul className="space-y-2 text-[11px]">
-              <li className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-orange-500 shrink-0" />
-                <span>Lima Metropolitana, Perú</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-orange-500 shrink-0" />
-                <span>+51 922 767 224</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-orange-500 shrink-0" />
-                <span>soporte@pidegas.pe</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Barra de Derechos de Autor */}
-        <div className="max-w-7xl mx-auto pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-neutral-500">
-          <p>© {new Date().getFullYear()} PideGas Perú S.A.C. Todos los derechos reservados.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/terminos-servicio" className="hover:text-neutral-400 transition">
-              Términos del Servicio
-            </Link>
-            <span>•</span>
-            <Link href="/politica-privacidad" className="hover:text-neutral-400 transition">
-              Políticas de Privacidad
-            </Link>
-          </div>
         </div>
       </footer>
 

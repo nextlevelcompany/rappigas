@@ -141,7 +141,7 @@ export default function EmpresaSoportePage() {
   });
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 w-full space-y-6">
       {errorPermisos && (
         <RoleGuardAlert
           rolRequerido="EMPRESA"
@@ -221,7 +221,7 @@ export default function EmpresaSoportePage() {
           ))}
         </div>
 
-        <div className="relative w-full sm:w-72">
+        <div className="relative w-full sm:w-80">
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"

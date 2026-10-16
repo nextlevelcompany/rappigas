@@ -19,8 +19,10 @@ import {
   HomeAlt,
   MessageCircleQuestionMark,
 } from "@boxicons/react";
-import { Truck, ShoppingBag, Navigation, ChartBar, Building, CreditCard, ClipboardList, HelpCircle, Palette, Settings } from "lucide-react";
+import { Truck, ShoppingBag, Navigation, ChartBar, Building, CreditCard, ClipboardList, HelpCircle, Palette, Settings, ShieldCheck, Tag, PackageCheck } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
+import { useUIThemeStore } from "@/store/ui-theme.store";
+import { BrandLogo } from "@/components/brand-logo";
 
 // Secciones modulares de navegación PideGas
 //--- Dashboard Section
@@ -145,16 +147,13 @@ const seccionSupervisionAdmin = {
   ],
 };
 
-const seccionEmpresa = {
-  title: "Distribuidora (Mi Negocio)",
+//--- Secciones estructuradas para Empresa / Distribuidora de Gas
+const seccionEmpresaOperaciones = {
+  title: "PEDIDOS Y DESPACHO",
   url: "#",
   icon: <Truck className="w-5 h-5 text-orange-500" />,
   isActive: true,
   items: [
-    {
-      title: "Panel y Analítica",
-      url: "/empresa/dashboard",
-    },
     {
       title: "Despacho en Vivo (Pedidos)",
       url: "/empresa/pedidos",
@@ -164,31 +163,66 @@ const seccionEmpresa = {
       url: "/empresa/flota",
     },
     {
-      title: "Inventario y Balones",
-      url: "/empresa/inventario",
+      title: "Zonas de Cobertura GPS",
+      url: "/empresa/cobertura",
+    },
+  ],
+};
+
+const seccionEmpresaVentas = {
+  title: "VENTAS Y FACTURACIÓN",
+  url: "#",
+  icon: <Flame className="w-5 h-5 text-amber-500" />,
+  isActive: true,
+  items: [
+    {
+      title: "Registro de Ventas",
+      url: "/empresa/ventas",
     },
     {
       title: "Catálogo de Balones",
       url: "/empresa/catalogo",
     },
     {
-      title: "Zonas de Cobertura",
-      url: "/empresa/cobertura",
-    },
-    {
       title: "Promociones y Cupones",
       url: "/empresa/promociones",
+    },
+    {
+      title: "Inventario y Kardex",
+      url: "/empresa/inventario",
+    },
+  ],
+};
+
+const seccionEmpresaFinanzas = {
+  title: "FINANZAS Y ANALÍTICA",
+  url: "#",
+  icon: <CreditCard className="w-5 h-5 text-emerald-500" />,
+  isActive: true,
+  items: [
+    {
+      title: "Panel y Analítica",
+      url: "/empresa/dashboard",
     },
     {
       title: "Finanzas y Liquidaciones",
       url: "/empresa/finanzas",
     },
+  ],
+};
+
+const seccionEmpresaGestion = {
+  title: "CALIDAD Y MI EMPRESA",
+  url: "#",
+  icon: <ShieldCheck className="w-5 h-5 text-blue-500" />,
+  isActive: true,
+  items: [
     {
       title: "Incidencias y Garantías",
       url: "/empresa/soporte",
     },
     {
-      title: "Mi Distribuidora",
+      title: "Mi Distribuidora (Osinergmin)",
       url: "/empresa/mi-empresa",
     },
   ],
@@ -258,6 +292,7 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 
 export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
   const { usuario } = useAuthStore();
+  const { customLogoSidebarAlign, customLogoSidebarOffset } = useUIThemeStore();
   const [montado, setMontado] = React.useState(false);
 
   React.useEffect(() => {
@@ -273,8 +308,13 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
     // Super Admin sees the new structured menu
     itemsNavegacion = [seccionDashboard, seccionCRM, seccionFinanzas, seccionMonitoreo, seccionSoporteMenu, seccionEstadisticas, seccionConfiguracion];
   } else if (rol === "EMPRESA") {
-    // Dueño de distribuidora ve únicamente las opciones operativas de su negocio
-    itemsNavegacion = [seccionEmpresa];
+    // Distribuidora con menú estructurado por áreas: Pedidos, Ventas, Finanzas y Gestión
+    itemsNavegacion = [
+      seccionEmpresaOperaciones,
+      seccionEmpresaVentas,
+      seccionEmpresaFinanzas,
+      seccionEmpresaGestion,
+    ];
   } else if (rol === "REPARTIDOR") {
     // Repartidor ve únicamente sus rutas y pedidos
     itemsNavegacion = [seccionRepartidor];
@@ -282,6 +322,13 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
     // Cliente o visitante en /cliente/tienda: VE ÚNICAMENTE OPCIONES DE CLIENTE
     itemsNavegacion = [seccionCliente];
   }
+
+  const navSecondaryFiltrado = navSecondary.filter((item) => {
+    if (item.url === "/admin/configuracion") {
+      return rol === "ADMIN";
+    }
+    return true;
+  });
 
   const rutaLogo = rol === "ADMIN"
     ? "/admin/dashboard"
@@ -291,35 +338,33 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
     ? "/repartidor/pedidos"
     : "/cliente/tienda";
 
+  const alignClass =
+    customLogoSidebarAlign === "center"
+      ? "justify-center"
+      : customLogoSidebarAlign === "right"
+      ? "justify-end"
+      : "justify-start";
+
   return (
     <div
       onMouseEnter={() => onHoverChange?.(true)}
       onMouseLeave={() => onHoverChange?.(false)}
     >
       <Sidebar collapsible="icon" {...props} className="shadow-lg z-50 overflow-hidden">
-        {/* Cabecera del Sidebar con Marca PideGas */}
+        {/* Cabecera del Sidebar con Marca PideGas y Alineación Dinámica */}
         <SidebarHeader className="h-16 justify-center px-3 border-0">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild className="p-2">
-                <a href={rutaLogo}>
-                  <div className="flex aspect-square size-8 items-center justify-center mx-auto rounded-lg bg-orange-600 text-white shadow-md shadow-orange-500/30">
-                    <Flame className="size-5" />
-                  </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-extrabold text-base tracking-tight">
-                      Pide<span className="text-orange-600">Gas</span>
-                    </span>
-                    <span className="truncate text-xs text-neutral-400">
-                      {rol === "ADMIN"
-                        ? "Super Admin"
-                        : rol === "EMPRESA"
-                        ? "Distribuidora"
-                        : rol === "REPARTIDOR"
-                        ? "Repartidor"
-                        : "Área de Clientes"}
-                    </span>
-                  </div>
+              <SidebarMenuButton size="lg" asChild className="p-0 hover:bg-transparent">
+                <a
+                  href={rutaLogo}
+                  className={`flex items-center w-full transition-all duration-150 ${alignClass}`}
+                  style={{
+                    paddingLeft: customLogoSidebarAlign === "left" ? `${customLogoSidebarOffset ?? 8}px` : undefined,
+                    paddingRight: customLogoSidebarAlign === "right" ? `${customLogoSidebarOffset ?? 8}px` : undefined,
+                  }}
+                >
+                  <BrandLogo size="md" showText={false} className="shrink-0" />
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -337,7 +382,7 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
                 )}
 
               <NavSecondary
-                items={navSecondary}
+                items={navSecondaryFiltrado}
                 className="mt-auto px-3 pb-3"
               />
             </div>

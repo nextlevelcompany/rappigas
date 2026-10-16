@@ -95,7 +95,26 @@ export const catalogoApi = {
     empresaPublicId: string
   ): Promise<ProductoDetalle[]> => {
     return peticionHttp<ProductoDetalle[]>(
-      `/publico/empresas/${empresaPublicId}/productos`
+      `/publico/empresas/${empresaPublicId}/productos?_t=${Date.now()}`,
+      { cache: "no-store" }
     );
   },
+
+  // Subir imagen física o comprobante al servidor
+  subirImagen: async (archivo: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("archivo", archivo);
+
+    const res = await peticionHttp<{ nombreArchivo: string; url: string; tamano: string }>(
+      "/archivos/subir",
+      {
+        method: "POST",
+        datos: formData,
+      }
+    );
+
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace("/api/v1", "") || "http://localhost:8080";
+    return res.url.startsWith("http") ? res.url : `${baseUrl}${res.url}`;
+  },
 };
+

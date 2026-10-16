@@ -28,14 +28,14 @@ export default function UIThemeProvider({
 }: {
   children: React.ReactNode
 }) {
-  const { theme, primaryColor, radius, loadTheme } = useUIThemeStore()
+  const { theme, primaryColor, radius, customLogoUrl, customFaviconUrl, loadTheme } = useUIThemeStore()
 
   // Load theme on mount
   useEffect(() => {
     loadTheme()
   }, [loadTheme])
 
-  // Apply theme classes and dynamic CSS variables
+  // Apply theme classes, dynamic CSS variables and favicon
   useEffect(() => {
     const root = document.documentElement
 
@@ -74,7 +74,32 @@ export default function UIThemeProvider({
     } else {
       root.style.removeProperty("--radius")
     }
-  }, [theme, primaryColor, radius])
+
+    // 5. Apply dynamic Favicon to document head
+    const targetFavicon = customFaviconUrl || customLogoUrl
+    if (typeof document !== "undefined") {
+      const faviconSelector = "link[rel*='icon']"
+      let existingFavicon = document.querySelector(faviconSelector) as HTMLLinkElement | null
+
+      if (targetFavicon) {
+        if (!existingFavicon) {
+          existingFavicon = document.createElement("link")
+          existingFavicon.rel = "shortcut icon"
+          document.head.appendChild(existingFavicon)
+        }
+        existingFavicon.href = targetFavicon
+
+        // Also update or add apple-touch-icon
+        let appleIcon = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement | null
+        if (!appleIcon) {
+          appleIcon = document.createElement("link")
+          appleIcon.rel = "apple-touch-icon"
+          document.head.appendChild(appleIcon)
+        }
+        appleIcon.href = targetFavicon
+      }
+    }
+  }, [theme, primaryColor, radius, customLogoUrl, customFaviconUrl])
 
   return <>{children}</>
 }

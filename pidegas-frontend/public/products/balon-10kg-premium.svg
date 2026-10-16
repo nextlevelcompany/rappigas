@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="balonBlueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#021d59" />
+      <stop offset="25%" stop-color="#0c3d96" />
+      <stop offset="55%" stop-color="#1e5bbd" />
+      <stop offset="80%" stop-color="#0c3d96" />
+      <stop offset="100%" stop-color="#021d59" />
+    </linearGradient>
+    <linearGradient id="valvulaClickOn" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="metalRing" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#cbd5e1" />
+      <stop offset="50%" stop-color="#94a3b8" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Sombra en la base -->
+  <ellipse cx="150" cy="370" rx="90" ry="16" fill="#cbd5e1" opacity="0.6" />
+  <ellipse cx="150" cy="370" rx="70" ry="10" fill="#94a3b8" opacity="0.8" />
+
+  <!-- Base de apoyo del balón -->
+  <path d="M 95 340 L 95 358 Q 150 368 205 358 L 205 340 Z" fill="url(#metalRing)" />
+
+  <!-- Cuerpo Principal del Balón (Cilíndrico con domos esféricos) -->
+  <g filter="url(#dropShadow)">
+    <path d="
+      M 75 140 
+      C 75 90, 225 90, 225 140 
+      L 225 320 
+      C 225 355, 75 355, 75 320 
+      Z" 
+      fill="url(#balonBlueGrad)" 
+    />
+  </g>
+
+  <!-- Reflejo de luz y volumen vertical -->
+  <path d="M 105 130 Q 115 230 105 325" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity="0.3" fill="none" />
+  <path d="M 120 135 Q 125 230 120 320" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.4" fill="none" />
+
+  <!-- Soldadura central del balón de GLP -->
+  <ellipse cx="150" cy="230" rx="74" ry="4" fill="none" stroke="#06225e" stroke-width="3" opacity="0.7" />
+  <ellipse cx="150" cy="231" rx="74" ry="3" fill="none" stroke="#60a5fa" stroke-width="1.5" opacity="0.4" />
+
+  <!-- Collarín Superior / Asas de Transporte -->
+  <path d="M 98 115 C 98 70, 202 70, 202 115 L 200 125 C 200 95, 100 95, 100 125 Z" fill="url(#metalRing)" />
+  <path d="M 98 90 C 110 55, 190 55, 202 90 L 194 92 C 185 68, 115 68, 106 92 Z" fill="#64748b" />
+  
+  <!-- Aberturas de las asas -->
+  <rect x="110" y="78" width="28" height="10" rx="5" fill="#021d59" opacity="0.9" />
+  <rect x="162" y="78" width="28" height="10" rx="5" fill="#021d59" opacity="0.9" />
+
+  <!-- Válvula Premium Click-On (Azul de seguridad) -->
+  <g transform="translate(150, 92)">
+    <!-- Base de la válvula -->
+    <rect x="-14" y="-12" width="28" height="16" rx="4" fill="#64748b" />
+    <cylinder />
+    <!-- Cabezal Click-on azul -->
+    <path d="M -16 -24 L 16 -24 L 12 -12 L -12 -12 Z" fill="url(#valvulaClickOn)" stroke="#0284c7" stroke-width="1.5" />
+    <circle cx="0" cy="-24" r="8" fill="#e0f2fe" />
+    <circle cx="0" cy="-24" r="4" fill="#0284c7" />
+    <!-- Precinto de seguridad termoencogible -->
+    <rect x="-18" y="-14" width="36" height="8" rx="3" fill="#ea580c" opacity="0.95" />
+    <text x="0" y="-8" font-family="Arial, sans-serif" font-size="5" font-weight="900" fill="#ffffff" text-anchor="middle">OSINERGMIN</text>
+  </g>
+
+  <!-- Etiqueta Oficial PideGas en el Cuerpo -->
+  <rect x="100" y="165" width="100" height="70" rx="12" fill="#ffffff" opacity="0.96" filter="url(#dropShadow)" />
+  <rect x="103" y="168" width="94" height="64" rx="9" fill="none" stroke="#ea580c" stroke-width="2" />
+  
+  <!-- Logo y Texto de la etiqueta -->
+  <circle cx="150" cy="184" r="9" fill="#ea580c" />
+  <path d="M 150 178 C 153 183, 155 186, 150 191 C 146 186, 148 183, 150 178 Z" fill="#ffffff" />
+  <text x="150" y="202" font-family="Arial, sans-serif" font-size="11" font-weight="900" fill="#03246b" text-anchor="middle">GLP 10 KG</text>
+  <text x="150" y="213" font-family="Arial, sans-serif" font-size="7.5" font-weight="700" fill="#ea580c" text-anchor="middle">PREMIUM CLICK-ON</text>
+  <text x="150" y="224" font-family="Arial, sans-serif" font-size="6" font-weight="600" fill="#64748b" text-anchor="middle">BALANZA DIGITAL CONTRASTADA</text>
+
+  <!-- Sello de Certificación 0g Tolerancia -->
+  <g transform="translate(185, 275)">
+    <circle cx="0" cy="0" r="18" fill="#16a34a" stroke="#ffffff" stroke-width="2.5" />
+    <text x="0" y="-3" font-family="Arial, sans-serif" font-size="6.5" font-weight="900" fill="#ffffff" text-anchor="middle">PESO EXACTO</text>
+    <text x="0" y="7" font-family="Arial, sans-serif" font-size="8" font-weight="900" fill="#ffffff" text-anchor="middle">±0g</text>
+  </g>
+</svg>

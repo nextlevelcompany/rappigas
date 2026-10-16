@@ -11,10 +11,10 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title:
-    "Syndron UI – Next.js & Tailwind CSS ShadCN Admin Dashboard Template",
+    "Pide Gas Perú",
 
   description:
-    "Modern admin dashboard template built with Next.js, Tailwind CSS, React, and ShadCN UI. Includes dashboards, charts, tables, forms, authentication pages, dark mode, and reusable UI components.",
+    "App de Pedidos de Gas de COcina con recompensas",
 
   keywords: [
     "Next.js Admin Dashboard",

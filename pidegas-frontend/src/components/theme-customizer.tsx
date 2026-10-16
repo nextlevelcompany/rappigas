@@ -1,7 +1,8 @@
-"use client"
-
+"use client";
+import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { useUIThemeStore } from "@/store/ui-theme.store"
+import { useAuthStore } from "@/store/auth-store"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -38,6 +39,8 @@ const SWATCHES = [
 ]
 
 export default function ThemeCustomizer() {
+  const { usuario } = useAuthStore()
+  const [montado, setMontado] = useState(false)
   const { theme: mode, setTheme: setMode } = useTheme()
   const {
     theme,
@@ -48,6 +51,15 @@ export default function ThemeCustomizer() {
     setRadius,
     resetToDefaults,
   } = useUIThemeStore()
+
+  useEffect(() => {
+    setMontado(true)
+  }, [])
+
+  // El botón flotante y el configurador solo deben existir para el Administrador General
+  if (!montado || usuario?.rol !== "ADMIN") {
+    return null
+  }
 
   const themes = [
     {

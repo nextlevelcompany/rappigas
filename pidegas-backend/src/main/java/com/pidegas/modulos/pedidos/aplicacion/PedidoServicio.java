@@ -308,6 +308,14 @@ public class PedidoServicio {
             log.error("Error al acumular puntos de fidelización por pedido {}", publicId, e);
         }
 
+        try {
+            if (finanzasServicio != null) {
+                finanzasServicio.registrarPagoContraEntregaSiAplica(pedidoGuardado);
+            }
+        } catch (Exception e) {
+            log.error("Error al registrar venta contable por entrega de pedido {}", publicId, e);
+        }
+
         Repartidor repartidor = repartidorRepositorio.findByUsuarioId(usuario.getId()).orElse(null);
         if (repartidor != null) {
             repartidor.setEstado(EstadoRepartidor.DISPONIBLE);

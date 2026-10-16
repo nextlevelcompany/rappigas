@@ -1,5 +1,7 @@
 package com.pidegas.modulos.empresas.aplicacion;
 
+import com.pidegas.modulos.cobertura.dominio.ZonaCobertura;
+import com.pidegas.modulos.cobertura.infraestructura.ZonaCoberturaRepositorio;
 import com.pidegas.modulos.empresas.dominio.Empresa;
 import com.pidegas.modulos.empresas.dominio.EstadoEmpresa;
 import com.pidegas.modulos.empresas.dto.ActualizarEmpresaDto;
@@ -25,14 +27,25 @@ public class EmpresaServicio {
     private final EmpresaRepositorio empresaRepositorio;
     private final UsuarioRepositorio usuarioRepositorio;
     private final PasswordEncoder passwordEncoder;
+    private final ZonaCoberturaRepositorio zonaCoberturaRepositorio;
 
     public EmpresaServicio(
             EmpresaRepositorio empresaRepositorio,
             UsuarioRepositorio usuarioRepositorio,
             PasswordEncoder passwordEncoder) {
+        this(empresaRepositorio, usuarioRepositorio, passwordEncoder, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public EmpresaServicio(
+            EmpresaRepositorio empresaRepositorio,
+            UsuarioRepositorio usuarioRepositorio,
+            PasswordEncoder passwordEncoder,
+            ZonaCoberturaRepositorio zonaCoberturaRepositorio) {
         this.empresaRepositorio = empresaRepositorio;
         this.usuarioRepositorio = usuarioRepositorio;
         this.passwordEncoder = passwordEncoder;
+        this.zonaCoberturaRepositorio = zonaCoberturaRepositorio;
     }
 
     @Transactional
@@ -132,6 +145,26 @@ public class EmpresaServicio {
         return mapearADetalleDto(empresa);
     }
 
+    @Transactional
+    public void cambiarPasswordAdminEmpresa(UUID publicId, String nuevaPassword) {
+        if (nuevaPassword == null || nuevaPassword.trim().length() < 6) {
+            throw new IllegalArgumentException("La nueva contraseña debe tener al menos 6 caracteres.");
+        }
+
+        Empresa empresa = empresaRepositorio.findByPublicId(publicId)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró la empresa con ID público " + publicId));
+
+        if (empresa.getUsuarioAdminId() == null) {
+            throw new IllegalStateException("La empresa no tiene un usuario administrador asociado.");
+        }
+
+        Usuario admin = usuarioRepositorio.findById(empresa.getUsuarioAdminId())
+                .orElseThrow(() -> new IllegalStateException("No se encontró el usuario administrador asociado a la empresa."));
+
+        admin.setPasswordHash(passwordEncoder.encode(nuevaPassword.trim()));
+        usuarioRepositorio.save(admin);
+    }
+
     @Transactional(readOnly = true)
     public List<EmpresaDetalleDto> listarEmpresasPublicas() {
         return empresaRepositorio.findByEstadoOrderByNombreComercialAsc(EstadoEmpresa.APROBADA)
@@ -168,6 +201,26 @@ public class EmpresaServicio {
             }
         }
 
+        Double latitud = null;
+        Double longitud = null;
+        String zonaNombre = null;
+
+        if (zonaCoberturaRepositorio != null) {
+            try {
+                List<ZonaCobertura> zonas = zonaCoberturaRepositorio.findByTenantIdAndActivaTrue(empresa.getId());
+                if (!zonas.isEmpty()) {
+                    ZonaCobertura z = zonas.get(0);
+                    zonaNombre = z.getNombre();
+                    if (z.getGeometria() != null) {
+                        org.locationtech.jts.geom.Point c = z.getGeometria().getCentroid();
+                        latitud = c.getY();
+                        longitud = c.getX();
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
         return new EmpresaDetalleDto(
                 empresa.getPublicId(),
                 empresa.getRuc(),
@@ -181,7 +234,10 @@ public class EmpresaServicio {
                 empresa.getCreatedAt(),
                 adminNombre,
                 adminEmail,
-                adminTelefono
+                adminTelefono,
+                latitud,
+                longitud,
+                zonaNombre
         );
     }
 }

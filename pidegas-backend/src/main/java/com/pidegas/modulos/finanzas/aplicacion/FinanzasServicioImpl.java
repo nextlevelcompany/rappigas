@@ -216,35 +216,49 @@ public class FinanzasServicioImpl implements FinanzasServicio {
     @Override
     @Transactional
     public void registrarPagoContraEntregaSiAplica(Pedido pedido) {
-        if (pedido.getMetodoPago() == MetodoPago.EFECTIVO && pedido.getEstadoPago() != EstadoPago.PAGADO) {
+        if (pedido == null) return;
+
+        if (pedido.getEstadoPago() != EstadoPago.PAGADO) {
             pedido.setEstadoPago(EstadoPago.PAGADO);
             pedidoRepositorio.save(pedido);
+        }
 
+        // Verificar si ya existe un registro de pago aprobado para este pedido
+        List<Pago> pagosExistentes = pagoRepositorio.findByPedidoId(pedido.getId());
+        Pago pagoAprobado = pagosExistentes.stream()
+                .filter(p -> p.getEstado() == EstadoTransaccionPago.APROBADO)
+                .findFirst()
+                .orElse(null);
+
+        if (pagoAprobado == null) {
+            MetodoPago metodo = pedido.getMetodoPago() != null ? pedido.getMetodoPago() : MetodoPago.EFECTIVO;
             Pago pago = new Pago(
                     pedido.getTenantId(),
                     pedido.getId(),
                     pedido.getClienteId(),
                     pedido.getTotal(),
-                    MetodoPago.EFECTIVO
+                    metodo
             );
+            String prefijo = metodo.name();
             pago.aprobar(
-                    "EFEC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(),
-                    "CASH-DELIVERED",
-                    "Pago contra entrega liquidado al repartidor."
+                    prefijo + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(),
+                    "ENTREGA-" + pedido.getId(),
+                    "Venta contabilizada por entrega de pedido (" + metodo + ")."
             );
-            pago = pagoRepositorio.save(pago);
+            pagoAprobado = pagoRepositorio.save(pago);
+            log.info("Venta contable registrada para pedido {} con método {}", pedido.getPublicId(), metodo);
+        }
 
-            if (!comisionRepositorio.existsByPedidoId(pedido.getId())) {
-                Comision comision = new Comision(
-                        pedido.getTenantId(),
-                        pedido.getId(),
-                        pago.getId(),
-                        pedido.getTotal(),
-                        PORCENTAJE_COMISION_PLATAFORMA
-                );
-                comisionRepositorio.save(comision);
-                log.info("Comisión de pago en efectivo registrada para pedido {}", pedido.getPublicId());
-            }
+        if (!comisionRepositorio.existsByPedidoId(pedido.getId())) {
+            Comision comision = new Comision(
+                    pedido.getTenantId(),
+                    pedido.getId(),
+                    pagoAprobado.getId(),
+                    pedido.getTotal(),
+                    PORCENTAJE_COMISION_PLATAFORMA
+            );
+            comisionRepositorio.save(comision);
+            log.info("Comisión de venta registrada para pedido {}", pedido.getPublicId());
         }
     }
 

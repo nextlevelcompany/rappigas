@@ -42,6 +42,11 @@ import {
   Trash2,
   Clock,
   MessageSquare,
+  Key,
+  Lock,
+  Eye,
+  EyeOff,
+  Sparkles,
 } from "lucide-react";
 
 export interface ContactoItem {
@@ -85,6 +90,54 @@ export default function DetalleEmpresaAdminPage({ params }: Props) {
     horario: "Lunes a Viernes 08:00 - 18:00",
   });
   const [textoCopiado, setTextoCopiado] = useState<string | null>(null);
+
+  // Gestión de Contraseña por Super Admin
+  const [modalPasswordAbierto, setModalPasswordAbierto] = useState(false);
+  const [nuevaPassword, setNuevaPassword] = useState("");
+  const [confirmarPassword, setConfirmarPassword] = useState("");
+  const [mostrarPassword, setMostrarPassword] = useState(false);
+  const [guardandoPassword, setGuardandoPassword] = useState(false);
+
+  const handleGuardarPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!empresa) return;
+
+    if (!nuevaPassword || nuevaPassword.length < 6) {
+      alert("La nueva contraseña debe tener un mínimo de 6 caracteres.");
+      return;
+    }
+    if (nuevaPassword !== confirmarPassword) {
+      alert("Las contraseñas no coinciden. Por favor verifique.");
+      return;
+    }
+
+    try {
+      setGuardandoPassword(true);
+      await empresasApi.cambiarPasswordEmpresaAdmin(empresa.publicId, nuevaPassword);
+      setMensaje({
+        tipo: "exito",
+        texto: `Contraseña de acceso actualizada exitosamente para la distribuidora ${empresa.nombreComercial}.`,
+      });
+      setModalPasswordAbierto(false);
+      setNuevaPassword("");
+      setConfirmarPassword("");
+    } catch (err: any) {
+      alert(err.message || "Error al cambiar la contraseña");
+    } finally {
+      setGuardandoPassword(false);
+    }
+  };
+
+  const generarPasswordSegura = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&*";
+    let pass = "";
+    for (let i = 0; i < 10; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNuevaPassword(pass);
+    setConfirmarPassword(pass);
+    setMostrarPassword(true);
+  };
 
   const cargarDatos = async () => {
     try {
@@ -516,6 +569,22 @@ export default function DetalleEmpresaAdminPage({ params }: Props) {
               Reactivar Distribuidora
             </Button>
           )}
+
+          {/* Botón Cambiar Contraseña del Administrador */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setModalPasswordAbierto(true);
+              setNuevaPassword("");
+              setConfirmarPassword("");
+              setMostrarPassword(false);
+            }}
+            className="border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 gap-1.5 cursor-pointer shadow-xs"
+          >
+            <Key className="w-3.5 h-3.5 text-amber-600" />
+            <span>Cambiar Contraseña</span>
+          </Button>
         </div>
       </div>
 
@@ -1545,6 +1614,128 @@ export default function DetalleEmpresaAdminPage({ params }: Props) {
                   className="bg-orange-600 hover:bg-orange-700 text-white"
                 >
                   Guardar Contacto
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Cambiar Contraseña Super Admin */}
+      {modalPasswordAbierto && empresa && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-card text-card-foreground border border-neutral-200 dark:border-neutral-800 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-start border-b pb-4 dark:border-neutral-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                  <Key className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-neutral-900 dark:text-white">
+                    Cambiar Contraseña de Acceso
+                  </h3>
+                  <p className="text-xs text-neutral-500">
+                    {empresa.nombreComercial}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalPasswordAbierto(false)}
+                className="text-neutral-400 hover:text-neutral-600 p-1 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="bg-neutral-50 dark:bg-neutral-900 p-3.5 rounded-2xl text-xs space-y-1.5 border border-neutral-200/80 dark:border-neutral-800">
+              <div className="flex justify-between">
+                <span className="text-neutral-500">RUC:</span>
+                <span className="font-mono font-semibold">{empresa.ruc}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Usuario Administrador:</span>
+                <span className="font-semibold text-neutral-800 dark:text-neutral-200 truncate max-w-[220px]">
+                  {empresa.adminEmail || empresa.emailContacto}
+                </span>
+              </div>
+              {empresa.adminNombre && (
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Titular:</span>
+                  <span className="font-medium text-neutral-700 dark:text-neutral-300">
+                    {empresa.adminNombre}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <form onSubmit={handleGuardarPassword} className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+                    Nueva Contraseña *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={generarPasswordSegura}
+                    className="text-[11px] font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Generar segura
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={mostrarPassword ? "text" : "password"}
+                    required
+                    minLength={6}
+                    placeholder="Mínimo 6 caracteres"
+                    value={nuevaPassword}
+                    onChange={(e) => setNuevaPassword(e.target.value)}
+                    className="w-full pl-3.5 pr-10 py-2.5 text-xs rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarPassword(!mostrarPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600"
+                  >
+                    {mostrarPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">
+                  Confirmar Nueva Contraseña *
+                </label>
+                <input
+                  type={mostrarPassword ? "text" : "password"}
+                  required
+                  minLength={6}
+                  placeholder="Repita la contraseña"
+                  value={confirmarPassword}
+                  onChange={(e) => setConfirmarPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 font-mono"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2.5 border-t dark:border-neutral-800">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setModalPasswordAbierto(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={guardandoPassword}
+                  className="bg-orange-600 hover:bg-orange-700 text-white font-bold flex items-center gap-2"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>{guardandoPassword ? "Guardando..." : "Actualizar Contraseña"}</span>
                 </Button>
               </div>
             </form>

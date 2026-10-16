@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useUIThemeStore } from "@/store/ui-theme.store";
+import { useAuthStore } from "@/store/auth-store";
+import { RoleGuardAlert } from "@/components/auth/role-guard-alert";
 import { toast } from "sonner";
 import {
   Palette,
@@ -24,9 +26,14 @@ import {
   Info,
   CheckCircle2,
   Brush,
+  Upload,
+  Image as ImageIcon,
+  Trash2,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { BrandLogo } from "@/components/brand-logo";
 
 const PALETA_COLORES = [
   { id: "orange", nombre: "Naranja PideGas (Oficial)", hex: "#ea580c", desc: "Identidad energética y entrega rápida" },
@@ -77,19 +84,37 @@ const RADIOS_BORDE = [
 ];
 
 export default function ConfiguracionTemasPage() {
+  const { usuario } = useAuthStore();
   const { theme: mode, setTheme: setMode } = useTheme();
   const {
     theme,
     primaryColor,
     radius,
+    customLogoUrl,
+    customLogoHeight,
+    customLogoSidebarAlign,
+    customLogoSidebarOffset,
+    customFaviconUrl,
     setTheme,
     setPrimaryColor,
     setRadius,
+    setCustomLogoUrl,
+    setCustomLogoHeight,
+    setCustomLogoSidebarAlign,
+    setCustomLogoSidebarOffset,
+    setCustomFaviconUrl,
+    resetLogo,
     resetToDefaults,
   } = useUIThemeStore();
 
   const [customHex, setCustomHex] = useState(primaryColor || "#ea580c");
+  const [urlLogoInput, setUrlLogoInput] = useState("");
+  const [urlFaviconInput, setUrlFaviconInput] = useState("");
+  const [isDraggingLogo, setIsDraggingLogo] = useState(false);
   const [montado, setMontado] = useState(false);
+
+  const fileLogoInputRef = React.useRef<HTMLInputElement>(null);
+  const fileFaviconInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMontado(true);
@@ -97,6 +122,40 @@ export default function ConfiguracionTemasPage() {
       setCustomHex(primaryColor);
     }
   }, [primaryColor]);
+
+  // Manejador de subida de archivos (PNG, JPG, SVG, WEBP, ICO)
+  const handleProcessImageFile = (file: File, type: "logo" | "favicon") => {
+    if (!file.type.startsWith("image/") && !file.name.endsWith(".ico")) {
+      toast.error("Formato inválido", {
+        description: "Por favor selecciona un archivo de imagen (PNG, JPG, SVG, WEBP o ICO).",
+      });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Archivo demasiado grande", {
+        description: "El tamaño máximo recomendado es de 2 MB.",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      if (type === "logo") {
+        setCustomLogoUrl(dataUrl);
+        toast.success("Logotipo actualizado", {
+          description: "El nuevo logo se aplicó a la web, panel y menús en tiempo real.",
+        });
+      } else {
+        setCustomFaviconUrl(dataUrl);
+        toast.success("Favicon actualizado", {
+          description: "El icono de la pestaña del navegador ha sido actualizado.",
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSelectColor = (hex: string) => {
     setCustomHex(hex);
@@ -123,12 +182,25 @@ export default function ConfiguracionTemasPage() {
     resetToDefaults();
     setMode("system");
     setCustomHex("#ea580c");
+    setUrlLogoInput("");
+    setUrlFaviconInput("");
     toast.info("Configuración restablecida", {
-      description: "Se restauraron los temas, colores y bordes originales del sistema.",
+      description: "Se restauraron los temas, colores, logotipo y bordes originales del sistema.",
     });
   };
 
   if (!montado) return null;
+
+  if (usuario && usuario.rol !== "ADMIN") {
+    return (
+      <div className="p-6 sm:p-8 lg:p-10 max-w-4xl mx-auto space-y-6">
+        <RoleGuardAlert
+          rolRequerido="ADMIN"
+          mensaje="Acceso Restringido: La configuración global de plataforma, temas y personalización de marca solo está disponible para Administradores de PideGas."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 sm:p-8 lg:p-10 max-w-7xl mx-auto space-y-10">
@@ -144,16 +216,16 @@ export default function ConfiguracionTemasPage() {
             <span>/</span>
             <span>Configuración</span>
             <span>/</span>
-            <span className="text-primary font-semibold">Temas y Colores</span>
+            <span className="text-primary font-semibold">Identidad y Temas</span>
           </nav>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-primary/10 text-primary">
               <Palette className="w-6 h-6" />
             </div>
-            Apariencia del Sistema • Temas y Colores
+            Apariencia e Identidad de Marca
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-2xl">
-            Personalice el modo de pantalla, el color primario de la aplicación, los temas envolventes y el estilo visual de toda la plataforma PideGas.
+            Personalice el logotipo oficial, el favicon del navegador, la paleta cromática, el modo de pantalla y el estilo visual de toda la plataforma PideGas.
           </p>
         </div>
 
@@ -171,6 +243,441 @@ export default function ConfiguracionTemasPage() {
       </div>
 
       {/* ========================================================
+          1. SECCIÓN: IDENTIDAD DE MARCA (Logotipo y Favicon)
+         ======================================================== */}
+      <div className="space-y-5">
+        <div>
+          <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-primary" />
+            1. Logotipo Oficial y Favicon del Navegador
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Suba los archivos gráficos de su empresa. Se reflejarán inmediatamente en la web pública, el panel de administración y la pestaña del navegador.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Columna Izquierda: Subida de Logo & Favicon */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Tarjeta: Logotipo Principal */}
+            <div className="p-5 rounded-3xl bg-card border border-border shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
+                    <Upload className="w-3.5 h-3.5 text-primary" />
+                    Logotipo Principal (Cabecera y Menús)
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Formatos recomendados: PNG o SVG transparente (Max 2MB)
+                  </p>
+                </div>
+                {customLogoUrl && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setCustomLogoUrl("");
+                      toast.info("Logotipo restaurado al predeterminado");
+                    }}
+                    className="text-xs text-destructive hover:bg-destructive/10 h-7 px-2.5 gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Quitar Logo
+                  </Button>
+                )}
+              </div>
+
+              {/* Zona Drag & Drop / Selector */}
+              <input
+                ref={fileLogoInputRef}
+                type="file"
+                accept="image/png, image/jpeg, image/svg+xml, image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleProcessImageFile(file, "logo");
+                }}
+              />
+
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDraggingLogo(true);
+                }}
+                onDragLeave={() => setIsDraggingLogo(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDraggingLogo(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleProcessImageFile(file, "logo");
+                }}
+                onClick={() => fileLogoInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2 ${
+                  isDraggingLogo
+                    ? "border-primary bg-primary/10"
+                    : "border-muted-foreground/25 hover:border-primary hover:bg-muted/40"
+                }`}
+              >
+                <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+                  <Upload className="w-6 h-6" />
+                </div>
+                <div className="text-xs font-bold text-foreground">
+                  Haga clic para subir o arrastre el archivo aquí
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  PNG, SVG, WEBP o JPG hasta 2 MB
+                </p>
+              </div>
+
+              {/* URL externa opcional */}
+              <div className="pt-2 border-t border-border/60">
+                <label className="text-[11px] font-semibold text-muted-foreground block mb-1.5">
+                  O vincular mediante URL de imagen:
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Globe className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="url"
+                      placeholder="https://ejemplo.com/logo.png"
+                      value={urlLogoInput}
+                      onChange={(e) => setUrlLogoInput(e.target.value)}
+                      className="pl-8 text-xs h-9"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    className="h-9 text-xs"
+                    onClick={() => {
+                      if (urlLogoInput.trim()) {
+                        setCustomLogoUrl(urlLogoInput.trim());
+                        toast.success("Logo actualizado desde URL");
+                      }
+                    }}
+                  >
+                    Aplicar
+                  </Button>
+                </div>
+              </div>
+
+              {/* Control de Tamaño del Logotipo */}
+              <div className="pt-3 border-t border-border/60 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-[11px] font-bold text-foreground block">
+                      Tamaño de Altura del Logotipo:
+                    </label>
+                    <p className="text-[10px] text-muted-foreground">
+                      Ajuste la altura en píxeles para que se adapte perfectamente a la cabecera
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                    {customLogoHeight || 44} px
+                  </span>
+                </div>
+
+                {/* Presets Rápidos */}
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { label: "Pequeño", val: 32 },
+                    { label: "Estándar", val: 44 },
+                    { label: "Grande", val: 56 },
+                    { label: "Maxi", val: 72 },
+                  ].map((preset) => {
+                    const isSelected = (customLogoHeight || 44) === preset.val;
+                    return (
+                      <button
+                        key={preset.val}
+                        type="button"
+                        onClick={() => {
+                          setCustomLogoHeight(preset.val);
+                          toast.success(`Tamaño de logo ajustado a ${preset.val}px`);
+                        }}
+                        className={`py-1.5 px-2 rounded-xl text-xs font-semibold border transition cursor-pointer text-center ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            : "bg-muted/40 hover:bg-muted text-foreground border-border"
+                        }`}
+                      >
+                        {preset.label} ({preset.val}px)
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Slider de ajuste fino */}
+                <div className="flex items-center gap-3 pt-1">
+                  <span className="text-[10px] font-mono text-muted-foreground">24px</span>
+                  <input
+                    type="range"
+                    min={24}
+                    max={90}
+                    step={2}
+                    value={customLogoHeight || 44}
+                    onChange={(e) => setCustomLogoHeight(parseInt(e.target.value, 10))}
+                    className="w-full accent-primary h-2 bg-muted rounded-lg cursor-pointer"
+                  />
+                  <span className="text-[10px] font-mono text-muted-foreground">90px</span>
+                </div>
+              </div>
+
+              {/* Control de Posición y Alineación en la Barra Lateral (Dashboard / Admin) */}
+              <div className="pt-3 border-t border-border/60 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-[11px] font-bold text-foreground block">
+                      Alineación del Logo en Barra Lateral (Admin / Dashboard):
+                    </label>
+                    <p className="text-[10px] text-muted-foreground">
+                      Mueva el logotipo más a la izquierda, al centro o ajuste el margen exacto
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                    {customLogoSidebarAlign === "left"
+                      ? `Izquierda (${customLogoSidebarOffset ?? 8}px)`
+                      : customLogoSidebarAlign === "right"
+                      ? "Derecha"
+                      : "Centrado"}
+                  </span>
+                </div>
+
+                {/* Botones de Alineación */}
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: "left" as const, label: "A la Izquierda" },
+                    { id: "center" as const, label: "Centrado" },
+                    { id: "right" as const, label: "A la Derecha" },
+                  ].map((pos) => {
+                    const isSelected = (customLogoSidebarAlign || "left") === pos.id;
+                    return (
+                      <button
+                        key={pos.id}
+                        type="button"
+                        onClick={() => {
+                          setCustomLogoSidebarAlign(pos.id);
+                          toast.success(`Alineación del logo: ${pos.label}`);
+                        }}
+                        className={`py-1.5 px-2 rounded-xl text-xs font-semibold border transition cursor-pointer text-center ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            : "bg-muted/40 hover:bg-muted text-foreground border-border"
+                        }`}
+                      >
+                        {pos.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Ajuste fino de margen izquierdo */}
+                {customLogoSidebarAlign === "left" && (
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex justify-between items-center text-[10px] text-muted-foreground">
+                      <span>Margen / Sangría Izquierda:</span>
+                      <span className="font-mono font-bold text-foreground">{customLogoSidebarOffset ?? 8} px</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-mono text-muted-foreground">0px</span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={36}
+                        step={2}
+                        value={customLogoSidebarOffset ?? 8}
+                        onChange={(e) => setCustomLogoSidebarOffset(parseInt(e.target.value, 10))}
+                        className="w-full accent-primary h-2 bg-muted rounded-lg cursor-pointer"
+                      />
+                      <span className="text-[10px] font-mono text-muted-foreground">36px</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Tarjeta: Favicon del Navegador */}
+            <div className="p-5 rounded-3xl bg-card border border-border shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
+                    <Globe className="w-3.5 h-3.5 text-primary" />
+                    Favicon de la Pestaña del Navegador
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Icono pequeño mostrado en las pestañas y marcadores del navegador
+                  </p>
+                </div>
+                {customFaviconUrl && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setCustomFaviconUrl("");
+                      toast.info("Favicon restaurado");
+                    }}
+                    className="text-xs text-destructive hover:bg-destructive/10 h-7 px-2.5 gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Restablecer
+                  </Button>
+                )}
+              </div>
+
+              <input
+                ref={fileFaviconInputRef}
+                type="file"
+                accept="image/png, image/x-icon, image/svg+xml, image/webp, image/jpeg"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleProcessImageFile(file, "favicon");
+                }}
+              />
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileFaviconInputRef.current?.click()}
+                  className="text-xs h-10 gap-2 cursor-pointer flex-1"
+                >
+                  <Upload className="w-4 h-4 text-primary" />
+                  Subir Favicon Independiente (.ico, .png, .svg)
+                </Button>
+
+                {customLogoUrl && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setCustomFaviconUrl(customLogoUrl);
+                      toast.success("Favicon sincronizado con el logotipo");
+                    }}
+                    className="text-xs h-10 gap-2 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    Usar mismo Logotipo como Favicon
+                  </Button>
+                )}
+              </div>
+
+              {/* URL externa de favicon */}
+              <div className="pt-2 border-t border-border/60">
+                <label className="text-[11px] font-semibold text-muted-foreground block mb-1.5">
+                  O vincular favicon mediante URL:
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Globe className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="url"
+                      placeholder="https://ejemplo.com/favicon.ico"
+                      value={urlFaviconInput}
+                      onChange={(e) => setUrlFaviconInput(e.target.value)}
+                      className="pl-8 text-xs h-9"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    className="h-9 text-xs"
+                    onClick={() => {
+                      if (urlFaviconInput.trim()) {
+                        setCustomFaviconUrl(urlFaviconInput.trim());
+                        toast.success("Favicon actualizado desde URL");
+                      }
+                    }}
+                  >
+                    Aplicar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Columna Derecha: Vista Previa en Tiempo Real de Marca */}
+          <div className="lg:col-span-5 space-y-4">
+            <div className="p-5 rounded-3xl bg-card border border-border shadow-sm space-y-4 h-full flex flex-col justify-between">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block mb-1">
+                  Vista Previa en Tiempo Real
+                </span>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Así se visualiza su identidad en los diferentes entornos del sistema:
+                </p>
+
+                <div className="space-y-4">
+                  {/* Mockup 1: Pestaña del navegador con favicon */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-semibold text-muted-foreground">
+                      Pestaña del Navegador Web:
+                    </span>
+                    <div className="bg-neutral-800 text-neutral-200 rounded-xl px-3 py-2 flex items-center gap-2.5 max-w-xs shadow-inner border border-neutral-700">
+                      {customFaviconUrl ? (
+                        <img
+                          src={customFaviconUrl}
+                          alt="Favicon Preview"
+                          className="w-4 h-4 object-contain rounded-xs shrink-0"
+                        />
+                      ) : (
+                        <Flame className="w-4 h-4 text-orange-500 shrink-0" />
+                      )}
+                      <span className="text-[11px] font-medium truncate">
+                        PideGas — Tu balón de gas exacto
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Mockup 2: Cabecera Web Pública (Fondo Blanco) */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-semibold text-muted-foreground">
+                      Cabecera Web Pública (Fondo Blanco):
+                    </span>
+                    <div className="p-3 bg-white rounded-2xl border border-neutral-200 shadow-xs flex items-center justify-between">
+                      <BrandLogo variant="dark" />
+                      <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-orange-500 text-white">
+                        Pedir Ahora
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Mockup 3: Cabecera Menú Lateral / Admin (Fondo Oscuro) */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-semibold text-muted-foreground">
+                      Barra Lateral de Administración (Fondo Oscuro):
+                    </span>
+                    <div className="p-3 bg-neutral-900 rounded-2xl border border-neutral-800 shadow-xs flex items-center justify-between">
+                      <div
+                        className={`flex items-center flex-1 transition-all ${
+                          customLogoSidebarAlign === "center"
+                            ? "justify-center"
+                            : customLogoSidebarAlign === "right"
+                            ? "justify-end"
+                            : "justify-start"
+                        }`}
+                        style={{
+                          paddingLeft: customLogoSidebarAlign === "left" ? `${customLogoSidebarOffset ?? 8}px` : undefined,
+                          paddingRight: customLogoSidebarAlign === "right" ? `${customLogoSidebarOffset ?? 8}px` : undefined,
+                        }}
+                      >
+                        <BrandLogo variant="light" size="sm" />
+                      </div>
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 shrink-0">
+                        Admin
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-muted/60 text-[11px] text-muted-foreground flex items-center gap-2 mt-4">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>Los cambios se guardan automáticamente en su navegador.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================
           2. SECCIÓN: MODO DEL SISTEMA (Light / Dark / Auto)
          ======================================================== */}
       <div className="space-y-4">
@@ -178,7 +685,7 @@ export default function ConfiguracionTemasPage() {
           <div>
             <h2 className="text-base font-bold text-foreground flex items-center gap-2">
               <Sun className="w-4 h-4 text-primary" />
-              1. Modo de Pantalla (Luz / Oscuridad)
+              2. Modo de Pantalla (Luz / Oscuridad)
             </h2>
             <p className="text-xs text-muted-foreground">
               Seleccione la iluminación base para el contraste de textos e interfaces

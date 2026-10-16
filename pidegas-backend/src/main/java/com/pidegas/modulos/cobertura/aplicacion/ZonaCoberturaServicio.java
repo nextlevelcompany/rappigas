@@ -186,6 +186,22 @@ public class ZonaCoberturaServicio {
     }
 
     private EmpresaDetalleDto mapearEmpresaADto(Empresa empresa) {
+        Double latitud = null;
+        Double longitud = null;
+        String zonaNombre = null;
+        try {
+            List<ZonaCobertura> zonas = zonaCoberturaRepositorio.findByTenantIdAndActivaTrue(empresa.getId());
+            if (!zonas.isEmpty()) {
+                ZonaCobertura z = zonas.get(0);
+                zonaNombre = z.getNombre();
+                if (z.getGeometria() != null) {
+                    org.locationtech.jts.geom.Point centroid = z.getGeometria().getCentroid();
+                    latitud = centroid.getY();
+                    longitud = centroid.getX();
+                }
+            }
+        } catch (Exception ignored) {}
+
         return new EmpresaDetalleDto(
                 empresa.getPublicId(),
                 empresa.getRuc(),
@@ -196,7 +212,13 @@ public class ZonaCoberturaServicio {
                 empresa.getDireccionFiscal(),
                 empresa.getLogoUrl(),
                 empresa.getEstado(),
-                empresa.getCreatedAt()
+                empresa.getCreatedAt(),
+                null,
+                null,
+                null,
+                latitud,
+                longitud,
+                zonaNombre
         );
     }
 }

@@ -20,6 +20,7 @@ import {
   ChevronRight,
   PhoneCall,
 } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 
 export function PublicNavbar() {
   const router = useRouter();
@@ -103,22 +104,7 @@ export function PublicNavbar() {
         <div className="flex items-center justify-between">
           {/* Logo PideGas */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-orange-600 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-105 transition-transform">
-              <Flame className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xl font-black tracking-tight text-white">
-                  Pide<span className="text-orange-500">Gas</span>
-                </span>
-                <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[10px] py-0 px-1.5 font-bold">
-                  Gas Perú
-                </Badge>
-              </div>
-              <p className="text-[10px] text-slate-400 tracking-wider font-medium uppercase -mt-0.5">
-                Gas de Cocina Seguro
-              </p>
-            </div>
+            <BrandLogo variant="light" />
           </Link>
 
           {/* Enlaces de Navegación de Escritorio */}
@@ -181,7 +167,7 @@ export function PublicNavbar() {
               asChild
               className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs shadow-md shadow-orange-600/30"
             >
-              <Link href="/cliente/tienda">
+              <Link href="/pedir">
                 <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
                 Pedir Balón de Gas
               </Link>
@@ -293,7 +279,7 @@ export function PublicNavbar() {
               asChild
               className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm"
             >
-              <Link href="/cliente/tienda" onClick={() => setMenuAbierto(false)}>
+              <Link href="/pedir" onClick={() => setMenuAbierto(false)}>
                 <ShoppingBag className="w-4 h-4 mr-2" />
                 Pedir Balón de Gas Ahora
               </Link>

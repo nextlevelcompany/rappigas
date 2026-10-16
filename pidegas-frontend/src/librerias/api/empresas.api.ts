@@ -40,6 +40,10 @@ export interface EmpresaDetalle {
   adminNombre?: string;
   adminEmail?: string;
   adminTelefono?: string;
+  latitud?: number;
+  longitud?: number;
+  zonaNombre?: string;
+  tieneCoberturaDirecta?: boolean;
 }
 
 export const empresasApi = {
@@ -90,6 +94,20 @@ export const empresasApi = {
       method: "PATCH",
       datos: { nuevoEstado, motivo },
     });
+  },
+
+  // Super Admin: Cambiar / resetear contraseña del administrador de la distribuidora
+  cambiarPasswordEmpresaAdmin: async (
+    publicId: string,
+    nuevaPassword: string
+  ): Promise<{ mensaje: string; empresaId: string }> => {
+    return peticionHttp<{ mensaje: string; empresaId: string }>(
+      `/admin/empresas/${publicId}/password`,
+      {
+        method: "PATCH",
+        datos: { nuevaPassword },
+      }
+    );
   },
 
   // Público / Clientes: Directorio de empresas aprobadas

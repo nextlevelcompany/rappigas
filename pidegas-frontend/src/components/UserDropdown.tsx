@@ -111,12 +111,14 @@ export function UserDropdown() {
               </DropdownMenuItem>
             )}
 
-            <DropdownMenuItem asChild className="gap-2 h-9 cursor-pointer">
-              <Link href="/admin/configuracion">
-                <Palette className="size-4 text-primary" />
-                <span>Personalizar Temas</span>
-              </Link>
-            </DropdownMenuItem>
+            {usuarioActivo?.rol === "ADMIN" && (
+              <DropdownMenuItem asChild className="gap-2 h-9 cursor-pointer">
+                <Link href="/admin/configuracion">
+                  <Palette className="size-4 text-primary" />
+                  <span>Personalizar Temas</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
 
             <DropdownMenuSeparator className="my-2" />
 

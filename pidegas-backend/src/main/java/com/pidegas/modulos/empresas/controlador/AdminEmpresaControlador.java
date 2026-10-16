@@ -5,6 +5,7 @@ import com.pidegas.modulos.analytics.dto.DashboardEmpresaDto;
 import com.pidegas.modulos.empresas.aplicacion.EmpresaServicio;
 import com.pidegas.modulos.empresas.dominio.EstadoEmpresa;
 import com.pidegas.modulos.empresas.dto.CambiarEstadoEmpresaDto;
+import com.pidegas.modulos.empresas.dto.CambiarPasswordEmpresaDto;
 import com.pidegas.modulos.empresas.dto.EmpresaDetalleDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -56,5 +58,17 @@ public class AdminEmpresaControlador {
             @PathVariable UUID publicId,
             @Valid @RequestBody CambiarEstadoEmpresaDto dto) {
         return ResponseEntity.ok(empresaServicio.cambiarEstadoEmpresa(publicId, dto.nuevoEstado()));
+    }
+
+    @PatchMapping("/{publicId}/password")
+    @Operation(summary = "Cambiar contraseña del administrador de la distribuidora", description = "Permite al Super Administrador cambiar la contraseña de acceso de una empresa registrada.")
+    public ResponseEntity<Map<String, String>> cambiarPassword(
+            @PathVariable UUID publicId,
+            @Valid @RequestBody CambiarPasswordEmpresaDto dto) {
+        empresaServicio.cambiarPasswordAdminEmpresa(publicId, dto.nuevaPassword());
+        return ResponseEntity.ok(Map.of(
+                "mensaje", "Contraseña del administrador de la distribuidora actualizada exitosamente",
+                "empresaId", publicId.toString()
+        ));
     }
 }

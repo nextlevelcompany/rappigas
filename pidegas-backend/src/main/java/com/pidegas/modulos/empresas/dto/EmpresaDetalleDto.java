@@ -17,7 +17,10 @@ public record EmpresaDetalleDto(
         Instant createdAt,
         String adminNombre,
         String adminEmail,
-        String adminTelefono
+        String adminTelefono,
+        Double latitud,
+        Double longitud,
+        String zonaNombre
 ) {
     public EmpresaDetalleDto(
             UUID publicId,
@@ -32,6 +35,25 @@ public record EmpresaDetalleDto(
             Instant createdAt
     ) {
         this(publicId, ruc, nombreComercial, razonSocial, telefono, emailContacto,
-             direccionFiscal, logoUrl, estado, createdAt, null, null, null);
+             direccionFiscal, logoUrl, estado, createdAt, null, null, null, null, null, null);
+    }
+
+    public EmpresaDetalleDto(
+            UUID publicId,
+            String ruc,
+            String nombreComercial,
+            String razonSocial,
+            String telefono,
+            String emailContacto,
+            String direccionFiscal,
+            String logoUrl,
+            EstadoEmpresa estado,
+            Instant createdAt,
+            String adminNombre,
+            String adminEmail,
+            String adminTelefono
+    ) {
+        this(publicId, ruc, nombreComercial, razonSocial, telefono, emailContacto,
+             direccionFiscal, logoUrl, estado, createdAt, adminNombre, adminEmail, adminTelefono, null, null, null);
     }
 }

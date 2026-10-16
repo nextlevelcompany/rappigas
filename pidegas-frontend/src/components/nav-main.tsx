@@ -35,14 +35,14 @@ function NavItem({ item, pathname }: { item: any; pathname: string }) {
   };
 
   const parentActive = isParentActive(item);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(item.isActive || parentActive);
 
-  // Keep the submenu open when the current route belongs to this parent.
+  // Keep the submenu open when the current route belongs to this parent or item.isActive is true.
   useEffect(() => {
-    if (parentActive) {
+    if (parentActive || item.isActive) {
       setOpen(true);
     }
-  }, [pathname, parentActive]);
+  }, [pathname, parentActive, item.isActive]);
 
   if (item.items) {
     return (

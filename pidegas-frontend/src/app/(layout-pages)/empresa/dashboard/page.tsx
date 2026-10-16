@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { RoleGuardAlert } from "@/components/auth/role-guard-alert";
 import { analyticsApi, DashboardEmpresaDto } from "@/librerias/api/analytics.api";
+import Link from "next/link";
 import {
   Flame,
   TrendingUp,
@@ -19,6 +20,10 @@ import {
   RefreshCw,
   CreditCard,
   Package,
+  Bike,
+  MapPin,
+  ShieldCheck,
+  ChevronRight,
 } from "lucide-react";
 
 export default function EmpresaDashboardPage() {
@@ -91,6 +96,106 @@ export default function EmpresaDashboardPage() {
           <RefreshCw className={`w-4 h-4 ${cargando ? "animate-spin" : ""}`} />
           Actualizar Datos
         </Button>
+      </div>
+
+      {/* Acceso Rápido a las Áreas Operativas del Distribuidor */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <Link
+          href="/empresa/pedidos"
+          className="p-4 rounded-2xl border bg-card hover:border-orange-500 hover:shadow-md transition group flex flex-col justify-between"
+        >
+          <div className="flex items-center justify-between">
+            <div className="p-2.5 rounded-xl bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 group-hover:scale-110 transition-transform">
+              <Truck className="w-5 h-5" />
+            </div>
+            {(datos?.pedidosPendientes ?? 0) > 0 && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white animate-pulse">
+                {datos?.pedidosPendientes} Nuevos
+              </span>
+            )}
+          </div>
+          <div className="mt-3">
+            <h4 className="text-xs font-bold text-neutral-900 dark:text-white group-hover:text-orange-600 transition-colors">
+              Despacho en Vivo
+            </h4>
+            <p className="text-[11px] text-neutral-400 mt-0.5">Pedidos y Kanban</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/empresa/catalogo"
+          className="p-4 rounded-2xl border bg-card hover:border-orange-500 hover:shadow-md transition group flex flex-col justify-between"
+        >
+          <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 w-fit group-hover:scale-110 transition-transform">
+            <Flame className="w-5 h-5" />
+          </div>
+          <div className="mt-3">
+            <h4 className="text-xs font-bold text-neutral-900 dark:text-white group-hover:text-orange-600 transition-colors">
+              Catálogo de Balones
+            </h4>
+            <p className="text-[11px] text-neutral-400 mt-0.5">Precios y Fotos</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/empresa/ventas"
+          className="p-4 rounded-2xl border bg-card hover:border-orange-500 hover:shadow-md transition group flex flex-col justify-between"
+        >
+          <div className="p-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 w-fit group-hover:scale-110 transition-transform">
+            <DollarSign className="w-5 h-5" />
+          </div>
+          <div className="mt-3">
+            <h4 className="text-xs font-bold text-neutral-900 dark:text-white group-hover:text-orange-600 transition-colors">
+              Registro de Ventas
+            </h4>
+            <p className="text-[11px] text-neutral-400 mt-0.5">Pedidos Entregados</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/empresa/flota"
+          className="p-4 rounded-2xl border bg-card hover:border-orange-500 hover:shadow-md transition group flex flex-col justify-between"
+        >
+          <div className="p-2.5 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 w-fit group-hover:scale-110 transition-transform">
+            <Bike className="w-5 h-5" />
+          </div>
+          <div className="mt-3">
+            <h4 className="text-xs font-bold text-neutral-900 dark:text-white group-hover:text-orange-600 transition-colors">
+              Flota y Repartidores
+            </h4>
+            <p className="text-[11px] text-neutral-400 mt-0.5">Motos y Choferes</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/empresa/cobertura"
+          className="p-4 rounded-2xl border bg-card hover:border-orange-500 hover:shadow-md transition group flex flex-col justify-between"
+        >
+          <div className="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 w-fit group-hover:scale-110 transition-transform">
+            <MapPin className="w-5 h-5" />
+          </div>
+          <div className="mt-3">
+            <h4 className="text-xs font-bold text-neutral-900 dark:text-white group-hover:text-orange-600 transition-colors">
+              Zonas de Cobertura
+            </h4>
+            <p className="text-[11px] text-neutral-400 mt-0.5">Polígonos y Tiempos</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/empresa/soporte"
+          className="p-4 rounded-2xl border bg-card hover:border-orange-500 hover:shadow-md transition group flex flex-col justify-between"
+        >
+          <div className="p-2.5 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 w-fit group-hover:scale-110 transition-transform">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div className="mt-3">
+            <h4 className="text-xs font-bold text-neutral-900 dark:text-white group-hover:text-orange-600 transition-colors">
+              Garantías y Reclamos
+            </h4>
+            <p className="text-[11px] text-neutral-400 mt-0.5">Atención de Calidad</p>
+          </div>
+        </Link>
       </div>
 
       {/* KPI Cards Superiores */}

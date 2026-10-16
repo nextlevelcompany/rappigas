@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bodySilverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="50%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#64748b" />
+    </linearGradient>
+    <linearGradient id="meterDial" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f1f5f9" />
+    </linearGradient>
+    <linearGradient id="hoseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ea580c" />
+      <stop offset="50%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#c2410c" />
+    </linearGradient>
+    <filter id="dropShadowReg" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Manguera reforzada mallada naranja en curva -->
+  <path d="M 195 240 C 240 250, 270 310, 230 350 C 190 380, 120 340, 100 370" fill="none" stroke="url(#hoseGrad)" stroke-width="18" stroke-linecap="round" />
+  <path d="M 195 240 C 240 250, 270 310, 230 350 C 190 380, 120 340, 100 370" fill="none" stroke="#7c2d12" stroke-width="1.5" stroke-dasharray="4, 4" opacity="0.6" />
+
+  <!-- Abrazadera metálica en la unión -->
+  <rect x="186" y="232" width="16" height="16" rx="3" fill="#94a3b8" stroke="#475569" stroke-width="1.5" />
+
+  <!-- Cuerpo central del regulador (Campana de diafragma de aluminio) -->
+  <g filter="url(#dropShadowReg)">
+    <!-- Disco del regulador -->
+    <circle cx="140" cy="220" r="55" fill="url(#bodySilverGrad)" stroke="#475569" stroke-width="2" />
+    <circle cx="140" cy="220" r="46" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5" />
+    
+    <!-- Perilla central de encendido / bloqueo antifugas -->
+    <circle cx="140" cy="220" r="22" fill="#0284c7" stroke="#0369a1" stroke-width="2" />
+    <path d="M 132 215 L 140 205 L 148 215 Z" fill="#ffffff" />
+    <text x="140" y="228" font-family="Arial, sans-serif" font-size="7" font-weight="900" fill="#ffffff" text-anchor="middle">CLICK-ON</text>
+
+    <!-- Conector rápido inferior hacia el balón -->
+    <path d="M 125 275 L 155 275 L 150 310 L 130 310 Z" fill="#475569" />
+    <rect x="122" y="308" width="36" height="8" rx="2" fill="#0284c7" />
+  </g>
+
+  <!-- Reloj Manómetro Superior con Indicador de Gas (Aguja) -->
+  <g transform="translate(140, 115)" filter="url(#dropShadowReg)">
+    <!-- Base de latón -->
+    <rect x="-8" y="38" width="16" height="15" fill="#ca8a04" />
+    
+    <!-- Bisel de acero inoxidable cromado -->
+    <circle cx="0" cy="0" r="42" fill="#94a3b8" stroke="#334155" stroke-width="2.5" />
+    <circle cx="0" cy="0" r="38" fill="url(#meterDial)" />
+
+    <!-- Arcos de nivel de gas: Rojo (Bajo), Amarillo (Medio), Verde (Lleno) -->
+    <!-- Rojo: 180° a 230° -->
+    <path d="M -28 10 A 30 30 0 0 1 -20 -22" fill="none" stroke="#ef4444" stroke-width="6" stroke-linecap="round" />
+    <!-- Amarillo: 230° a 290° -->
+    <path d="M -18 -24 A 30 30 0 0 1 12 -28" fill="none" stroke="#f59e0b" stroke-width="6" />
+    <!-- Verde: 290° a 360° -->
+    <path d="M 14 -27 A 30 30 0 0 1 29 6" fill="none" stroke="#10b981" stroke-width="6" stroke-linecap="round" />
+
+    <!-- Texto de escalas -->
+    <text x="-16" y="2" font-family="Arial, sans-serif" font-size="5" font-weight="800" fill="#dc2626">VACÍO</text>
+    <text x="0" y="-12" font-family="Arial, sans-serif" font-size="5" font-weight="800" fill="#d97706" text-anchor="middle">MEDIO</text>
+    <text x="16" y="2" font-family="Arial, sans-serif" font-size="5" font-weight="800" fill="#059669">LLENO</text>
+    <text x="0" y="16" font-family="Arial, sans-serif" font-size="5.5" font-weight="900" fill="#03246b" text-anchor="middle">GLP BAR / PSI</text>
+
+    <!-- Aguja indicadora (apuntando al verde/lleno) -->
+    <line x1="0" y1="0" x2="16" y2="-18" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" />
+    <circle cx="0" cy="0" r="4" fill="#0f172a" />
+    <circle cx="0" cy="0" r="1.5" fill="#ffffff" />
+  </g>
+
+  <!-- Sello Osinergmin Certificado -->
+  <g transform="translate(68, 160)">
+    <rect x="-10" y="-10" width="60" height="20" rx="4" fill="#03246b" stroke="#ffffff" stroke-width="1.5" filter="url(#dropShadowReg)" />
+    <text x="20" y="3" font-family="Arial, sans-serif" font-size="7" font-weight="900" fill="#ffffff" text-anchor="middle">OSINERGMIN</text>
+  </g>
+</svg>

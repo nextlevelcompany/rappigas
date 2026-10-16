@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="balonSteelGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="20%" stop-color="#64748b" />
+      <stop offset="50%" stop-color="#94a3b8" />
+      <stop offset="80%" stop-color="#64748b" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <filter id="dropShadow45" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Sombra en la base -->
+  <ellipse cx="150" cy="385" rx="70" ry="12" fill="#94a3b8" opacity="0.6" />
+
+  <!-- Base de acero macizo -->
+  <path d="M 108 360 L 108 376 Q 150 384 192 376 L 192 360 Z" fill="#1e293b" />
+
+  <!-- Cuerpo largo y robusto de 45kg -->
+  <g filter="url(#dropShadow45)">
+    <path d="
+      M 95 65 
+      C 95 35, 205 35, 205 65 
+      L 205 355 
+      C 205 375, 95 375, 95 355 
+      Z" 
+      fill="url(#balonSteelGrad)" 
+    />
+  </g>
+
+  <!-- Reflejo de metal brillante -->
+  <path d="M 115 55 Q 120 200 115 355" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity="0.4" fill="none" />
+  <path d="M 125 60 Q 128 200 125 350" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.5" fill="none" />
+
+  <!-- Aros de refuerzo estructural tipo tanque industrial -->
+  <ellipse cx="150" cy="140" rx="54" ry="4" fill="none" stroke="#1e293b" stroke-width="3" opacity="0.8" />
+  <ellipse cx="150" cy="270" rx="54" ry="4" fill="none" stroke="#1e293b" stroke-width="3" opacity="0.8" />
+
+  <!-- Collarín / Jaula de protección de válvula -->
+  <path d="M 110 50 C 110 20, 190 20, 190 50 L 188 56 C 188 32, 112 32, 112 56 Z" fill="#cbd5e1" />
+  <rect x="120" y="28" width="20" height="8" rx="4" fill="#0f172a" />
+  <rect x="160" y="28" width="20" height="8" rx="4" fill="#0f172a" />
+
+  <!-- Válvula industrial reforzada con volante -->
+  <g transform="translate(150, 36)">
+    <rect x="-8" y="-8" width="16" height="12" fill="#ca8a04" />
+    <ellipse cx="0" cy="-10" rx="14" ry="5" fill="#a16207" stroke="#fde047" stroke-width="1" />
+    <rect x="-12" y="-4" width="24" height="6" rx="2" fill="#dc2626" />
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="4" font-weight="900" fill="#ffffff" text-anchor="middle">GLP 45</text>
+  </g>
+
+  <!-- Banda azul institucional Osinergmin -->
+  <rect x="96" y="170" width="108" height="65" fill="#03246b" opacity="0.9" />
+  <rect x="96" y="167" width="108" height="3" fill="#ea580c" />
+  <rect x="96" y="235" width="108" height="3" fill="#ea580c" />
+
+  <text x="150" y="192" font-family="Arial, sans-serif" font-size="13" font-weight="900" fill="#ffffff" text-anchor="middle">GLP 45 KG</text>
+  <text x="150" y="206" font-family="Arial, sans-serif" font-size="7.5" font-weight="800" fill="#f97316" text-anchor="middle">USO INDUSTRIAL & COMERCIAL</text>
+  <text x="150" y="218" font-family="Arial, sans-serif" font-size="6" font-weight="600" fill="#cbd5e1" text-anchor="middle">POLLERÍAS • HOTELES • PANADERÍAS</text>
+
+  <!-- Sello de Alta Presión -->
+  <g transform="translate(178, 305)">
+    <circle cx="0" cy="0" r="15" fill="#ea580c" stroke="#ffffff" stroke-width="2" />
+    <text x="0" y="-1" font-family="Arial, sans-serif" font-size="5" font-weight="900" fill="#ffffff" text-anchor="middle">PRESIÓN</text>
+    <text x="0" y="7" font-family="Arial, sans-serif" font-size="7" font-weight="900" fill="#ffffff" text-anchor="middle">45 KG</text>
+  </g>
+</svg>
