@@ -30,6 +30,11 @@ import {
   Image as ImageIcon,
   Trash2,
   Globe,
+  MessageCircle,
+  Phone,
+  Send,
+  Smartphone,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,6 +100,9 @@ export default function ConfiguracionTemasPage() {
     customLogoSidebarAlign,
     customLogoSidebarOffset,
     customFaviconUrl,
+    whatsappNumber,
+    whatsappDefaultMessage,
+    whatsappEnabled,
     setTheme,
     setPrimaryColor,
     setRadius,
@@ -103,6 +111,10 @@ export default function ConfiguracionTemasPage() {
     setCustomLogoSidebarAlign,
     setCustomLogoSidebarOffset,
     setCustomFaviconUrl,
+    setWhatsappNumber,
+    setWhatsappDefaultMessage,
+    setWhatsappEnabled,
+    resetWhatsapp,
     resetLogo,
     resetToDefaults,
   } = useUIThemeStore();
@@ -110,6 +122,9 @@ export default function ConfiguracionTemasPage() {
   const [customHex, setCustomHex] = useState(primaryColor || "#ea580c");
   const [urlLogoInput, setUrlLogoInput] = useState("");
   const [urlFaviconInput, setUrlFaviconInput] = useState("");
+  const [wspNumeroInput, setWspNumeroInput] = useState(whatsappNumber || "51999999999");
+  const [wspMensajeInput, setWspMensajeInput] = useState(whatsappDefaultMessage || "Hola PideGas, deseo pedir un balón de gas");
+  const [wspActivoInput, setWspActivoInput] = useState(whatsappEnabled !== false);
   const [isDraggingLogo, setIsDraggingLogo] = useState(false);
   const [montado, setMontado] = useState(false);
 
@@ -121,7 +136,14 @@ export default function ConfiguracionTemasPage() {
     if (primaryColor) {
       setCustomHex(primaryColor);
     }
-  }, [primaryColor]);
+    if (whatsappNumber) {
+      setWspNumeroInput(whatsappNumber);
+    }
+    if (whatsappDefaultMessage) {
+      setWspMensajeInput(whatsappDefaultMessage);
+    }
+    setWspActivoInput(whatsappEnabled !== false);
+  }, [primaryColor, whatsappNumber, whatsappDefaultMessage, whatsappEnabled]);
 
   // Manejador de subida de archivos (PNG, JPG, SVG, WEBP, ICO)
   const handleProcessImageFile = (file: File, type: "logo" | "favicon") => {
@@ -178,14 +200,44 @@ export default function ConfiguracionTemasPage() {
     }
   };
 
+  const handleGuardarWhatsapp = () => {
+    const numeroLimpio = wspNumeroInput.replace(/[^0-9]/g, "");
+    if (!numeroLimpio || numeroLimpio.length < 8) {
+      toast.error("Número de WhatsApp inválido", {
+        description: "Ingrese un número válido con al menos 9 dígitos (ej. 987654321 o 51987654321).",
+      });
+      return;
+    }
+
+    setWhatsappNumber(numeroLimpio);
+    setWhatsappDefaultMessage(wspMensajeInput);
+    setWhatsappEnabled(wspActivoInput);
+    toast.success("WhatsApp Oficial Actualizado", {
+      description: `Se configuró el número +${numeroLimpio} para pedidos y atención en toda la plataforma.`,
+    });
+  };
+
+  const handleRestablecerWhatsapp = () => {
+    resetWhatsapp();
+    setWspNumeroInput("51999999999");
+    setWspMensajeInput("Hola PideGas, deseo pedir un balón de gas");
+    setWspActivoInput(true);
+    toast.info("WhatsApp restablecido", {
+      description: "Se restauró el número y mensaje de WhatsApp predeterminados.",
+    });
+  };
+
   const handleReset = () => {
     resetToDefaults();
     setMode("system");
     setCustomHex("#ea580c");
     setUrlLogoInput("");
     setUrlFaviconInput("");
+    setWspNumeroInput("51999999999");
+    setWspMensajeInput("Hola PideGas, deseo pedir un balón de gas");
+    setWspActivoInput(true);
     toast.info("Configuración restablecida", {
-      description: "Se restauraron los temas, colores, logotipo y bordes originales del sistema.",
+      description: "Se restauraron los temas, colores, logotipo, WhatsApp y bordes originales del sistema.",
     });
   };
 
@@ -678,14 +730,188 @@ export default function ConfiguracionTemasPage() {
       </div>
 
       {/* ========================================================
-          2. SECCIÓN: MODO DEL SISTEMA (Light / Dark / Auto)
+          2. SECCIÓN: CANAL OFICIAL DE ATENCIÓN Y WHATSAPP
+         ======================================================== */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-[#25D366]/10 text-[#25D366]">
+                <MessageCircle className="w-4 h-4" />
+              </div>
+              2. Canal Oficial de Atención y WhatsApp
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Configure el número telefónico oficial de WhatsApp de la empresa y el mensaje predeterminado para pedidos en línea
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                wspActivoInput
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                  : "bg-muted text-muted-foreground border border-border"
+              }`}
+            >
+              <span className={`size-1.5 rounded-full ${wspActivoInput ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground"}`} />
+              {wspActivoInput ? "WhatsApp Activo" : "Desactivado"}
+            </span>
+          </div>
+        </div>
+
+        <div className="p-6 rounded-2xl border border-border bg-card shadow-xs space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Columna Izquierda: Formulario de Configuración de WhatsApp */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-[#25D366]" />
+                  Número de Teléfono de WhatsApp
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 px-3 py-2 rounded-xl bg-muted/70 border border-border text-xs font-bold text-foreground shrink-0 select-none">
+                    <span>🇵🇪 +51</span>
+                  </div>
+                  <Input
+                    type="text"
+                    value={wspNumeroInput}
+                    onChange={(e) => setWspNumeroInput(e.target.value)}
+                    placeholder="999 999 999"
+                    className="h-10 text-sm font-semibold rounded-xl bg-background"
+                  />
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Ingrese el número con o sin código de país (ej. 987654321 o 51987654321). Se limpiará automáticamente para el enlace directo de WhatsApp.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Send className="w-3.5 h-3.5 text-primary" />
+                  Mensaje Predeterminado al Iniciar Conversación
+                </label>
+                <textarea
+                  value={wspMensajeInput}
+                  onChange={(e) => setWspMensajeInput(e.target.value)}
+                  rows={3}
+                  placeholder="Hola PideGas, deseo pedir un balón de gas a domicilio..."
+                  className="w-full text-sm rounded-xl border border-border bg-background p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 text-foreground resize-none"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Texto que el cliente verá preescrito en su chat al hacer clic en el botón de WhatsApp.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/30">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold text-foreground block">
+                    Habilitar WhatsApp en la Web Pública
+                  </span>
+                  <span className="text-[11px] text-muted-foreground block">
+                    Muestra el enlace en la cabecera superior y el botón flotante de pedidos
+                  </span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={wspActivoInput}
+                    onChange={(e) => setWspActivoInput(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#25D366]"></div>
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <Button
+                  type="button"
+                  onClick={handleGuardarWhatsapp}
+                  className="bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs gap-1.5 cursor-pointer rounded-xl h-9.5 px-4 shadow-sm"
+                >
+                  <Check className="w-4 h-4" />
+                  Guardar Configuración de WhatsApp
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRestablecerWhatsapp}
+                  className="text-xs gap-1.5 cursor-pointer rounded-xl h-9.5"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Restablecer
+                </Button>
+              </div>
+            </div>
+
+            {/* Columna Derecha: Previsualización en Vivo de WhatsApp */}
+            <div className="lg:col-span-5 bg-muted/40 p-4 rounded-2xl border border-border/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5 uppercase tracking-wider">
+                  <Smartphone className="w-3.5 h-3.5" />
+                  Vista Previa del Chat
+                </span>
+                <span className="text-[10px] text-muted-foreground">En Vivo</span>
+              </div>
+
+              {/* Mockup de pantalla WhatsApp */}
+              <div className="rounded-xl overflow-hidden border border-border shadow-md bg-[#0b141a] text-white font-sans text-xs">
+                {/* Header del Chat */}
+                <div className="bg-[#1f2c34] p-3 flex items-center gap-3 border-b border-[#2a3942]">
+                  <div className="w-9 h-9 rounded-full bg-[#25D366] flex items-center justify-center font-bold text-white shrink-0">
+                    <MessageCircle className="w-5 h-5 fill-white text-[#25D366]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-white text-xs truncate flex items-center gap-1">
+                      PideGas Oficial
+                      <CheckCircle2 className="w-3 h-3 text-[#25D366] shrink-0 fill-[#25D366]/20" />
+                    </div>
+                    <div className="text-[10px] text-[#25D366] font-medium">
+                      +{wspNumeroInput.replace(/[^0-9]/g, "") || "51999999999"} • En línea
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fondo de conversación */}
+                <div className="p-4 bg-[radial-gradient(#1f2c34_1px,transparent_1px)] bg-[size:16px_16px] bg-[#0b141a] min-h-[140px] flex flex-col justify-end space-y-2">
+                  <div className="bg-[#005c4b] text-[#e9edef] p-3 rounded-xl rounded-tr-none max-w-[85%] self-end shadow-xs text-xs space-y-1">
+                    <p className="leading-relaxed whitespace-pre-wrap break-words">
+                      {wspMensajeInput || "Hola PideGas, deseo pedir un balón de gas"}
+                    </p>
+                    <div className="text-[9px] text-[#8696a0] text-right flex items-center justify-end gap-1">
+                      <span>12:00 PM</span>
+                      <span className="text-[#53bdeb]">✓✓</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botón de Prueba en Vivo */}
+              <div className="pt-1">
+                <a
+                  href={`https://wa.me/${wspNumeroInput.replace(/[^0-9]/g, "") || "51999999999"}?text=${encodeURIComponent(wspMensajeInput || "Hola PideGas")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] font-bold text-xs transition cursor-pointer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Probar Enlace en WhatsApp Web
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================
+          3. SECCIÓN: MODO DEL SISTEMA (Light / Dark / Auto)
          ======================================================== */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-foreground flex items-center gap-2">
               <Sun className="w-4 h-4 text-primary" />
-              2. Modo de Pantalla (Luz / Oscuridad)
+              3. Modo de Pantalla (Luz / Oscuridad)
             </h2>
             <p className="text-xs text-muted-foreground">
               Seleccione la iluminación base para el contraste de textos e interfaces

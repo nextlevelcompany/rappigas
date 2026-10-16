@@ -12,6 +12,12 @@ export interface UIThemeState {
   customLogoSidebarAlign: "left" | "center" | "right"
   customLogoSidebarOffset: number // in pixels (-20 to 40, default 0)
   customFaviconUrl: string
+  
+  // WhatsApp Configuration
+  whatsappNumber: string // ej: "51999999999" o "+51 999 999 999"
+  whatsappDefaultMessage: string // ej: "Hola PideGas, deseo pedir un balón de gas"
+  whatsappEnabled: boolean // true / false
+
   setTheme: (theme: string) => void
   setPrimaryColor: (color: string) => void
   setRadius: (radius: string) => void
@@ -21,6 +27,10 @@ export interface UIThemeState {
   setCustomLogoSidebarAlign: (align: "left" | "center" | "right") => void
   setCustomLogoSidebarOffset: (offset: number) => void
   setCustomFaviconUrl: (url: string) => void
+  setWhatsappNumber: (number: string) => void
+  setWhatsappDefaultMessage: (message: string) => void
+  setWhatsappEnabled: (enabled: boolean) => void
+  resetWhatsapp: () => void
   resetLogo: () => void
   resetToDefaults: () => void
   loadTheme: () => void
@@ -36,6 +46,9 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
   customLogoSidebarAlign: "left", // Default aligned to the left
   customLogoSidebarOffset: 8, // 8px default padding from left
   customFaviconUrl: "",
+  whatsappNumber: "51999999999",
+  whatsappDefaultMessage: "Hola PideGas, deseo pedir un balón de gas",
+  whatsappEnabled: true,
 
   setTheme: (theme) => {
     if (typeof window !== "undefined") {
@@ -108,6 +121,40 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
     set({ customFaviconUrl })
   },
 
+  setWhatsappNumber: (whatsappNumber) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("ui-whatsapp-number", whatsappNumber)
+    }
+    set({ whatsappNumber })
+  },
+
+  setWhatsappDefaultMessage: (whatsappDefaultMessage) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("ui-whatsapp-message", whatsappDefaultMessage)
+    }
+    set({ whatsappDefaultMessage })
+  },
+
+  setWhatsappEnabled: (whatsappEnabled) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("ui-whatsapp-enabled", String(whatsappEnabled))
+    }
+    set({ whatsappEnabled })
+  },
+
+  resetWhatsapp: () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("ui-whatsapp-number")
+      localStorage.removeItem("ui-whatsapp-message")
+      localStorage.removeItem("ui-whatsapp-enabled")
+    }
+    set({
+      whatsappNumber: "51999999999",
+      whatsappDefaultMessage: "Hola PideGas, deseo pedir un balón de gas",
+      whatsappEnabled: true,
+    })
+  },
+
   resetLogo: () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("ui-custom-logo")
@@ -136,6 +183,9 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
       localStorage.removeItem("ui-custom-logo-align")
       localStorage.removeItem("ui-custom-logo-offset")
       localStorage.removeItem("ui-custom-favicon")
+      localStorage.removeItem("ui-whatsapp-number")
+      localStorage.removeItem("ui-whatsapp-message")
+      localStorage.removeItem("ui-whatsapp-enabled")
     }
     set({
       theme: "",
@@ -147,6 +197,9 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
       customLogoSidebarAlign: "left",
       customLogoSidebarOffset: 8,
       customFaviconUrl: "",
+      whatsappNumber: "51999999999",
+      whatsappDefaultMessage: "Hola PideGas, deseo pedir un balón de gas",
+      whatsappEnabled: true,
     })
   },
 
@@ -161,6 +214,9 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
       const savedLogoAlign = localStorage.getItem("ui-custom-logo-align") as "left" | "center" | "right" | null
       const savedLogoOffset = localStorage.getItem("ui-custom-logo-offset")
       const savedFavicon = localStorage.getItem("ui-custom-favicon") || ""
+      const savedWhatsappNumber = localStorage.getItem("ui-whatsapp-number") || "51999999999"
+      const savedWhatsappMsg = localStorage.getItem("ui-whatsapp-message") || "Hola PideGas, deseo pedir un balón de gas"
+      const savedWhatsappEnabled = localStorage.getItem("ui-whatsapp-enabled") !== "false"
 
       set({
         theme: savedTheme,
@@ -172,6 +228,9 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
         customLogoSidebarAlign: savedLogoAlign || "left",
         customLogoSidebarOffset: savedLogoOffset ? parseInt(savedLogoOffset, 10) : 8,
         customFaviconUrl: savedFavicon,
+        whatsappNumber: savedWhatsappNumber,
+        whatsappDefaultMessage: savedWhatsappMsg,
+        whatsappEnabled: savedWhatsappEnabled,
       })
     }
   },

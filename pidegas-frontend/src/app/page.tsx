@@ -48,10 +48,23 @@ import {
 } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand-logo";
+import { useUIThemeStore } from "@/store/ui-theme.store";
 
 export default function HomePage() {
   const router = useRouter();
+  const { whatsappNumber, whatsappDefaultMessage, whatsappEnabled } = useUIThemeStore();
+  const [montado, setMontado] = useState(false);
   const [busquedaDireccion, setBusquedaDireccion] = useState("");
+
+  useEffect(() => {
+    setMontado(true);
+  }, []);
+
+  const rawWsp = (montado && whatsappNumber ? whatsappNumber : "51999999999").replace(/[^0-9]/g, "");
+  const cleanWspNumber = rawWsp.startsWith("51") ? rawWsp : `51${rawWsp}`;
+  const wspMensaje = montado && whatsappDefaultMessage ? whatsappDefaultMessage : "Hola PideGas, deseo pedir un balón de gas";
+  const wspUrl = `https://wa.me/${cleanWspNumber}?text=${encodeURIComponent(wspMensaje)}`;
+  const mostrarWsp = !montado || whatsappEnabled !== false;
 
   // Estados para el Slider con Efecto y Fondos (main-slider de Mediplace index2.html)
   const [slideActivo, setSlideActivo] = useState(0);
@@ -313,17 +326,19 @@ export default function HomePage() {
                 (01) 800-PIDE
               </a>
             </div>
-            <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
-              <MessageCircle className="w-3.5 h-3.5" />
-              <a
-                href="https://wa.me/51999999999?text=Hola%20PideGas,%20deseo%20pedir%20un%20balon%20de%20gas"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:underline"
-              >
-                WhatsApp Oficial
-              </a>
-            </div>
+            {mostrarWsp && (
+              <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                <MessageCircle className="w-3.5 h-3.5" />
+                <a
+                  href={wspUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  WhatsApp Oficial
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1596,6 +1611,23 @@ export default function HomePage() {
 
         </div>
       </footer>
+
+      {/* Botón Flotante de WhatsApp para Pedidos Directos */}
+      {mostrarWsp && (
+        <a
+          href={wspUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white px-4 py-3 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 font-bold text-sm group cursor-pointer border-2 border-white/40"
+          title="Pedir Balón de Gas por WhatsApp"
+        >
+          <div className="relative">
+            <MessageCircle className="w-5 h-5 fill-white text-[#25D366]" />
+            <span className="absolute -top-1 -right-1 size-2.5 bg-white rounded-full animate-ping" />
+          </div>
+          <span className="hidden sm:inline font-bold">Pedir por WhatsApp</span>
+        </a>
+      )}
 
     </div>
   );
