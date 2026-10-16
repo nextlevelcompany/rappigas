@@ -56,11 +56,11 @@ export function BrandLogo({
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
       <div
-        className={`rounded-2xl bg-gradient-to-tr from-[#03246b] to-[#1c58d5] flex items-center justify-center shadow-md shadow-blue-900/10 shrink-0 ${
+        className={`rounded-xl bg-gradient-to-tr from-[#03246b] to-[#1c58d5] flex items-center justify-center shadow-md shadow-blue-900/10 shrink-0 ${
           size === "sm"
-            ? "w-8 h-8 rounded-xl"
+            ? "w-8 h-8 rounded-lg"
             : size === "lg"
-            ? "w-14 h-14 rounded-3xl"
+            ? "w-14 h-14 rounded-xl"
             : "w-11 h-11"
         } ${iconClassName}`}
       >

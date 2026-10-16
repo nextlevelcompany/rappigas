@@ -22,27 +22,25 @@ import {
 
 // Helper component that encapsulates per‑item state and effects.
 function NavItem({ item, pathname }: { item: any; pathname: string }) {
-  const isActive = (url: string) => pathname === url || pathname.startsWith(url + "/");
+  const isActive = (url: string) => Boolean(url && url !== "#" && (pathname === url || pathname.startsWith(url + "/")));
 
   const isParentActive = (itm: any): boolean => {
     if (!itm.items) return false;
     return itm.items.some((sub: any) => {
       if (sub.items) {
-        return sub.items.some((child: any) => pathname.startsWith(child.url));
+        return sub.items.some((child: any) => isActive(child.url));
       }
-      return pathname.startsWith(sub.url);
+      return isActive(sub.url);
     });
   };
 
   const parentActive = isParentActive(item);
-  const [open, setOpen] = useState(item.isActive || parentActive);
+  const [open, setOpen] = useState(Boolean(item.defaultOpen || parentActive));
 
-  // Keep the submenu open when the current route belongs to this parent or item.isActive is true.
+  // Sync open state when the active route changes
   useEffect(() => {
-    if (parentActive || item.isActive) {
-      setOpen(true);
-    }
-  }, [pathname, parentActive, item.isActive]);
+    setOpen(parentActive);
+  }, [parentActive]);
 
   if (item.items) {
     return (

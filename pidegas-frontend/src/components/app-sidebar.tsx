@@ -31,7 +31,7 @@ const seccionDashboard = {
   title: "DASHBOARD",
   url: "#",
   icon: <ChartBar className="w-5 h-5" />, // using lucide icon
-  isActive: true,
+  isActive: false,
   items: [
     {
       title: "Panel Global",
@@ -49,7 +49,7 @@ const seccionCRM = {
   title: "CRM",
   url: "#",
   icon: <Building className="w-5 h-5" />, // lucide Building
-  isActive: true,
+  isActive: false,
   items: [
     { title: "Empresas", url: "/admin/empresas" },
     { title: "Contactos", url: "/admin/contactos" },
@@ -62,7 +62,7 @@ const seccionFinanzas = {
   title: "FINANZAS",
   url: "#",
   icon: <CreditCard className="w-5 h-5" />, // lucide CreditCard
-  isActive: true,
+  isActive: false,
   items: [
     { title: "Planes", url: "/admin/suscripciones" },
     { title: "Facturación", url: "/admin/facturacion" },
@@ -75,7 +75,7 @@ const seccionMonitoreo = {
   title: "MONITOREO ",
   url: "#",
   icon: <ClipboardList className="w-5 h-5" />, // lucide ClipboardList
-  isActive: true,
+  isActive: false,
   items: [
     { title: "Distribuidora", url: "/empresa/dashboard" },
     { title: "Flotas", url: "/empresa/flota" },
@@ -88,7 +88,7 @@ const seccionEstadisticas = {
   title: "ESTADISTICAS",
   url: "#",
   icon: <ChartBar className="w-5 h-5" />, // lucide ChartBar
-  isActive: true,
+  isActive: false,
   items: [
     { title: "Resumen global", url: "/admin/estadisticas/resumen" },
     { title: "Ingresos por plan", url: "/admin/estadisticas/ingresos" },
@@ -102,7 +102,7 @@ const seccionSoporteMenu = {
   title: "SOPORTE",
   url: "#",
   icon: <HelpCircle className="w-5 h-5" />, // lucide HelpCircle
-  isActive: true,
+  isActive: false,
   items: [
     { title: "Soporte", url: "/admin/soporte" },
     { title: "Comunicaciones", url: "/admin/comunicaciones" },
@@ -115,7 +115,7 @@ const seccionConfiguracion = {
   title: "CONFIGURACIÓN",
   url: "#",
   icon: <Palette className="w-5 h-5" />,
-  isActive: true,
+  isActive: false,
   items: [
     { title: "Temas y Colores", url: "/admin/configuracion" },
     { title: "Auditoría Forense", url: "/admin/auditoria" },
@@ -152,7 +152,7 @@ const seccionEmpresaOperaciones = {
   title: "PEDIDOS Y DESPACHO",
   url: "#",
   icon: <Truck className="w-5 h-5 text-orange-500" />,
-  isActive: true,
+  isActive: false,
   items: [
     {
       title: "Despacho en Vivo (Pedidos)",
@@ -173,7 +173,7 @@ const seccionEmpresaVentas = {
   title: "VENTAS Y FACTURACIÓN",
   url: "#",
   icon: <Flame className="w-5 h-5 text-amber-500" />,
-  isActive: true,
+  isActive: false,
   items: [
     {
       title: "Registro de Ventas",
@@ -198,7 +198,7 @@ const seccionEmpresaFinanzas = {
   title: "FINANZAS Y ANALÍTICA",
   url: "#",
   icon: <CreditCard className="w-5 h-5 text-emerald-500" />,
-  isActive: true,
+  isActive: false,
   items: [
     {
       title: "Panel y Analítica",
@@ -215,7 +215,7 @@ const seccionEmpresaGestion = {
   title: "CALIDAD Y MI EMPRESA",
   url: "#",
   icon: <ShieldCheck className="w-5 h-5 text-blue-500" />,
-  isActive: true,
+  isActive: false,
   items: [
     {
       title: "Incidencias y Garantías",
@@ -232,7 +232,7 @@ const seccionRepartidor = {
   title: "Repartidor",
   url: "#",
   icon: <Navigation className="w-5 h-5 text-blue-500" />,
-  isActive: true,
+  isActive: false,
   items: [
     {
       title: "Ruta y Entregas",
@@ -245,7 +245,7 @@ const seccionCliente = {
   title: "Área de Clientes",
   url: "#",
   icon: <ShoppingBag className="w-5 h-5 text-emerald-500" />,
-  isActive: true,
+  isActive: false,
   items: [
     {
       title: "Pedir Balón de Gas",

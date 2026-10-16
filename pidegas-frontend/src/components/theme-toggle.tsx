@@ -39,35 +39,37 @@ export function ThemeToggle() {
   const isDark = theme === "dark"
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          id="header-theme-toggle"
-          variant="ghost"
-          size="icon"
-          className="rounded-full w-10 h-10"
-          onClick={() => {
-            setCustomTheme("")              // ✅ REMOVE custom theme
-            setTheme(isDark ? "light" : "dark") // ✅ APPLY system theme
-          }}
-          aria-label="Toggle theme"
-        >
-          <Sun
-            className={`transition-all size-6 ${
-              isDark ? "rotate-90 scale-0" : "rotate-0 scale-100"
-            }`}
-          />
-          <Moon
-            className={`absolute size-6 transition-all ${
-              isDark ? "rotate-0 scale-100" : "-rotate-90 scale-0"
-            }`}
-          />
-        </Button>
-      </TooltipTrigger>
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            id="header-theme-toggle"
+            variant="ghost"
+            size="icon"
+            className="rounded-full w-10 h-10"
+            onClick={() => {
+              setCustomTheme("")              // ✅ REMOVE custom theme
+              setTheme(isDark ? "light" : "dark") // ✅ APPLY system theme
+            }}
+            aria-label="Toggle theme"
+          >
+            <Sun
+              className={`transition-all size-6 ${
+                isDark ? "rotate-90 scale-0" : "rotate-0 scale-100"
+              }`}
+            />
+            <Moon
+              className={`absolute size-6 transition-all ${
+                isDark ? "rotate-0 scale-100" : "-rotate-90 scale-0"
+              }`}
+            />
+          </Button>
+        </TooltipTrigger>
 
-      <TooltipContent side="bottom">
-        {isDark ? "Switch to light mode" : "Switch to dark mode"}
-      </TooltipContent>
-    </Tooltip>
+        <TooltipContent side="bottom">
+          {isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }

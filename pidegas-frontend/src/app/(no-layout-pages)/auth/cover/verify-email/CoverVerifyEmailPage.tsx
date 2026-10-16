@@ -11,6 +11,9 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
+import Link from "next/link"
+import { BrandLogo } from "@/components/brand-logo"
+
 export default function CoverVerifyEmailPage({
   className,
   ...props
@@ -21,11 +24,10 @@ export default function CoverVerifyEmailPage({
       <div className="flex items-center justify-center bg-muted p-6 md:p-10">
         <div className="w-full max-w-sm">
           {/* Logo */}
-          <div className="mb-6 flex items-center justify-center gap-2 font-medium">
-            <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-md">
-              <GalleryVerticalEnd className="size-5" />
-            </div>
-            <span className="text-lg">Acme Inc.</span>
+          <div className="mb-6 flex items-center justify-center">
+            <Link href="/" title="Ir a PideGas" className="hover:opacity-90 transition">
+              <BrandLogo size="lg" />
+            </Link>
           </div>
 
           {/* Card */}
