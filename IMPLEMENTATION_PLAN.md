@@ -13,12 +13,12 @@
 
 ## Estado Actual: Fases 1 a 13 Completadas al 100% (LISTO PARA PRODUCCIÓN)
 - [x] Inspección del repositorio y descarte de plantillas obsoletas (Bootstrap 5 y eCommerce HTML puro).
-- [x] Activación e integración de la plantilla administrativa oficial: `pidegas-frontend` (Next.js + Tailwind CSS + Shadcn).
+- [x] Activación e integración de la plantilla administrativa oficial: `frontend` (Next.js + Tailwind CSS + Shadcn).
 - [x] Eliminación de restricciones de demo estática (`basePath` y `output: 'export'`) en `next.config.ts`.
 - [x] Creación de documento de auditoría: `docs/syndron-audit.md`.
 - [x] Instalación de dependencias de frontend y compilación verificada.
 - [x] Contenedor `pidegas-postgres` con PostgreSQL 16 + PostGIS 3.4 desplegado y saludable.
-- [x] Proyecto backend `pidegas-backend` estructurado en Java 21 + Spring Boot 3.3.5.
+- [x] Proyecto backend `backend` estructurado en Java 21 + Spring Boot 3.3.5.
 - [x] 12 migraciones Flyway ejecutadas y validadas contra PostgreSQL/PostGIS.
 - [x] Endpoint de salud y Actuator verificados (`/actuator/health`, `/api/v1/publico/salud`).
 - [x] Configuración de Docker Compose (`docker-compose.yml`), Nginx (`nginx/nginx.conf`), `.env` y `.env.example`.
@@ -35,7 +35,7 @@
 
 ### FASE 1 — Infraestructura y Contenerización (COMPLETADA)
 - [x] Configuración de `docker-compose.yml` (PostgreSQL 16 + PostGIS 3.4, Backend Spring Boot, Frontend Next.js, Nginx).
-- [x] Configuración inicial de Spring Boot 3 con Java 21 en `pidegas-backend`.
+- [x] Configuración inicial de Spring Boot 3 con Java 21 en `backend`.
 - [x] Configuración y ejecución de 12 migraciones Flyway (PostGIS, UUIDs, Identity, Companies, Coverage, Catalog, Orders, Loyalty, Inventory, Fleet, Promotions, Support, Indexes).
 - [x] Verificación de health checks (`/actuator/health` y `/api/v1/publico/salud`).
 - [x] Swagger UI / OpenAPI 3 operativo en `/swagger-ui/index.html`.
@@ -45,7 +45,7 @@
 - [x] Autenticación stateless con JWT (Access + Refresh tokens con HS512).
 - [x] Endpoints `/api/v1/auth/login`, `/api/v1/auth/registro-cliente`, `/api/v1/auth/refresh`, `/api/v1/auth/yo`.
 - [x] Inicializador de cuentas base (`admin@pidegas.pe`, `empresa@pidegas.pe`, `cliente@pidegas.pe`, `repartidor@pidegas.pe`).
-- [x] Integración de formulario de Login y Registro en `pidegas-frontend` con branding PideGas y botones de prueba rápida.
+- [x] Integración de formulario de Login y Registro en `frontend` con branding PideGas y botones de prueba rápida.
 - [x] Store de estado global con Zustand para gestión de sesión en Next.js.
 - [x] Suite de pruebas unitarias (`AutenticacionServicioTest`) ejecutadas y aprobadas (8/8 tests pasando).
 
@@ -75,7 +75,7 @@
 - [x] Suite de pruebas automatizadas (`ZonaCoberturaServicioTest`) ejecutadas y aprobadas (21/21 tests pasando en backend).
 - [x] Script de prueba end-to-end (`test_fase4.ps1`) validando ubigeo, persistencia de polígonos, punto dentro (`ST_Covers = true`) y punto fuera (`ST_Covers = false`).
 - [x] Clientes frontend TypeScript `cobertura.api.ts` y `ubigeo.api.ts`.
-- [x] Interfaz de gestión de polígonos y comprobador geoespacial en vivo en `pidegas-frontend` (`/empresa/cobertura`) con presets de Lima y soporte GPS.
+- [x] Interfaz de gestión de polígonos y comprobador geoespacial en vivo en `frontend` (`/empresa/cobertura`) con presets de Lima y soporte GPS.
 - [x] Integración de "Zonas de Cobertura" en el menú lateral de Syndron.
 - [x] Compilación de producción de Next.js (`npm run build`) validada con 78/78 rutas estáticas generadas sin errores.
 

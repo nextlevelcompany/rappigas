@@ -21,9 +21,9 @@ services:
 
   backend:
     build:
-      context: ./pidegas-backend
+      context: ./backend
       dockerfile: Dockerfile
-    container_name: pidegas-backend
+    container_name: backend
     restart: always
     environment:
       SPRING_PROFILES_ACTIVE: dev
@@ -54,9 +54,9 @@ services:
 
   frontend:
     build:
-      context: ./pidegas-frontend
+      context: ./frontend
       dockerfile: Dockerfile
-    container_name: pidegas-frontend
+    container_name: frontend
     restart: always
     environment:
       NODE_ENV: production

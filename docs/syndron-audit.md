@@ -6,7 +6,7 @@ Se realizó la inspección del paquete descargado `syndron-tailwind-css-next-js-
 2. `eCommerce-Template` (~19.1 MB): Plantilla HTML estática de comercio electrónico. Descartada por no ser el backoffice ni usar Next.js.
 3. `Tailwind+Nextjs-Admin` (~38.3 MB): **Plantilla seleccionada y activada**. Cumple con el stack moderno oficial para el Backoffice de PideGas.
 
-El proyecto fue reubicado formalmente en `pidegas-frontend/` para alinearse con la arquitectura monolítica modular de PideGas (`pidegas-frontend/` y `pidegas-backend/`).
+El proyecto fue reubicado formalmente en `frontend/` para alinearse con la arquitectura monolítica modular de PideGas (`frontend/` y `backend/`).
 
 ---
 
@@ -45,7 +45,7 @@ La plantilla organiza sus rutas dentro de `src/app/`:
    - *Hallazgo*: La plantilla venía configurada con `output: "export"`, `basePath: "/syndron-ui-next"` y `assetPrefix: "/syndron-ui-next/"`, pensada para un hosting estático de demostración.
    - *Ajuste*: Se removieron el `basePath` y el `output: "export"` estático, permitiendo a Next.js operar en la raíz `/` con soporte para rutas dinámicas, Server Components y llamadas a API.
 2. **Identificador del Proyecto**:
-   - Se renombró el paquete en `package.json` de `next-admin-dashboard` a `pidegas-frontend`.
+   - Se renombró el paquete en `package.json` de `next-admin-dashboard` a `frontend`.
 3. **Depuración de Archivos Innecesarios**:
    - Se eliminaron las variantes de Bootstrap 5 y eCommerce HTML puro, liberando más de 216 MB de espacio en disco.
 
