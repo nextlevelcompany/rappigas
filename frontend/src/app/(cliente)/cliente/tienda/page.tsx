@@ -1,13 +1,21 @@
 "use client";
 
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useEffect, useState, useTransition, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { empresasApi, EmpresaDetalle } from "@/librerias/api/empresas.api";
 import { catalogoApi, ProductoDetalle } from "@/librerias/api/catalogo.api";
 import { pedidosApi, CrearPedidoDto, PedidoDetalle } from "@/librerias/api/pedidos.api";
 import { fidelizacionApi, BilleteraPuntos, ResultadoValidacionCupon } from "@/librerias/api/fidelizacion.api";
 import { finanzasApi, MetodoPago } from "@/librerias/api/finanzas.api";
+import { ubigeoApi, UbigeoItem } from "@/librerias/api/ubigeo.api";
 import { useAuthStore } from "@/store/auth-store";
 import { authApi } from "@/librerias/api/auth.api";
+import {
+  calcularDistanciaKm,
+  obtenerCoordenadasDistribuidora,
+  obtenerCoordenadasPorUbigeo,
+  UBIGEO_COORDENADAS_PERU,
+} from "@/librerias/geo-utils";
 import {
   Flame,
   MapPin,
@@ -27,8 +35,38 @@ import {
   ArrowRight,
   Phone,
   Navigation,
-  Lock,
+  Search,
+  Map as MapIcon,
+  List as ListIcon,
+  ChevronDown,
+  Maximize2,
+  Minimize2,
+  Loader2,
+  Trash2,
+  Sparkles,
 } from "lucide-react";
+
+// Import dinámico de Leaflet con SSR desactivado para evitar errores de window en Next.js
+const MapaCoberturaDistribuidores = dynamic(
+  () =>
+    import("@/components/mapa/mapa-cobertura-distribuidores").then(
+      (mod) => mod.MapaCoberturaDistribuidores
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-[240px] rounded-2xl bg-slate-100 flex flex-col items-center justify-center text-slate-400 animate-pulse border border-slate-200">
+        <MapPin className="w-6 h-6 text-orange-500 animate-bounce mb-1" />
+        <span className="text-xs font-semibold text-slate-700">
+          Cargando mapa interactivo...
+        </span>
+      </div>
+    ),
+  }
+);
+
+// Límite máximo de cobertura en kilómetros para despacho express de balones
+const LIMITE_COBERTURA_KM = 10.0;
 
 export default function TiendaClienteGasPage() {
   const { usuario, establecerSesion } = useAuthStore();
@@ -38,20 +76,50 @@ export default function TiendaClienteGasPage() {
   const [carrito, setCarrito] = useState<{ [productoId: string]: number }>({});
   const [billetera, setBilletera] = useState<BilleteraPuntos | null>(null);
 
-  // Formulario Pedido
+  // Ubicación y Dirección estructurada del cliente
+  const [direccionExacta, setDireccionExacta] = useState("Av. Antúnez de Mayolo 1234");
+  const [distritoDireccion, setDistritoDireccion] = useState("Los Olivos");
+  const [ciudadDireccion, setCiudadDireccion] = useState("Lima");
+  const [departamentoDireccion, setDepartamentoDireccion] = useState("Lima");
   const [direccion, setDireccion] = useState("Av. Antúnez de Mayolo 1234, Los Olivos, Lima");
-  const [referencia, setReferencia] = useState("A 2 cuadras de la municipalidad, 2do piso");
+  const [referencia, setReferencia] = useState("A 2 cuadras de la municipalidad");
   const [latitud, setLatitud] = useState(-11.9912);
   const [longitud, setLongitud] = useState(-77.0711);
+  const [buscandoDireccion, setBuscandoDireccion] = useState(false);
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("YAPE");
   const [telefonoYape, setTelefonoYape] = useState("977665554");
-  const [notas, setNotas] = useState("Balón para cocina doméstica de 4 hornillas.");
+  const [notas, setNotas] = useState("Balón para cocina doméstica con precinto intacto.");
+
+  // Buscador por Distritos (Ubigeo Perú)
+  const [mostrarBuscadorUbigeo, setMostrarBuscadorUbigeo] = useState(false);
+  const [departamentosList, setDepartamentosList] = useState<string[]>([]);
+  const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState("LIMA");
+  const [provinciasList, setProvinciasList] = useState<string[]>([]);
+  const [provinciaSeleccionada, setProvinciaSeleccionada] = useState("LIMA");
+  const [distritosList, setDistritosList] = useState<UbigeoItem[]>([]);
+  const [distritoSeleccionado, setDistritoSeleccionado] = useState<UbigeoItem | null>(null);
+  const [ubigeoActivo, setUbigeoActivo] = useState<UbigeoItem | null>({
+    id: 17,
+    codigoInei: "150117",
+    departamento: "LIMA",
+    provincia: "LIMA",
+    distrito: "LOS OLIVOS",
+  });
+  const [cargandoUbigeo, setCargandoUbigeo] = useState(false);
+  const [errorUbigeo, setErrorUbigeo] = useState<string | null>(null);
 
   // Cupones
   const [codigoCupon, setCodigoCupon] = useState("GASPRIMERO");
   const [cuponAplicado, setCuponAplicado] = useState<ResultadoValidacionCupon | null>(null);
   const [validandoCupon, setValidandoCupon] = useState(false);
   const [errorCupon, setErrorCupon] = useState<string | null>(null);
+
+  // Estados de interfaz y filtrado de mapa
+  const [vistaModo, setVistaModo] = useState<"mapa" | "lista">("mapa");
+  const [mapaExpandido, setMapaExpandido] = useState(false);
+  const [busquedaDistribuidor, setBusquedaDistribuidor] = useState("");
+  const [filtroMarca, setFiltroMarca] = useState<string>("TODAS");
+  const [mensajeGps, setMensajeGps] = useState<string | null>(null);
 
   // Estados de proceso
   const [cargando, setCargando] = useState(true);
@@ -61,6 +129,7 @@ export default function TiendaClienteGasPage() {
 
   useEffect(() => {
     cargarDatosIniciales();
+    cargarDepartamentosUbigeo();
   }, []);
 
   const cargarDatosIniciales = async () => {
@@ -68,16 +137,25 @@ export default function TiendaClienteGasPage() {
     try {
       const emps = await empresasApi.listarEmpresasPublicas();
       setEmpresas(emps);
+
       if (emps.length > 0) {
-        setEmpresaSeleccionada(emps[0]);
-        const prods = await catalogoApi.listarProductosPublicos(emps[0].publicId);
-        setCatalogo(prods.filter((p) => p.estado === "ACTIVO"));
-        if (prods.length > 0) {
-          setCarrito({ [prods[0].publicId]: 1 });
+        const inicial =
+          emps.find((e) => e.nombreComercial.toLowerCase().includes("solgas")) ||
+          emps[0];
+        setEmpresaSeleccionada(inicial);
+
+        try {
+          const prods = await catalogoApi.listarProductosPublicos(inicial.publicId);
+          const activos = prods.filter((p) => p.estado === "ACTIVO");
+          setCatalogo(activos);
+          if (activos.length > 0) {
+            setCarrito({ [activos[0].publicId]: 1 });
+          }
+        } catch {
+          // Si el catálogo falla, se gestiona en UI
         }
       }
 
-      // Si está autenticado como cliente, cargar billetera
       try {
         const b = await fidelizacionApi.obtenerBilletera();
         setBilletera(b);
@@ -91,19 +169,310 @@ export default function TiendaClienteGasPage() {
     }
   };
 
+  const cargarDepartamentosUbigeo = async () => {
+    try {
+      const deps = await ubigeoApi.listarDepartamentos();
+      setDepartamentosList(deps);
+      if (deps.includes("LIMA")) {
+        setDepartamentoSeleccionado("LIMA");
+        const provs = await ubigeoApi.listarProvincias("LIMA");
+        setProvinciasList(provs);
+        if (provs.includes("LIMA")) {
+          setProvinciaSeleccionada("LIMA");
+          const dists = await ubigeoApi.listarDistritos("LIMA", "LIMA");
+          setDistritosList(dists);
+          const losOlivos = dists.find((d) => d.codigoInei === "150117") || dists[0];
+          setDistritoSeleccionado(losOlivos || null);
+        }
+      }
+    } catch (e) {
+      console.warn("Ubigeo inicial no cargado:", e);
+    }
+  };
+
+  const handleCambiarDepartamento = async (dep: string) => {
+    setDepartamentoSeleccionado(dep);
+    setCargandoUbigeo(true);
+    setErrorUbigeo(null);
+    try {
+      const provs = await ubigeoApi.listarProvincias(dep);
+      setProvinciasList(provs);
+      if (provs.length > 0) {
+        setProvinciaSeleccionada(provs[0]);
+        const dists = await ubigeoApi.listarDistritos(dep, provs[0]);
+        setDistritosList(dists);
+        setDistritoSeleccionado(dists.length > 0 ? dists[0] : null);
+      } else {
+        setProvinciasList([]);
+        setDistritosList([]);
+        setDistritoSeleccionado(null);
+      }
+    } catch (err: any) {
+      setErrorUbigeo("Error: " + (err.message || "Error"));
+    } finally {
+      setCargandoUbigeo(false);
+    }
+  };
+
+  const handleCambiarProvincia = async (prov: string) => {
+    setProvinciaSeleccionada(prov);
+    setCargandoUbigeo(true);
+    setErrorUbigeo(null);
+    try {
+      const dists = await ubigeoApi.listarDistritos(departamentoSeleccionado, prov);
+      setDistritosList(dists);
+      setDistritoSeleccionado(dists.length > 0 ? dists[0] : null);
+    } catch (err: any) {
+      setErrorUbigeo("Error: " + (err.message || "Error"));
+    } finally {
+      setCargandoUbigeo(false);
+    }
+  };
+
+  const handleAplicarUbigeoCascada = () => {
+    if (!distritoSeleccionado) {
+      setErrorUbigeo("Selecciona un distrito válido.");
+      return;
+    }
+    const coords = obtenerCoordenadasPorUbigeo(
+      distritoSeleccionado.codigoInei,
+      distritoSeleccionado.departamento,
+      distritoSeleccionado.distrito
+    );
+    setLatitud(coords.lat);
+    setLongitud(coords.lng);
+    setDistritoDireccion(distritoSeleccionado.distrito);
+    setCiudadDireccion(distritoSeleccionado.provincia);
+    setDepartamentoDireccion(distritoSeleccionado.departamento);
+    setDireccion(
+      `${distritoSeleccionado.distrito}, ${distritoSeleccionado.provincia}`
+    );
+    setUbigeoActivo(distritoSeleccionado);
+    setMensajeGps(`Ubicación fijada en ${distritoSeleccionado.distrito}`);
+    setTimeout(() => setMensajeGps(null), 3500);
+    setMostrarBuscadorUbigeo(false);
+  };
+
+  // Buscar dirección exacta escrita en el input (sin GPS)
+  const handleBuscarDireccionExacta = async () => {
+    const query = direccion.trim();
+    if (!query) {
+      setMensajeGps("Escribe una dirección para buscar.");
+      setTimeout(() => setMensajeGps(null), 3000);
+      return;
+    }
+
+    setBuscandoDireccion(true);
+    setMensajeGps("Buscando dirección exacta en el mapa...");
+
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        query + ", Perú"
+      )}&limit=1&countrycodes=pe`;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4500);
+
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: { Accept: "application/json" },
+      });
+      clearTimeout(timeoutId);
+
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const item = data[0];
+        const nLat = parseFloat(item.lat);
+        const nLng = parseFloat(item.lon);
+        if (!isNaN(nLat) && !isNaN(nLng)) {
+          setLatitud(nLat);
+          setLongitud(nLng);
+          const parts = item.display_name.split(",").map((s: string) => s.trim());
+          if (parts.length > 0) setDireccionExacta(parts[0]);
+          if (parts.length > 1) setDistritoDireccion(parts[1]);
+          if (parts.length > 2) setCiudadDireccion(parts[2]);
+          if (parts.length > 3) setDepartamentoDireccion(parts[3]);
+          setMensajeGps(`¡Dirección ubicada: ${parts.slice(0, 2).join(", ")}!`);
+          setTimeout(() => setMensajeGps(null), 4000);
+          return;
+        }
+      }
+      throw new Error("No encontrado en línea");
+    } catch {
+      const queryUpper = query.toUpperCase();
+      let encontrado = false;
+
+      for (const [ubigeo, info] of Object.entries(UBIGEO_COORDENADAS_PERU)) {
+        const nombreNorm = info.nombre.toUpperCase();
+        if (
+          queryUpper.includes(nombreNorm) ||
+          (nombreNorm.includes(" ") && queryUpper.includes(nombreNorm.split(" ")[0]))
+        ) {
+          setLatitud(info.lat);
+          setLongitud(info.lng);
+          setDistritoDireccion(info.nombre);
+          setCiudadDireccion("Lima");
+          setDepartamentoDireccion("Lima");
+          setUbigeoActivo({
+            id: 0,
+            codigoInei: ubigeo,
+            distrito: info.nombre.toUpperCase(),
+            provincia: "LIMA",
+            departamento: "LIMA",
+          });
+          setMensajeGps(`¡Ubicado en distrito de ${info.nombre}!`);
+          setTimeout(() => setMensajeGps(null), 4000);
+          encontrado = true;
+          break;
+        }
+      }
+
+      if (!encontrado) {
+        setMensajeGps(
+          "No se pudo ubicar con exactitud. Selecciona tu distrito en el botón 'Distritos'."
+        );
+        setTimeout(() => setMensajeGps(null), 4500);
+      }
+    } finally {
+      setBuscandoDireccion(false);
+    }
+  };
+
   const cambiarEmpresa = async (emp: EmpresaDetalle) => {
     setEmpresaSeleccionada(emp);
     setCarrito({});
     setCuponAplicado(null);
     try {
       const prods = await catalogoApi.listarProductosPublicos(emp.publicId);
-      setCatalogo(prods.filter((p) => p.estado === "ACTIVO"));
-      if (prods.length > 0) {
-        setCarrito({ [prods[0].publicId]: 1 });
+      const activos = prods.filter((p) => p.estado === "ACTIVO");
+      setCatalogo(activos);
+      if (activos.length > 0) {
+        setCarrito({ [activos[0].publicId]: 1 });
       }
     } catch {
-      // Ignorar errores al cambiar empresa
+      setCatalogo([]);
     }
+  };
+
+  // Función para limpiar o deseleccionar la distribuidora
+  const handleLimpiarDistribuidora = () => {
+    setEmpresaSeleccionada(null);
+    setCarrito({});
+    setCatalogo([]);
+    setCuponAplicado(null);
+    setErrorEnvio(null);
+  };
+
+  const distribuidoresConDistancia = useMemo(() => {
+    return empresas
+      .map((emp, idx) => {
+        const coords = obtenerCoordenadasDistribuidora(
+          emp,
+          latitud,
+          longitud,
+          idx,
+          empresas.length
+        );
+        const distanciaKm = calcularDistanciaKm(
+          latitud,
+          longitud,
+          coords.lat,
+          coords.lng
+        );
+        const tiempoMin = Math.max(15, Math.round(distanciaKm * 6 + 12));
+        const tiempoMax = Math.max(25, Math.round(distanciaKm * 6 + 22));
+        const tieneCoberturaDirecta =
+          Boolean(emp.tieneCoberturaDirecta) || distanciaKm <= 6.0;
+        const estaSinCobertura = distanciaKm > LIMITE_COBERTURA_KM;
+
+        return {
+          ...emp,
+          coords,
+          distanciaKm,
+          tiempoMin,
+          tiempoMax,
+          tieneCoberturaDirecta,
+          estaSinCobertura,
+        };
+      })
+      .sort((a, b) => a.distanciaKm - b.distanciaKm);
+  }, [empresas, latitud, longitud]);
+
+  const distribuidoresFiltrados = useMemo(() => {
+    return distribuidoresConDistancia.filter((emp) => {
+      const matchBusqueda =
+        !busquedaDistribuidor.trim() ||
+        emp.nombreComercial
+          .toLowerCase()
+          .includes(busquedaDistribuidor.toLowerCase()) ||
+        (emp.direccionFiscal &&
+          emp.direccionFiscal
+            .toLowerCase()
+            .includes(busquedaDistribuidor.toLowerCase())) ||
+        (emp.zonaNombre &&
+          emp.zonaNombre
+            .toLowerCase()
+            .includes(busquedaDistribuidor.toLowerCase()));
+
+      const matchMarca =
+        filtroMarca === "TODAS" ||
+        emp.nombreComercial.toUpperCase().includes(filtroMarca) ||
+        (emp.direccionFiscal &&
+          emp.direccionFiscal.toUpperCase().includes(filtroMarca));
+
+      return matchBusqueda && matchMarca;
+    });
+  }, [distribuidoresConDistancia, busquedaDistribuidor, filtroMarca]);
+
+  const handleUsarGps = () => {
+    if (!navigator.geolocation) {
+      setMensajeGps("GPS no disponible.");
+      return;
+    }
+    setMensajeGps("Detectando GPS...");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = Number(pos.coords.latitude.toFixed(6));
+        const lng = Number(pos.coords.longitude.toFixed(6));
+        setLatitud(lat);
+        setLongitud(lng);
+        setDireccion(`GPS (${lat}, ${lng})`);
+        setUbigeoActivo(null);
+        setMensajeGps("¡Ubicación fijada por GPS!");
+        setTimeout(() => setMensajeGps(null), 3000);
+      },
+      (err) => {
+        setMensajeGps("Error GPS: " + err.message);
+        setTimeout(() => setMensajeGps(null), 3000);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  };
+
+  // Mapeador de imagen oficial para cada tipo de balón o accesorio
+  const obtenerImagenProducto = (prod: ProductoDetalle): string => {
+    if (prod.imagenUrl && prod.imagenUrl.trim() !== "") {
+      const url = prod.imagenUrl.trim();
+      if (url.startsWith("/api/v1/archivos/ver/")) {
+        return `http://localhost:8080${url}`;
+      }
+      return url;
+    }
+    if (prod.tipoGas === "GLP_10KG") {
+      return prod.tipoValvula === "ROSCA"
+        ? "/products/balon-10kg-rosca.svg"
+        : "/products/balon-10kg-premium.svg";
+    }
+    if (prod.tipoGas === "GLP_15KG") {
+      return "/products/balon-15kg-premium.svg";
+    }
+    if (prod.tipoGas === "GLP_45KG") {
+      return "/products/balon-45kg-industrial.svg";
+    }
+    if (prod.tipoGas === "VALVULA_ACCESORIO") {
+      return "/products/regulador-manometro.svg";
+    }
+    return "/products/balon-10kg-premium.svg";
   };
 
   const modificarCantidad = (publicId: string, delta: number) => {
@@ -143,30 +512,44 @@ export default function TiendaClienteGasPage() {
       if (res.valido) {
         setCuponAplicado(res);
       } else {
-        setErrorCupon(res.mensaje || "Cupón no válido.");
+        setErrorCupon(res.mensaje || "Cupón inválido.");
         setCuponAplicado(null);
       }
     } catch (err: any) {
-      setErrorCupon("Error al validar cupón: " + (err.message || "Servicio no disponible"));
+      setErrorCupon("Error al validar: " + (err.message || "Error"));
     } finally {
       setValidandoCupon(false);
     }
   };
 
+  const distribuidoraActiva = distribuidoresConDistancia.find(
+    (d) => d.publicId === empresaSeleccionada?.publicId
+  );
+
+  // Verificación de cobertura
+  const distribuidoraSinCobertura = distribuidoraActiva
+    ? distribuidoraActiva.distanciaKm > LIMITE_COBERTURA_KM
+    : false;
+
   const handleConfirmarPedido = () => {
-    if (Object.keys(carrito).length === 0) {
-      setErrorEnvio("Debes seleccionar al menos un balón de gas para continuar.");
+    if (!empresaSeleccionada) {
+      setErrorEnvio("Por favor selecciona una distribuidora autorizada en el mapa.");
       return;
     }
-    if (!empresaSeleccionada) {
-      setErrorEnvio("Selecciona una distribuidora autorizada.");
+    if (distribuidoraSinCobertura) {
+      setErrorEnvio(
+        `La distribuidora ${empresaSeleccionada.nombreComercial} está a ${distribuidoraActiva?.distanciaKm} km (fuera del límite de cobertura de ${LIMITE_COBERTURA_KM} km). Por favor selecciona una distribuidora más cercana.`
+      );
+      return;
+    }
+    if (Object.keys(carrito).length === 0) {
+      setErrorEnvio("Selecciona al menos un balón de gas para continuar.");
       return;
     }
 
     startTransition(async () => {
       setErrorEnvio(null);
       try {
-        // Asegurar sesión como cliente si no está autenticado
         if (!usuario || usuario.rol !== "CLIENTE") {
           const authRes = await authApi.login({
             email: "cliente@pidegas.pe",
@@ -180,9 +563,12 @@ export default function TiendaClienteGasPage() {
           cantidad: cant,
         }));
 
+        // Dirección completa estructurada
+        const direccionFinal = `${direccionExacta.trim()}, ${distritoDireccion.trim()}, ${ciudadDireccion.trim()}, ${departamentoDireccion.trim()}`;
+
         const payload: CrearPedidoDto = {
           empresaPublicId: empresaSeleccionada.publicId,
-          direccionEntrega: direccion,
+          direccionEntrega: direccionFinal,
           referenciaDireccion: referencia,
           latitud: latitud,
           longitud: longitud,
@@ -193,18 +579,17 @@ export default function TiendaClienteGasPage() {
 
         const nuevoPed = await pedidosApi.crearPedido(payload);
 
-        // Si es pago en línea (YAPE, PLIN, TARJETA), procesar pago inmediato
         if (metodoPago === "YAPE" || metodoPago === "PLIN" || metodoPago === "TARJETA") {
           try {
             await finanzasApi.procesarPagoCliente({
               pedidoPublicId: nuevoPed.publicId,
               metodoPago: metodoPago,
               telefonoYapePlin: telefonoYape,
-              nombreTitular: "Juan Pérez",
+              nombreTitular: "Cliente RappiGas",
             });
             nuevoPed.estadoPago = "PAGADO";
           } catch (pagoErr) {
-            console.warn("Pago en línea diferido a contra entrega:", pagoErr);
+            console.warn("Pago diferido:", pagoErr);
           }
         }
 
@@ -212,434 +597,1093 @@ export default function TiendaClienteGasPage() {
         setCarrito({});
         setCuponAplicado(null);
       } catch (err: any) {
-        setErrorEnvio(err.message || "Error al procesar el pedido. Intenta nuevamente.");
+        setErrorEnvio(err.message || "Error al procesar el pedido.");
       }
     });
   };
 
   return (
-    <div className="w-full py-3 px-3 sm:px-6 space-y-3 text-xs">
-      {/* Banner Superior de Cobertura y Bienvenida */}
-      <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 rounded-lg p-3.5 sm:p-4 text-white shadow-2xs relative overflow-hidden">
-        <div className="relative z-10 max-w-2xl space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-white/20 backdrop-blur-md rounded text-[10px] font-bold uppercase tracking-wider">
-            <Flame className="w-3 h-3 text-amber-200 animate-pulse" />
-            Marketplace Oficial de Balones de Gas
+    <div className="w-full py-2.5 px-3 sm:px-4 space-y-3 text-xs text-slate-800">
+      {/* Barra Superior Compacta */}
+      <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 rounded-xl px-3.5 py-2 text-white shadow-xs flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0">
+            <Flame className="w-4 h-4 text-amber-200" />
           </div>
-          <h1 className="text-lg sm:text-xl font-bold tracking-tight">
-            Pide tu Balón de Gas a Domicilio
-          </h1>
-          <p className="text-orange-100 text-[11px]">
-            Distribuidoras certificadas por Osinergmin con válvulas seguras y entrega express en menos de 30 minutos.
-          </p>
-
-          <div className="pt-1.5 flex flex-wrap items-center gap-2 text-[10px] font-semibold text-white/90">
-            <span className="flex items-center gap-1 bg-black/20 px-2 py-0.5 rounded">
-              <MapPin className="w-3 h-3 text-amber-300" />
-              Los Olivos, Lima
-            </span>
-            <span className="flex items-center gap-1 bg-black/20 px-2 py-0.5 rounded">
-              <ShieldCheck className="w-3 h-3 text-emerald-300" />
-              Garantía de Peso Exacto
-            </span>
-            {billetera && (
-              <span className="flex items-center gap-1 bg-black/20 px-2 py-0.5 rounded text-amber-200">
-                <Gift className="w-3 h-3" />
-                Tienes {billetera.saldoPuntos} Puntos
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xs sm:text-sm font-black tracking-tight leading-none">
+                RappiGas • Tienda Oficial
+              </h1>
+              <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/20">
+                <ShieldCheck className="w-3 h-3 text-emerald-300" />
+                Osinergmin Garantizado
               </span>
-            )}
+            </div>
+            <p className="text-[10px] text-orange-100 hidden sm:block mt-0.5">
+              Balones certificados con entrega express a tu puerta
+            </p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 text-[11px] font-semibold">
+          {/* Ubicación Actual Compacta */}
+          <div className="flex items-center gap-1.5 bg-black/20 border border-white/20 px-2.5 py-1 rounded-xl text-[10px] text-white font-bold">
+            <MapPin className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+            <span className="truncate max-w-[130px] sm:max-w-[200px]">
+              {distritoDireccion ? `${distritoDireccion}, ${departamentoDireccion}` : "Los Olivos, Lima"}
+            </span>
+          </div>
+
+          {/* Badge Destacado de Puntos RappiGas */}
+          <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-300 text-amber-950 px-3 py-1 rounded-xl shadow-md border-2 border-white/70 font-black shrink-0 hover:scale-105 transition cursor-default">
+            <Sparkles className="w-4 h-4 text-amber-900 fill-amber-900 animate-pulse shrink-0" />
+            <div className="flex items-center gap-1 leading-none">
+              <span className="text-[10px] uppercase tracking-wider font-extrabold text-amber-900">Puntos:</span>
+              <span className="text-xs font-black text-amber-950 bg-white/80 px-1.5 py-0.5 rounded shadow-2xs font-mono">
+                {billetera ? Number(billetera.saldoPuntos).toLocaleString() : "0"} PTS
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tarjeta Informativa Destacada: Mi Ubicación o Dirección Actual */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-3 sm:p-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 shadow-2xs mt-0.5 border border-orange-200">
+            <MapPin className="w-5 h-5 text-orange-600" />
+          </div>
+          <div className="min-w-0 space-y-0.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-orange-700 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse" />
+                Mi Ubicación Actual de Entrega
+              </span>
+              <span className="text-[10px] font-mono text-slate-400">
+                GPS: {latitud.toFixed(4)}, {longitud.toFixed(4)}
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm font-black text-slate-900 truncate">
+              {direccion || `${direccionExacta}, ${distritoDireccion}, ${ciudadDireccion}`}
+            </p>
+            <div className="flex items-center gap-2 text-[10px] text-slate-500 flex-wrap">
+              <span><strong>Distrito:</strong> {distritoDireccion}</span>
+              <span>•</span>
+              <span><strong>Provincia/Ciudad:</strong> {ciudadDireccion}</span>
+              <span>•</span>
+              <span><strong>Departamento:</strong> {departamentoDireccion}</span>
+              {referencia && (
+                <>
+                  <span>•</span>
+                  <span className="italic text-slate-400 truncate max-w-xs">Ref: {referencia}</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Acciones Rápidas sobre la Ubicación */}
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+          <button
+            type="button"
+            onClick={handleUsarGps}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-bold text-xs transition cursor-pointer shadow-2xs"
+            title="Detectar por GPS actual"
+          >
+            <Navigation className="w-3.5 h-3.5 text-blue-600" />
+            <span>Actualizar GPS</span>
+          </button>
         </div>
       </div>
 
       {/* Modal de Éxito cuando el pedido se confirma */}
       {pedidoConfirmado && (
-        <div className="bg-emerald-50 border-2 border-emerald-500 rounded-3xl p-6 sm:p-8 shadow-xl space-y-4 animate-in fade-in duration-300">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-emerald-500 text-white rounded-2xl shadow-md">
-                <CheckCircle2 className="w-8 h-8" />
+        <div className="bg-emerald-50 border border-emerald-500 rounded-2xl p-4 shadow-md space-y-2.5 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-emerald-500 text-white rounded-lg">
+                <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                  ¡Pedido Recibido con Éxito!
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                  ¡Pedido Confirmado!
                 </span>
-                <h2 className="text-2xl font-black text-emerald-950">
+                <h2 className="text-base font-black text-emerald-950">
                   Orden #PG-{pedidoConfirmado.publicId.substring(0, 8).toUpperCase()}
                 </h2>
               </div>
             </div>
             <button
               onClick={() => setPedidoConfirmado(null)}
-              className="text-emerald-700 hover:text-emerald-950 font-bold text-xl px-2"
+              className="text-emerald-700 hover:text-emerald-950 font-bold px-1.5 cursor-pointer"
             >
               ✕
             </button>
           </div>
 
-          {/* Código de Seguridad de 6 dígitos */}
-          <div className="bg-white rounded-2xl p-5 border border-emerald-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="bg-white rounded-xl p-2.5 border border-emerald-200 flex items-center justify-between gap-2">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Código de Confirmación de Entrega
+              <p className="text-[10px] font-bold uppercase text-slate-500">
+                Código para el Repartidor:
               </p>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Entrega este código al repartidor al momento de recibir tu balón de gas:
-              </p>
+              <p className="text-[10px] text-slate-500">Muéstralo al recibir el balón</p>
             </div>
-            <div className="px-6 py-2.5 bg-orange-50 border-2 border-orange-500 rounded-2xl text-3xl font-mono font-black text-orange-600 tracking-widest shadow-inner">
+            <div className="px-3 py-1 bg-orange-50 border border-orange-500 rounded-lg text-lg font-mono font-black text-orange-600 tracking-wider">
               {pedidoConfirmado.codigoConfirmacion}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-emerald-900 font-medium">
-            <div className="bg-emerald-100/60 p-3 rounded-xl">
-              <span className="text-emerald-700 block">Distribuidora:</span>
-              <strong className="text-sm">{empresaSeleccionada?.nombreComercial}</strong>
-            </div>
-            <div className="bg-emerald-100/60 p-3 rounded-xl">
-              <span className="text-emerald-700 block">Total a Pagar:</span>
-              <strong className="text-sm">S/ {Number(pedidoConfirmado.total).toFixed(2)} ({pedidoConfirmado.metodoPago})</strong>
-            </div>
-            <div className="bg-emerald-100/60 p-3 rounded-xl">
-              <span className="text-emerald-700 block">Estado del Pago:</span>
-              <strong className="text-sm text-emerald-700 uppercase">{pedidoConfirmado.estadoPago}</strong>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+          <div className="flex items-center justify-between gap-2 text-[11px] pt-1">
+            <span className="text-emerald-800">
+              Total: <strong>S/ {Number(pedidoConfirmado.total).toFixed(2)}</strong> ({pedidoConfirmado.metodoPago})
+            </span>
             <a
               href="/cliente/pedidos"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition"
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-xs"
             >
-              <Truck className="w-4 h-4" />
-              Seguimiento de Mi Pedido en Vivo
+              <Truck className="w-3.5 h-3.5" />
+              Ver Seguimiento
             </a>
           </div>
         </div>
       )}
 
-      {/* Grid Principal: Catálogo a la izquierda, Checkout a la derecha */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Columna Izquierda: Selección de Empresa y Balones de Gas */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Selector de Distribuidora con Cobertura */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
-            <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <Truck className="w-4 h-4 text-orange-500" />
-              Distribuidoras con Cobertura en tu Ubicación
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {empresas.map((emp) => {
-                const seleccionada = empresaSeleccionada?.publicId === emp.publicId;
-                return (
+      {/* Grid Principal: 2 columnas compactas */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        {/* Columna Izquierda: Mapa + Distribuidores + Catálogo */}
+        <div className="lg:col-span-2 space-y-3">
+          {/* Tarjeta del Mapa y Localización */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-3 space-y-2.5">
+            {/* Barra de Ubicación: Input + Buscar + GPS + Distritos */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5">
+              <div className="flex-1 relative flex items-center">
+                <MapPin className="w-3.5 h-3.5 text-orange-500 absolute left-2.5 shrink-0" />
+                <input
+                  type="text"
+                  value={direccion}
+                  onChange={(e) => {
+                    setDireccion(e.target.value);
+                    setDireccionExacta(e.target.value.split(",")[0] || e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleBuscarDireccionExacta();
+                  }}
+                  placeholder="Escribe tu dirección exacta (ej. Av. Larco 880, Miraflores)..."
+                  className="w-full pl-7 pr-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:ring-1 focus:ring-orange-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                {/* Botón Buscar Dirección Exacta */}
+                <button
+                  type="button"
+                  onClick={handleBuscarDireccionExacta}
+                  disabled={buscandoDireccion}
+                  className="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-bold rounded-lg text-xs shadow-xs transition cursor-pointer shrink-0"
+                  title="Buscar coordenadas exactas de la dirección escrita"
+                >
+                  {buscandoDireccion ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Search className="w-3.5 h-3.5" />
+                  )}
+                  <span>{buscandoDireccion ? "Buscando..." : "Buscar"}</span>
+                </button>
+
+                {/* Botón GPS */}
+                <button
+                  type="button"
+                  onClick={handleUsarGps}
+                  className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs shadow-xs transition cursor-pointer shrink-0"
+                  title="Detectar ubicación GPS"
+                >
+                  <Navigation className="w-3 h-3" />
+                  <span>GPS</span>
+                </button>
+
+                {/* Botón Selector de Distritos */}
+                <button
+                  type="button"
+                  onClick={() => setMostrarBuscadorUbigeo(!mostrarBuscadorUbigeo)}
+                  className={`inline-flex items-center justify-center gap-1 px-2.5 py-1.5 font-bold rounded-lg text-xs shadow-xs transition cursor-pointer border shrink-0 ${
+                    mostrarBuscadorUbigeo
+                      ? "bg-rose-600 text-white border-rose-700"
+                      : "bg-white hover:bg-rose-50 text-rose-700 border-rose-200"
+                  }`}
+                  title="Seleccionar distrito de entrega"
+                >
+                  <span>🇵🇪</span>
+                  <span>Distritos</span>
+                  <ChevronDown
+                    className={`w-3 h-3 transition-transform ${
+                      mostrarBuscadorUbigeo ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {mensajeGps && (
+              <div className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-200 flex items-center justify-between">
+                <span>{mensajeGps}</span>
+                <button
+                  type="button"
+                  onClick={() => setMensajeGps(null)}
+                  className="text-blue-500 hover:text-blue-700 text-[10px] ml-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Selector Desplegable ÚNICAMENTE de Distritos */}
+            {mostrarBuscadorUbigeo && (
+              <div className="bg-rose-50/60 border border-rose-200 rounded-xl p-2.5 space-y-2 animate-in fade-in duration-150">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-rose-950">
+                    <span>🇵🇪</span>
+                    <span>Seleccionar Distrito de Entrega</span>
+                  </div>
                   <button
-                    key={emp.publicId}
                     type="button"
-                    onClick={() => cambiarEmpresa(emp)}
-                    className={`p-4 rounded-xl border text-left transition flex items-start gap-3 ${
-                      seleccionada
-                        ? "border-orange-500 bg-orange-50/50 shadow-sm ring-2 ring-orange-400/20"
-                        : "border-slate-200 hover:border-slate-300 bg-white"
+                    onClick={() => setMostrarBuscadorUbigeo(false)}
+                    className="text-slate-400 hover:text-slate-600 text-xs px-1 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">
+                      Departamento
+                    </label>
+                    <select
+                      value={departamentoSeleccionado}
+                      onChange={(e) => handleCambiarDepartamento(e.target.value)}
+                      className="w-full p-1.5 text-[11px] bg-white border border-rose-200 rounded-lg font-semibold text-slate-800 focus:outline-hidden"
+                    >
+                      {departamentosList.map((dep) => (
+                        <option key={dep} value={dep}>
+                          {dep}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">
+                      Provincia / Ciudad
+                    </label>
+                    <select
+                      value={provinciaSeleccionada}
+                      onChange={(e) => handleCambiarProvincia(e.target.value)}
+                      disabled={cargandoUbigeo || provinciasList.length === 0}
+                      className="w-full p-1.5 text-[11px] bg-white border border-rose-200 rounded-lg font-semibold text-slate-800 focus:outline-hidden disabled:opacity-50"
+                    >
+                      {provinciasList.map((prov) => (
+                        <option key={prov} value={prov}>
+                          {prov}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">
+                      Distrito
+                    </label>
+                    <select
+                      value={distritoSeleccionado?.codigoInei || ""}
+                      onChange={(e) => {
+                        const item = distritosList.find(
+                          (d) => d.codigoInei === e.target.value
+                        );
+                        if (item) setDistritoSeleccionado(item);
+                      }}
+                      disabled={cargandoUbigeo || distritosList.length === 0}
+                      className="w-full p-1.5 text-[11px] bg-white border border-rose-200 rounded-lg font-semibold text-slate-800 focus:outline-hidden disabled:opacity-50"
+                    >
+                      {distritosList.map((dist) => (
+                        <option key={dist.codigoInei} value={dist.codigoInei}>
+                          {dist.distrito}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[10px] text-slate-500">
+                    Centra el mapa en el distrito seleccionado
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleAplicarUbigeoCascada}
+                    disabled={!distritoSeleccionado || cargandoUbigeo}
+                    className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-lg transition disabled:opacity-50 cursor-pointer"
+                  >
+                    Aplicar Distrito
+                  </button>
+                </div>
+
+                {errorUbigeo && (
+                  <p className="text-[10px] text-red-600 font-medium">{errorUbigeo}</p>
+                )}
+              </div>
+            )}
+
+            {/* Sub-barra de Filtros y Selector de Vista */}
+            <div className="flex items-center justify-between gap-1.5 pt-0.5 border-t border-slate-100">
+              <div className="flex items-center gap-1 flex-1 max-w-xs relative">
+                <Search className="w-3 h-3 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={busquedaDistribuidor}
+                  onChange={(e) => setBusquedaDistribuidor(e.target.value)}
+                  placeholder="Filtrar distribuidora..."
+                  className="w-full pl-6 pr-2 py-1 text-[11px] bg-slate-50 border border-slate-200 rounded-md focus:outline-hidden"
+                />
+              </div>
+
+              <div className="flex items-center gap-1 shrink-0">
+                {["TODAS", "SOLGAS", "ZETA", "LLAMAGAS"].map((marca) => (
+                  <button
+                    key={marca}
+                    type="button"
+                    onClick={() => setFiltroMarca(marca)}
+                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase transition cursor-pointer ${
+                      filtroMarca === marca
+                        ? "bg-slate-900 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
-                    <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 font-bold shrink-0">
-                      <Flame className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-sm text-slate-900 truncate">
-                          {emp.nombreComercial}
-                        </h3>
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                          Abierto
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">{emp.direccionFiscal}</p>
-                      <div className="flex items-center gap-3 mt-2 text-[11px] text-slate-600">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-slate-400" />
-                          20 - 35 min
-                        </span>
-                        <span className="flex items-center gap-1 font-bold text-amber-600">
-                          ★ 4.9 (120+)
-                        </span>
-                      </div>
-                    </div>
+                    {marca}
                   </button>
-                );
-              })}
+                ))}
+              </div>
+
+              {/* Botón Mapa / Lista y Expandir */}
+              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setVistaModo("mapa")}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${
+                    vistaModo === "mapa" ? "bg-white text-orange-600 shadow-2xs" : "text-slate-600"
+                  }`}
+                  title="Ver Mapa"
+                >
+                  <MapIcon className="w-3 h-3 inline mr-0.5" />
+                  Mapa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVistaModo("lista")}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${
+                    vistaModo === "lista" ? "bg-white text-orange-600 shadow-2xs" : "text-slate-600"
+                  }`}
+                  title="Ver Lista"
+                >
+                  <ListIcon className="w-3 h-3 inline mr-0.5" />
+                  ({distribuidoresFiltrados.length})
+                </button>
+                {vistaModo === "mapa" && (
+                  <button
+                    type="button"
+                    onClick={() => setMapaExpandido(!mapaExpandido)}
+                    className="p-1 rounded text-slate-500 hover:text-slate-800"
+                    title={mapaExpandido ? "Compactar mapa" : "Ampliar mapa"}
+                  >
+                    {mapaExpandido ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Vista del Mapa Compacto */}
+            {vistaModo === "mapa" && (
+              <div
+                className={`w-full rounded-xl overflow-hidden border border-slate-200 shadow-inner relative transition-all duration-200 ${
+                  mapaExpandido ? "h-[360px]" : "h-[220px] sm:h-[240px]"
+                }`}
+              >
+                <MapaCoberturaDistribuidores
+                  latCliente={latitud}
+                  lngCliente={longitud}
+                  direccionCliente={direccion}
+                  distribuidoras={distribuidoresFiltrados}
+                  distribuidoraSeleccionadaId={empresaSeleccionada?.publicId}
+                  onSeleccionarDistribuidora={cambiarEmpresa}
+                  permitirMoverCliente={true}
+                  onCambiarUbicacionCliente={(lat, lng) => {
+                    setLatitud(lat);
+                    setLongitud(lng);
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Distribuidora Activa: Ribbon Compacto con Estado de Cobertura */}
+            {distribuidoraActiva && (
+              <div
+                className={`px-2.5 py-1.5 rounded-xl border flex items-center justify-between gap-2 transition ${
+                  distribuidoraSinCobertura
+                    ? "bg-red-50/80 border-red-300"
+                    : "bg-orange-50 border-orange-300"
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div
+                    className={`w-7 h-7 rounded-lg text-white flex items-center justify-center font-bold shrink-0 ${
+                      distribuidoraSinCobertura ? "bg-red-600" : "bg-orange-600"
+                    }`}
+                  >
+                    <Flame className="w-3.5 h-3.5 text-amber-200" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-bold text-xs text-slate-900 truncate">
+                        {distribuidoraActiva.nombreComercial}
+                      </span>
+                      {distribuidoraSinCobertura ? (
+                        <span className="text-[10px] font-bold text-red-700 bg-red-100 border border-red-200 px-1.5 py-0.2 rounded flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3 text-red-600" />
+                          Sin Cobertura ({distribuidoraActiva.distanciaKm} km)
+                        </span>
+                      ) : (
+                        <>
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded">
+                            ⚡ {distribuidoraActiva.tiempoMin}-{distribuidoraActiva.tiempoMax} min
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            • {distribuidoraActiva.distanciaKm} km
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("seccion-catalogo");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white font-bold text-[10px] rounded-lg flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Ver Balones ({catalogo.length})</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLimpiarDistribuidora}
+                    className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
+                    title="Quitar distribuidora"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Lista de Distribuidoras (Modo Lista o selector rápido) */}
+            {(vistaModo === "lista" || distribuidoresFiltrados.length <= 4) && (
+              <div className="space-y-1 pt-1">
+                <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold px-0.5">
+                  <span>Distribuidores por cercanía ({distribuidoresFiltrados.length}):</span>
+                  <span>Clic para seleccionar</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-[180px] overflow-y-auto pr-1">
+                  {distribuidoresFiltrados.map((emp) => {
+                    const seleccionada = empresaSeleccionada?.publicId === emp.publicId;
+                    const sinCob = emp.distanciaKm > LIMITE_COBERTURA_KM;
+                    return (
+                      <button
+                        key={emp.publicId}
+                        type="button"
+                        onClick={() => cambiarEmpresa(emp)}
+                        className={`p-2 rounded-xl border text-left transition flex items-center gap-2 cursor-pointer ${
+                          seleccionada
+                            ? "border-orange-500 bg-orange-50/70 shadow-2xs ring-1 ring-orange-400"
+                            : sinCob
+                            ? "border-slate-200 bg-slate-50/60 opacity-75 hover:opacity-100"
+                            : "border-slate-200 hover:bg-slate-50 bg-white"
+                        }`}
+                      >
+                        <div
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold shrink-0 ${
+                            seleccionada
+                              ? "bg-orange-600 text-white"
+                              : sinCob
+                              ? "bg-slate-200 text-slate-500"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          <Flame className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <h4 className="font-bold text-[11px] text-slate-900 truncate">
+                              {emp.nombreComercial}
+                            </h4>
+                            {sinCob ? (
+                              <span className="text-[9px] font-bold text-red-700 bg-red-100 px-1 rounded shrink-0">
+                                Sin Cobertura
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 rounded shrink-0">
+                                {emp.distanciaKm} km
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                            {sinCob ? (
+                              <span className="text-red-600 font-semibold">
+                                A {emp.distanciaKm} km (muy lejos)
+                              </span>
+                            ) : (
+                              <>
+                                <span>⏱️ {emp.tiempoMin}-{emp.tiempoMax} min</span>
+                                <span className="text-amber-600 font-semibold">★ 4.9</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Catálogo de Balones de Gas */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Flame className="w-5 h-5 text-orange-600" />
-                Catálogo de Balones de Gas de Cocina
-              </h2>
-              <span className="text-xs text-slate-500">
-                {catalogo.length} opciones disponibles
+          {/* SECCIÓN DEL CATÁLOGO DE BALONES DE GAS */}
+          <div id="seccion-catalogo" className="space-y-2 pt-1">
+            <div className="flex items-center justify-between px-0.5">
+              <div className="flex items-center gap-1.5">
+                <Flame className="w-4 h-4 text-orange-600" />
+                <h2 className="text-xs sm:text-sm font-black text-slate-900">
+                  Balones de Gas Disponibles
+                </h2>
+                <span className="text-[10px] text-slate-500">
+                  ({empresaSeleccionada?.nombreComercial || "Ninguna distribuidora seleccionada"})
+                </span>
+              </div>
+              <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
+                {catalogo.length} tipos
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {catalogo.map((prod) => {
-                const cantidad = carrito[prod.publicId] || 0;
-                return (
-                  <div
-                    key={prod.publicId}
-                    className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center shrink-0 border border-orange-200">
-                        <Flame className="w-8 h-8 text-orange-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between gap-1">
-                          <h3 className="font-bold text-slate-900 text-sm leading-snug">
-                            {prod.nombre}
-                          </h3>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                          {prod.descripcion}
-                        </p>
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-                            {prod.tipoValvula}
-                          </span>
-                          <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-800">
-                            {prod.tipoGas}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+            {!empresaSeleccionada ? (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-1.5">
+                <ShoppingBag className="w-6 h-6 text-slate-400 mx-auto" />
+                <p className="text-xs font-bold text-slate-800">
+                  Ninguna distribuidora seleccionada
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  Haz clic en cualquier distribuidora en el mapa para cargar sus balones disponibles.
+                </p>
+              </div>
+            ) : catalogo.length === 0 ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center space-y-1.5">
+                <AlertCircle className="w-5 h-5 text-amber-600 mx-auto" />
+                <p className="text-xs font-bold text-amber-900">
+                  No hay balones en el catálogo de esta distribuidora
+                </p>
+                <p className="text-[11px] text-amber-700">
+                  Prueba seleccionando <strong>Solgas Los Olivos</strong> u otra distribuidora en el mapa.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {catalogo.map((prod) => {
+                  const cantidad = carrito[prod.publicId] || 0;
+                  const imgUrl = obtenerImagenProducto(prod);
+                  return (
+                    <div
+                      key={prod.publicId}
+                      className={`bg-white rounded-xl border p-2.5 shadow-2xs transition flex flex-col justify-between group ${
+                        cantidad > 0
+                          ? "border-orange-500 ring-1 ring-orange-300 bg-orange-50/10"
+                          : "border-slate-200 hover:border-orange-300"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        {/* Contenedor de Imagen con Efecto Hover Zoom Flotante */}
+                        <div className="relative group/zoom shrink-0">
+                          {/* Miniatura */}
+                          <div className="w-12 h-14 rounded-xl bg-gradient-to-b from-slate-50 to-orange-50/40 border border-slate-200/90 p-1 flex items-center justify-center shadow-2xs transition-all duration-200 cursor-zoom-in hover:border-orange-400 hover:shadow-md">
+                            <img
+                              src={imgUrl}
+                              alt={prod.nombre}
+                              className="h-12 w-auto max-w-full object-contain drop-shadow-xs transition-transform duration-200 group-hover/zoom:scale-110"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src =
+                                  "/products/balon-10kg-premium.svg";
+                              }}
+                            />
+                          </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                      <div>
-                        <span className="text-xs text-slate-400 block">Precio Unitario</span>
-                        <span className="text-xl font-black text-slate-900">
-                          S/ {Number(prod.precio).toFixed(2)}
-                        </span>
-                      </div>
+                          {/* Vista Ampliada Flotante al pasar el cursor */}
+                          <div className="absolute left-14 -top-3 z-[60] pointer-events-none opacity-0 invisible group-hover/zoom:opacity-100 group-hover/zoom:visible transition-all duration-200 transform scale-95 group-hover/zoom:scale-100">
+                            <div className="w-52 bg-white rounded-2xl border-2 border-orange-400 p-2.5 shadow-2xl space-y-1.5 backdrop-blur-md">
+                              <div className="w-full h-44 bg-gradient-to-b from-slate-50 via-white to-orange-50/30 rounded-xl p-2 flex items-center justify-center border border-slate-100">
+                                <img
+                                  src={imgUrl}
+                                  alt={prod.nombre}
+                                  className="h-40 w-auto max-w-full object-contain drop-shadow-md"
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).src =
+                                      "/products/balon-10kg-premium.svg";
+                                  }}
+                                />
+                              </div>
+                              <div className="text-center px-1">
+                                <p className="font-black text-slate-900 text-xs leading-snug line-clamp-1">
+                                  {prod.nombre}
+                                </p>
+                                <div className="mt-1 flex items-center justify-center gap-1.5 text-[10px]">
+                                  <span className="font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
+                                    S/ {Number(prod.precio).toFixed(2)}
+                                  </span>
+                                  <span className="font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-md">
+                                    {prod.tipoValvula}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
 
-                      <div className="flex items-center gap-2">
-                        {cantidad > 0 ? (
-                          <div className="flex items-center gap-2 bg-slate-100 px-2 py-1 rounded-xl border border-slate-200">
-                            <button
-                              type="button"
-                              onClick={() => modificarCantidad(prod.publicId, -1)}
-                              className="w-7 h-7 rounded-lg bg-white shadow-xs flex items-center justify-center text-slate-700 hover:bg-slate-200 font-bold"
-                            >
-                              <Minus className="w-3.5 h-3.5" />
-                            </button>
-                            <span className="font-bold text-sm w-5 text-center text-slate-900">
-                              {cantidad}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-1">
+                            <h3 className="font-bold text-slate-900 text-xs truncate">
+                              {prod.nombre}
+                            </h3>
+                            <span className="text-xs sm:text-sm font-black text-slate-900 shrink-0">
+                              S/ {Number(prod.precio).toFixed(2)}
                             </span>
+                          </div>
+                          <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">
+                            {prod.descripcion}
+                          </p>
+                          <div className="mt-1 flex items-center gap-1">
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
+                              {prod.tipoValvula}
+                            </span>
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-orange-50 text-orange-700 border border-orange-100">
+                              {prod.tipoGas}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between">
+                        <span className="text-[9px] text-emerald-700 font-semibold">
+                          ✓ Garantía Oficial
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {cantidad > 0 ? (
+                            <div className="flex items-center gap-1.5 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200">
+                              <button
+                                type="button"
+                                onClick={() => modificarCantidad(prod.publicId, -1)}
+                                className="w-5 h-5 rounded bg-white shadow-2xs flex items-center justify-center text-slate-700 hover:bg-slate-200 font-bold cursor-pointer"
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="font-bold text-xs w-4 text-center text-slate-900">
+                                {cantidad}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => modificarCantidad(prod.publicId, 1)}
+                                className="w-5 h-5 rounded bg-orange-600 text-white shadow-2xs flex items-center justify-center hover:bg-orange-700 font-bold cursor-pointer"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
                             <button
                               type="button"
                               onClick={() => modificarCantidad(prod.publicId, 1)}
-                              className="w-7 h-7 rounded-lg bg-orange-600 text-white shadow-xs flex items-center justify-center hover:bg-orange-700 font-bold"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white text-[11px] font-bold rounded-lg shadow-2xs transition cursor-pointer"
                             >
-                              <Plus className="w-3.5 h-3.5" />
+                              <Plus className="w-3 h-3" />
+                              Agregar
                             </button>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => modificarCantidad(prod.publicId, 1)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-xl shadow-xs transition"
-                          >
-                            <Plus className="w-4 h-4" />
-                            Agregar
-                          </button>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Columna Derecha: Checkout, Cupón, Pago y Confirmación */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-5 sticky top-20">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h2 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5 text-orange-600" />
+        {/* Columna Derecha: Checkout y Resumen Ultra Compacto */}
+        <div className="space-y-3">
+          <div className="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-xs space-y-2.5 sticky top-14">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h2 className="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-1.5">
+                <ShoppingBag className="w-4 h-4 text-orange-600" />
                 Resumen del Pedido
               </h2>
-              <span className="text-xs font-bold text-orange-600">
+              <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
                 {Object.values(carrito).reduce((a, b) => a + b, 0)} balones
               </span>
             </div>
 
-            {/* Dirección de Entrega */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-orange-500" />
-                Dirección de Entrega
+            {/* Distribuidora en Checkout: Con opción de limpiar y alerta de sin cobertura */}
+            {empresaSeleccionada ? (
+              <div
+                className={`p-2 rounded-xl text-[11px] border transition ${
+                  distribuidoraSinCobertura
+                    ? "bg-red-50/70 border-red-300"
+                    : "bg-slate-50 border-slate-200"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-1">
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-bold uppercase text-slate-400 block">
+                      Distribuidora Despachadora:
+                    </span>
+                    <p className="font-bold text-slate-900 truncate">
+                      {empresaSeleccionada.nombreComercial}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLimpiarDistribuidora}
+                    className="text-[10px] font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-1.5 py-0.5 rounded transition cursor-pointer shrink-0"
+                    title="Quitar esta distribuidora"
+                  >
+                    ✕ Quitar
+                  </button>
+                </div>
+
+                {distribuidoraActiva && (
+                  <div className="mt-1">
+                    {distribuidoraSinCobertura ? (
+                      <div className="flex items-center gap-1 text-[10px] text-red-700 font-bold bg-red-100/70 px-1.5 py-0.5 rounded mt-0.5">
+                        <AlertCircle className="w-3 h-3 text-red-600 shrink-0" />
+                        <span>Sin cobertura en tu zona (A {distribuidoraActiva.distanciaKm} km)</span>
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-500">
+                        📍 {distribuidoraActiva.distanciaKm} km • ⏱️ {distribuidoraActiva.tiempoMin}-{distribuidoraActiva.tiempoMax} min (Express)
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-[11px]">
+                <span className="text-[9px] font-bold uppercase text-amber-700 block">
+                  Distribuidora Despachadora:
+                </span>
+                <p className="font-bold text-amber-950 mt-0.5">⚠️ Ninguna seleccionada</p>
+                <p className="text-[10px] text-amber-700 mt-0.5">
+                  Haz clic en una distribuidora en el mapa para ver sus balones y despachar tu pedido.
+                </p>
+              </div>
+            )}
+
+            {/* Items seleccionados en el carrito con imagen miniatura */}
+            {Object.keys(carrito).length > 0 && (
+              <div className="space-y-1.5 py-1.5 border-t border-slate-100 max-h-[140px] overflow-y-auto pr-1">
+                <span className="text-[9px] font-bold text-slate-500 uppercase block">
+                  Balones en tu pedido:
+                </span>
+                {Object.entries(carrito).map(([prodId, cant]) => {
+                  const prod = catalogo.find((p) => p.publicId === prodId);
+                  if (!prod) return null;
+                  const imgItem = obtenerImagenProducto(prod);
+                  return (
+                    <div
+                      key={prodId}
+                      className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-slate-50/80 border border-slate-100 text-[11px]"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-8 h-8 rounded-md bg-white border border-slate-200 p-0.5 flex items-center justify-center shrink-0">
+                          <img
+                            src={imgItem}
+                            alt={prod.nombre}
+                            className="h-7 w-auto object-contain"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src =
+                                "/products/balon-10kg-premium.svg";
+                            }}
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 truncate text-[11px]">
+                            {prod.nombre}
+                          </p>
+                          <p className="text-[10px] text-slate-500">
+                            {cant} x S/ {prod.precio.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="font-bold text-slate-900 text-[11px] shrink-0">
+                        S/ {(prod.precio * cant).toFixed(2)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Dirección de Entrega Detallada (Calle, Distrito, Ciudad, Departamento) */}
+            <div className="space-y-1.5 pt-1 border-t border-slate-100">
+              <label className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-orange-500" />
+                  Dirección de Entrega
+                </span>
+                <span className="text-[9px] text-slate-400 font-normal">Punto de destino</span>
               </label>
+
+              {/* Calle / Avenida y Número */}
               <input
                 type="text"
-                value={direccion}
-                onChange={(e) => setDireccion(e.target.value)}
-                placeholder="Dirección exacta..."
-                className="w-full text-xs p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                value={direccionExacta}
+                onChange={(e) => {
+                  setDireccionExacta(e.target.value);
+                  setDireccion(`${e.target.value}, ${distritoDireccion}`);
+                }}
+                placeholder="Calle / Avenida y N° (ej. Av. Antúnez de Mayolo 1234)..."
+                className="w-full text-xs px-2.5 py-1 bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-orange-500"
               />
+
+              {/* Distrito, Ciudad y Departamento */}
+              <div className="grid grid-cols-3 gap-1">
+                <div>
+                  <label className="text-[9px] font-bold uppercase text-slate-400 block mb-0.5">
+                    Distrito
+                  </label>
+                  <input
+                    type="text"
+                    value={distritoDireccion}
+                    onChange={(e) => setDistritoDireccion(e.target.value)}
+                    placeholder="Distrito..."
+                    className="w-full text-[10px] font-semibold px-1.5 py-1 bg-slate-50 border border-slate-200 rounded-md focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-orange-500 text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-bold uppercase text-slate-400 block mb-0.5">
+                    Ciudad
+                  </label>
+                  <input
+                    type="text"
+                    value={ciudadDireccion}
+                    onChange={(e) => setCiudadDireccion(e.target.value)}
+                    placeholder="Ciudad..."
+                    className="w-full text-[10px] font-semibold px-1.5 py-1 bg-slate-50 border border-slate-200 rounded-md focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-orange-500 text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-bold uppercase text-slate-400 block mb-0.5">
+                    Departamento
+                  </label>
+                  <input
+                    type="text"
+                    value={departamentoDireccion}
+                    onChange={(e) => setDepartamentoDireccion(e.target.value)}
+                    placeholder="Departamento..."
+                    className="w-full text-[10px] font-semibold px-1.5 py-1 bg-slate-50 border border-slate-200 rounded-md focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-orange-500 text-slate-800"
+                  />
+                </div>
+              </div>
+
+              {/* Referencia */}
               <input
                 type="text"
                 value={referencia}
                 onChange={(e) => setReferencia(e.target.value)}
-                placeholder="Referencia (piso, depto, frente al parque)..."
-                className="w-full text-xs p-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden text-slate-600"
+                placeholder="Referencia (piso, dpto, reja negra, etc.)..."
+                className="w-full text-[11px] px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-slate-600 focus:outline-hidden focus:ring-1 focus:ring-orange-500"
               />
             </div>
 
-            {/* Cupón Promocional */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+            {/* Cupón Promocional Compacto */}
+            <div className="space-y-1 pt-1 border-t border-slate-100">
+              <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700">
                 <span className="flex items-center gap-1">
-                  <Tag className="w-3.5 h-3.5 text-purple-600" />
-                  Cupón Promocional
+                  <Tag className="w-3 h-3 text-purple-600" />
+                  Cupón
                 </span>
-                <span className="text-[10px] text-purple-600 font-semibold">Usa: GASPRIMERO</span>
-              </label>
-              <div className="flex gap-2">
+                <span className="text-[9px] text-purple-600">Usa: GASPRIMERO</span>
+              </div>
+              <div className="flex gap-1">
                 <input
                   type="text"
                   value={codigoCupon}
                   onChange={(e) => setCodigoCupon(e.target.value)}
-                  placeholder="Código cupón..."
-                  className="flex-1 text-xs p-2 border border-slate-200 rounded-xl uppercase font-mono font-bold focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                  placeholder="Código..."
+                  className="flex-1 text-xs px-2 py-1 border border-slate-200 rounded-lg uppercase font-mono font-bold focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                 />
                 <button
                   type="button"
                   onClick={handleValidarCupon}
                   disabled={validandoCupon}
-                  className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition disabled:opacity-50"
+                  className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-bold rounded-lg transition disabled:opacity-50 cursor-pointer"
                 >
                   {validandoCupon ? "..." : "Aplicar"}
                 </button>
               </div>
-              {errorCupon && <p className="text-[11px] text-red-600 font-medium">{errorCupon}</p>}
+              {errorCupon && <p className="text-[10px] text-red-600">{errorCupon}</p>}
               {cuponAplicado && (
-                <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center justify-between">
-                  <span>Cupón <strong>{cuponAplicado.codigo}</strong> aplicado</span>
-                  <span className="font-bold text-emerald-700">- S/ {cuponAplicado.descuento.toFixed(2)}</span>
+                <div className="p-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-[10px] text-emerald-800 flex items-center justify-between">
+                  <span>{cuponAplicado.codigo} aplicado</span>
+                  <span className="font-bold text-emerald-700">
+                    - S/ {cuponAplicado.descuento.toFixed(2)}
+                  </span>
                 </div>
               )}
             </div>
 
-            {/* Método de Pago */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <label className="text-xs font-bold text-slate-700 block">
+            {/* Método de Pago en Cuadrícula Compacta */}
+            <div className="space-y-1 pt-1 border-t border-slate-100">
+              <label className="text-[11px] font-bold text-slate-700 block">
                 Método de Pago
               </label>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-4 gap-1 text-[10px]">
                 <button
                   type="button"
                   onClick={() => setMetodoPago("YAPE")}
-                  className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 font-semibold transition ${
+                  className={`py-1.5 px-1 rounded-lg border flex flex-col items-center gap-0.5 font-bold transition cursor-pointer ${
                     metodoPago === "YAPE"
-                      ? "border-purple-500 bg-purple-50 text-purple-900 ring-2 ring-purple-300"
+                      ? "border-purple-500 bg-purple-50 text-purple-900 ring-1 ring-purple-400"
                       : "border-slate-200 hover:bg-slate-50 text-slate-700"
                   }`}
                 >
-                  <QrCode className="w-5 h-5 text-purple-600" />
-                  Yape (QR)
+                  <QrCode className="w-3.5 h-3.5 text-purple-600" />
+                  Yape
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setMetodoPago("EFECTIVO")}
-                  className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 font-semibold transition ${
+                  className={`py-1.5 px-1 rounded-lg border flex flex-col items-center gap-0.5 font-bold transition cursor-pointer ${
                     metodoPago === "EFECTIVO"
-                      ? "border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-300"
+                      ? "border-amber-500 bg-amber-50 text-amber-900 ring-1 ring-amber-400"
                       : "border-slate-200 hover:bg-slate-50 text-slate-700"
                   }`}
                 >
-                  <Banknote className="w-5 h-5 text-amber-600" />
+                  <Banknote className="w-3.5 h-3.5 text-amber-600" />
                   Efectivo
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setMetodoPago("PLIN")}
-                  className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 font-semibold transition ${
+                  className={`py-1.5 px-1 rounded-lg border flex flex-col items-center gap-0.5 font-bold transition cursor-pointer ${
                     metodoPago === "PLIN"
-                      ? "border-cyan-500 bg-cyan-50 text-cyan-900 ring-2 ring-cyan-300"
+                      ? "border-cyan-500 bg-cyan-50 text-cyan-900 ring-1 ring-cyan-400"
                       : "border-slate-200 hover:bg-slate-50 text-slate-700"
                   }`}
                 >
-                  <Phone className="w-5 h-5 text-cyan-600" />
+                  <Phone className="w-3.5 h-3.5 text-cyan-600" />
                   Plin
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setMetodoPago("TARJETA")}
-                  className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 font-semibold transition ${
+                  className={`py-1.5 px-1 rounded-lg border flex flex-col items-center gap-0.5 font-bold transition cursor-pointer ${
                     metodoPago === "TARJETA"
-                      ? "border-blue-500 bg-blue-50 text-blue-900 ring-2 ring-blue-300"
+                      ? "border-blue-500 bg-blue-50 text-blue-900 ring-1 ring-blue-400"
                       : "border-slate-200 hover:bg-slate-50 text-slate-700"
                   }`}
                 >
-                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  <CreditCard className="w-3.5 h-3.5 text-blue-600" />
                   Tarjeta
                 </button>
               </div>
 
               {metodoPago === "YAPE" && (
-                <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl text-xs space-y-1">
-                  <p className="font-bold text-purple-900">Número de Yape:</p>
-                  <p className="font-mono text-purple-700 font-bold text-sm">988-777-666 (Gas Los Olivos)</p>
-                  <p className="text-[11px] text-purple-600">Simulación: Pago validado automáticamente.</p>
+                <div className="p-1.5 bg-purple-50 border border-purple-200 rounded-lg text-[10px] flex items-center justify-between">
+                  <span className="font-bold text-purple-900">Yape: 988-777-666</span>
+                  <span className="text-purple-600 text-[9px]">Validación automática</span>
                 </div>
               )}
             </div>
 
-            {/* Totales */}
-            <div className="space-y-1.5 pt-3 border-t border-slate-100 text-xs">
+            {/* Totales Compactos */}
+            <div className="space-y-1 pt-1.5 border-t border-slate-100 text-[11px]">
               <div className="flex justify-between text-slate-500">
                 <span>Subtotal:</span>
                 <span>S/ {subtotal.toFixed(2)}</span>
               </div>
               {descuento > 0 && (
                 <div className="flex justify-between text-emerald-600 font-semibold">
-                  <span>Descuento Promocional:</span>
+                  <span>Descuento:</span>
                   <span>- S/ {descuento.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between text-slate-500">
-                <span>Envío a domicilio:</span>
-                <span className="font-bold text-emerald-600 uppercase text-[10px]">Gratis</span>
+                <span>Envío:</span>
+                <span className="font-bold text-emerald-600 uppercase text-[9px]">Gratis</span>
               </div>
-              <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-100">
-                <span>Total a Pagar:</span>
+              <div className="flex justify-between text-xs sm:text-sm font-black text-slate-900 pt-1 border-t border-slate-100">
+                <span>Total:</span>
                 <span className="text-orange-600">S/ {totalPagar.toFixed(2)}</span>
               </div>
             </div>
 
+            {/* Alertas de error o de Sin Cobertura */}
+            {distribuidoraSinCobertura && (
+              <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-[10px] text-red-700 flex items-start gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Fuera de Cobertura:</strong> Esta distribuidora se encuentra a {distribuidoraActiva?.distanciaKm} km. El límite de reparto express es de {LIMITE_COBERTURA_KM} km. Por favor elige una más cercana en el mapa.
+                </span>
+              </div>
+            )}
+
             {errorEnvio && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-[11px] text-red-700 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>{errorEnvio}</span>
               </div>
             )}
 
-            {/* Botón de Confirmación Principal */}
+            {/* Botón de Confirmación */}
             <button
               type="button"
               onClick={handleConfirmarPedido}
-              disabled={isPending || subtotal <= 0}
-              className="w-full py-3.5 px-4 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-black text-sm rounded-xl shadow-md transition flex items-center justify-center gap-2"
+              disabled={
+                isPending ||
+                subtotal <= 0 ||
+                distribuidoraSinCobertura ||
+                !empresaSeleccionada
+              }
+              className={`w-full py-2.5 px-3 font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 ${
+                distribuidoraSinCobertura
+                  ? "bg-red-200 text-red-700 cursor-not-allowed"
+                  : !empresaSeleccionada
+                  ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                  : isPending || subtotal <= 0
+                  ? "bg-orange-300 text-white cursor-not-allowed"
+                  : "bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
+              }`}
             >
-              <Flame className="w-4 h-4" />
-              {isPending ? "Confirmando pedido..." : `Confirmar y Pedir Gas (S/ ${totalPagar.toFixed(2)})`}
+              <Flame className="w-3.5 h-3.5" />
+              {isPending
+                ? "Procesando..."
+                : !empresaSeleccionada
+                ? "Selecciona una Distribuidora"
+                : distribuidoraSinCobertura
+                ? "Sin Cobertura (Muy lejos)"
+                : `Pedir Gas • S/ ${totalPagar.toFixed(2)}`}
             </button>
           </div>
         </div>

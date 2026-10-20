@@ -108,7 +108,7 @@ function LayoutContent({
         </div>
       </header>
 
-      <div className="flex flex-1 flex-col bg-muted w-full max-w-full min-w-0 overflow-x-hidden mx-0 text-xs app-content-scoped">
+      <div className="flex flex-1 flex-col bg-muted w-full max-w-full min-w-0 overflow-x-clip mx-0 text-xs app-content-scoped">
         {children}
       </div>
 

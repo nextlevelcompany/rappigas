@@ -1,7 +1,9 @@
+name: rappigas
+
 services:
   postgres:
     image: postgis/postgis:16-3.4
-    container_name: pidegas-postgres
+    container_name: rappigas-postgres
     restart: always
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-pidegas_db}
@@ -17,13 +19,13 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - pidegas-network
+      - rappigas-network
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: backend
+    container_name: rappigas-backend
     restart: always
     environment:
       SPRING_PROFILES_ACTIVE: dev
@@ -50,13 +52,13 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - pidegas-network
+      - rappigas-network
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: frontend
+    container_name: rappigas-frontend
     restart: always
     environment:
       NODE_ENV: production
@@ -68,11 +70,11 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - pidegas-network
+      - rappigas-network
 
   nginx:
     image: nginx:alpine
-    container_name: pidegas-nginx
+    container_name: rappigas-nginx
     restart: always
     ports:
       - "80:80"
@@ -82,12 +84,14 @@ services:
       - frontend
       - backend
     networks:
-      - pidegas-network
+      - rappigas-network
 
 volumes:
   postgres_data:
+    name: pidegas_postgres_data
+    external: true
   uploads_data:
 
 networks:
-  pidegas-network:
+  rappigas-network:
     driver: bridge

@@ -18,7 +18,7 @@ import {
   HomeAlt,
   MessageCircleQuestionMark,
 } from "@boxicons/react";
-import { Truck, ShoppingBag, Navigation, ChartBar, Building, CreditCard, ClipboardList, HelpCircle, Palette, Settings, ShieldCheck, Tag, PackageCheck, Boxes, LayoutDashboard } from "lucide-react";
+import { Truck, ShoppingBag, Navigation, ChartBar, Building, CreditCard, ClipboardList, HelpCircle, Palette, Settings, ShieldCheck, Tag, PackageCheck, Boxes, LayoutDashboard, Gift, LifeBuoy } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { useUIThemeStore } from "@/store/ui-theme.store";
 import { BrandLogo } from "@/components/brand-logo";
@@ -49,6 +49,18 @@ const seccionCRM = {
     { title: "Empresas", url: "/admin/empresas" },
     { title: "Contactos", url: "/admin/contactos" },
     { title: "Contratos y Adendas", url: "/admin/contratos" },
+  ],
+};
+
+//--- Fidelidad y Premios Section
+const seccionFidelidadAdmin = {
+  title: "FIDELIDAD",
+  url: "#",
+  icon: <Gift className="w-5 h-5" />,
+  isActive: false,
+  items: [
+    { title: "Puntos", url: "/admin/puntos" },
+    { title: "Premios", url: "/admin/premios" },
   ],
 };
 
@@ -254,26 +266,48 @@ const seccionRepartidor = {
   ],
 };
 
-const seccionCliente = {
-  title: "Área de Clientes",
+const seccionClienteCompras = {
+  title: "COMPRAS",
   url: "#",
-  icon: <ShoppingBag className="w-5 h-5 text-emerald-500" />,
-  isActive: false,
+  icon: <Flame className="w-5 h-5 text-orange-500" />,
+  isActive: true,
   items: [
     {
-      title: "Pedir Balón de Gas",
+      title: "Tienda",
       url: "/cliente/tienda",
     },
     {
-      title: "Mis Pedidos de Gas",
+      title: "Pedidos",
       url: "/cliente/pedidos",
     },
+  ],
+};
+
+const seccionClienteFidelidad = {
+  title: "FIDELIDAD",
+  url: "#",
+  icon: <Gift className="w-5 h-5 text-amber-500" />,
+  isActive: true,
+  items: [
     {
-      title: "Mis Puntos de Gas",
-      url: "/cliente/puntos",
+      title: "Canjes",
+      url: "/cliente/canjes",
     },
     {
-      title: "Ayuda y Reclamos",
+      title: "Puntos",
+      url: "/cliente/puntos",
+    },
+  ],
+};
+
+const seccionClienteSoporte = {
+  title: "ATENCIÓN",
+  url: "#",
+  icon: <LifeBuoy className="w-5 h-5 text-blue-500" />,
+  isActive: false,
+  items: [
+    {
+      title: "Soporte",
       url: "/cliente/soporte",
     },
   ],
@@ -325,7 +359,16 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
 
   if (rol === "ADMIN") {
     // Super Admin sees the new structured menu
-    itemsNavegacion = [seccionDashboard, seccionCRM, seccionFinanzas, seccionMonitoreo, seccionSoporteMenu, seccionEstadisticas, seccionConfiguracion];
+    itemsNavegacion = [
+      seccionDashboard,
+      seccionCRM,
+      seccionFidelidadAdmin,
+      seccionFinanzas,
+      seccionMonitoreo,
+      seccionSoporteMenu,
+      seccionEstadisticas,
+      seccionConfiguracion,
+    ];
   } else if (rol === "EMPRESA") {
     // Distribuidora con menú estructurado por áreas con títulos de una sola palabra
     itemsNavegacion = [
@@ -340,8 +383,8 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
     // Repartidor ve únicamente sus rutas y pedidos
     itemsNavegacion = [seccionRepartidor];
   } else {
-    // Cliente o visitante en /cliente/tienda: VE ÚNICAMENTE OPCIONES DE CLIENTE
-    itemsNavegacion = [seccionCliente];
+    // Cliente o visitante en /cliente/tienda: Menú estructurado por áreas
+    itemsNavegacion = [seccionClienteCompras, seccionClienteFidelidad, seccionClienteSoporte];
   }
 
   const navSecondaryFiltrado = navSecondary.filter((item) => {

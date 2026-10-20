@@ -43,6 +43,15 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import {
+  listarPagosComisiones,
+  PagoComisionReportado,
+  guardarEsquemaEmpresa,
+  obtenerBilleteraEmpresa,
+  recargarBilletera,
+  BilleteraEmpresa,
+  SemaforoSaldos,
+} from "@/librerias/comisiones";
 
 function safeNum(val: unknown, fallback = 0): number {
   if (val === null || val === undefined) return fallback;
@@ -66,6 +75,8 @@ export interface DistribuidoraComision {
   comisionGeneradaSoles: number;
   estadoPago: "AL_DIA" | "PENDIENTE" | "EXONERADO";
   fechaUltimoCorte: string;
+  saldoBilletera?: number;
+  estadoSemaforo?: SemaforoSaldos;
 }
 
 export default function AdminSuscripcionesComisionesPage() {
@@ -90,11 +101,58 @@ export default function AdminSuscripcionesComisionesPage() {
   const [editTarifaFija, setEditTarifaFija] = useState<string>("1.20");
   const [editTasaPorcentual, setEditTasaPorcentual] = useState<string>("3.0");
   const [editEstadoPago, setEditEstadoPago] = useState<"AL_DIA" | "PENDIENTE" | "EXONERADO">("AL_DIA");
+  const [editMontoRecargaAdmin, setEditMontoRecargaAdmin] = useState<string>("");
 
   // Modal de Calculadora Simuladora
   const [modalCalculadora, setModalCalculadora] = useState(false);
   const [calcPedidos, setCalcPedidos] = useState<number>(250);
   const [calcPrecioPromedio, setCalcPrecioPromedio] = useState<number>(48.50);
+
+  // Vouchers y Pagos Reportados por Distribuidoras
+  const [reportesPagos, setReportesPagos] = useState<PagoComisionReportado[]>([]);
+  const [modalReportes, setModalReportes] = useState(false);
+
+  const handleAprobarPagoReportado = (pagoId: string, empresaPublicId: string) => {
+    if (typeof window === "undefined") return;
+    try {
+      const actualizados = reportesPagos.map((p) =>
+        p.id === pagoId ? { ...p, estado: "APROBADO" as const, observacionAdmin: "Comprobante verificado y aprobado por Admin" } : p
+      );
+      setReportesPagos(actualizados);
+      localStorage.setItem("rappigas_pagos_comisiones", JSON.stringify(actualizados));
+
+      // Acreditar saldo en la billetera
+      const pago = reportesPagos.find((p) => p.id === pagoId);
+      let nuevoSaldo = 50.0;
+      let nuevoSemaforo: SemaforoSaldos = "VERDE";
+      if (pago) {
+        const b = recargarBilletera(empresaPublicId, pago.monto, `Abono Validado por Admin (Op: ${pago.numeroOperacion})`);
+        nuevoSaldo = b.saldoActual;
+        nuevoSemaforo = b.estadoSemaforo;
+      }
+
+      // Actualizar la distribuidora a AL_DIA con nuevo saldo
+      setDistribuidoras((prev) =>
+        prev.map((d) =>
+          d.publicId === empresaPublicId
+            ? { ...d, estadoPago: "AL_DIA" as const, saldoBilletera: nuevoSaldo, estadoSemaforo: nuevoSemaforo }
+            : d
+        )
+      );
+
+      // Guardar en el esquema persistente
+      const config = localStorage.getItem(`empresa_comision_${empresaPublicId}`);
+      if (config) {
+        const parsed = JSON.parse(config);
+        parsed.estadoPago = "AL_DIA";
+        localStorage.setItem(`empresa_comision_${empresaPublicId}`, JSON.stringify(parsed));
+      }
+
+      toast.success("¡Pago validado y saldo acreditado con éxito! La distribuidora ahora figura 'Al Día'.");
+    } catch {
+      toast.error("Error al actualizar el estado del pago");
+    }
+  };
 
   // Carga inicial y generación de datos a partir de las empresas reales del sistema
   const cargarDatos = async () => {
@@ -134,6 +192,8 @@ export default function AdminSuscripcionesComisionesPage() {
           ? safeNum(pedidosEstimados * tarifaFijaFinal)
           : safeNum((ventasEstimadas * tasaPorcFinal) / 100);
 
+        const b = obtenerBilleteraEmpresa(emp.publicId);
+
         return {
           id: (emp as any).id || idx + 1,
           publicId: emp.publicId || `emp-${idx + 1}`,
@@ -148,6 +208,8 @@ export default function AdminSuscripcionesComisionesPage() {
           comisionGeneradaSoles: comision,
           estadoPago: estadoPagoFinal,
           fechaUltimoCorte: "15 Oct 2026",
+          saldoBilletera: b.saldoActual,
+          estadoSemaforo: b.estadoSemaforo,
         };
       });
 
@@ -168,6 +230,8 @@ export default function AdminSuscripcionesComisionesPage() {
               comisionGeneradaSoles: 408.0,
               estadoPago: "AL_DIA",
               fechaUltimoCorte: "15 Oct 2026",
+              saldoBilletera: 48.80,
+              estadoSemaforo: "VERDE",
             },
             {
               id: 2,
@@ -183,6 +247,8 @@ export default function AdminSuscripcionesComisionesPage() {
               comisionGeneradaSoles: 603.82,
               estadoPago: "PENDIENTE",
               fechaUltimoCorte: "15 Oct 2026",
+              saldoBilletera: 6.50,
+              estadoSemaforo: "AMARILLO",
             },
             {
               id: 3,
@@ -198,6 +264,8 @@ export default function AdminSuscripcionesComisionesPage() {
               comisionGeneradaSoles: 580.0,
               estadoPago: "AL_DIA",
               fechaUltimoCorte: "15 Oct 2026",
+              saldoBilletera: 72.00,
+              estadoSemaforo: "VERDE",
             },
             {
               id: 4,
@@ -213,6 +281,8 @@ export default function AdminSuscripcionesComisionesPage() {
               comisionGeneradaSoles: 329.28,
               estadoPago: "AL_DIA",
               fechaUltimoCorte: "15 Oct 2026",
+              saldoBilletera: -8.40,
+              estadoSemaforo: "GRACIA",
             },
             {
               id: 5,
@@ -228,11 +298,17 @@ export default function AdminSuscripcionesComisionesPage() {
               comisionGeneradaSoles: 0,
               estadoPago: "EXONERADO",
               fechaUltimoCorte: "Mes de Bienvenida (Gratis)",
+              saldoBilletera: 30.00,
+              estadoSemaforo: "VERDE",
             },
           ];
           setDistribuidoras(ejemplosDemo);
         } else {
           setDistribuidoras(listaMapeada);
+        }
+
+        if (typeof window !== "undefined") {
+          setReportesPagos(listarPagosComisiones());
         }
       } catch (err) {
         console.error("Error al cargar distribuidoras:", err);
@@ -314,6 +390,7 @@ export default function AdminSuscripcionesComisionesPage() {
     setEditTarifaFija(emp.tarifaFija.toFixed(2));
     setEditTasaPorcentual(emp.tasaPorcentual.toFixed(1));
     setEditEstadoPago(emp.estadoPago);
+    setEditMontoRecargaAdmin("");
   };
 
   // Guardar cambio de esquema para una distribuidora
@@ -330,6 +407,21 @@ export default function AdminSuscripcionesComisionesPage() {
     if (isNaN(porcVal) || porcVal < 0 || porcVal > 50) {
       toast.error("Ingresa un porcentaje válido");
       return;
+    }
+
+    let nuevoSaldo = empresaEditando.saldoBilletera ?? 38.8;
+    let nuevoSemaforo = empresaEditando.estadoSemaforo ?? "VERDE";
+    const montoRec = parseFloat(editMontoRecargaAdmin);
+    if (!isNaN(montoRec) && montoRec > 0) {
+      const b = recargarBilletera(
+        empresaEditando.publicId,
+        montoRec,
+        "Abono / Recarga por Super Admin",
+        "AJUSTE_ADMIN"
+      );
+      nuevoSaldo = b.saldoActual;
+      nuevoSemaforo = b.estadoSemaforo;
+      toast.success(`Se abonaron S/ ${montoRec.toFixed(2)} al saldo de ${empresaEditando.nombreComercial}`);
     }
 
     setDistribuidoras((prev) =>
@@ -351,6 +443,8 @@ export default function AdminSuscripcionesComisionesPage() {
             tasaPorcentual: porcVal,
             estadoPago: editEstadoPago,
             comisionGeneradaSoles: nuevaComision,
+            saldoBilletera: nuevoSaldo,
+            estadoSemaforo: nuevoSemaforo,
           };
         }
         return d;
@@ -404,7 +498,7 @@ export default function AdminSuscripcionesComisionesPage() {
   if (usuario && usuario.rol !== "ADMIN") {
     return (
       <div className="p-6">
-        <RoleGuardAlert rolPermitido="ADMIN" modulo="Comisiones y Planes de Distribuidoras" />
+        <RoleGuardAlert rolRequerido="ADMIN" />
       </div>
     );
   }
@@ -467,6 +561,16 @@ export default function AdminSuscripcionesComisionesPage() {
           </Button>
 
           <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setModalReportes(true)}
+            className="text-xs h-8 gap-1.5 cursor-pointer border-orange-500/30 text-orange-600 hover:bg-orange-500/10 font-bold"
+          >
+            <Receipt className="w-3.5 h-3.5" />
+            Vouchers Reportados ({reportesPagos.length})
+          </Button>
+
+          <Button
             size="sm"
             onClick={handleExportarResumen}
             className="text-xs h-8 gap-1.5 font-bold cursor-pointer"
@@ -475,6 +579,36 @@ export default function AdminSuscripcionesComisionesPage() {
             Exportar Liquidaciones
           </Button>
         </div>
+      </div>
+
+      {/* Banner Informativo del Modelo de Cobro Directo */}
+      <div className="p-3.5 rounded-xl bg-card border border-border shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-600 flex items-center justify-center shrink-0">
+            <Coins className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-foreground">Modelo de Cobro Directo:</span>
+              <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-bold">
+                100% Recaudado por la Distribuidora
+              </Badge>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Los clientes pagan directamente al distribuidor (en efectivo contraentrega, su propio Yape o POS). RappiGas no retiene ventas de balones; consolida las comisiones por cobrar quincenalmente y valida los pagos transferidos por cada distribuidora.
+            </p>
+          </div>
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setModalReportes(true)}
+          className="shrink-0 text-xs h-7 font-bold border-orange-500/40 text-orange-600 hover:bg-orange-500/10 gap-1.5"
+        >
+          <Receipt className="w-3.5 h-3.5" />
+          Revisar {reportesPagos.length} Comprobantes
+        </Button>
       </div>
 
       {/* 4 KPIs de Rendimiento Financiero de la Plataforma */}
@@ -742,6 +876,7 @@ export default function AdminSuscripcionesComisionesPage() {
                 <tr>
                   <th className="py-3 px-4">Distribuidora</th>
                   <th className="py-3 px-4">Esquema Elegido</th>
+                  <th className="py-3 px-4 text-center">Billetera / Saldo</th>
                   <th className="py-3 px-4 text-center">Pedidos Mes</th>
                   <th className="py-3 px-4 text-right">Ventas Totales</th>
                   <th className="py-3 px-4 text-right">Comisión RappiGas</th>
@@ -752,7 +887,7 @@ export default function AdminSuscripcionesComisionesPage() {
               <tbody className="divide-y divide-border/60">
                 {distribuidorasFiltradas.length === 0 ? (
                   <tr key="fila-vacia">
-                    <td colSpan={7} className="py-8 text-center text-muted-foreground text-xs">
+                    <td colSpan={8} className="py-8 text-center text-muted-foreground text-xs">
                       No se encontraron distribuidoras con los filtros aplicados.
                     </td>
                   </tr>
@@ -787,6 +922,40 @@ export default function AdminSuscripcionesComisionesPage() {
                               <div className="text-[10px] text-muted-foreground">Sobre venta final</div>
                             </div>
                           )}
+                        </td>
+
+                        {/* Billetera y Semáforo */}
+                        <td className="py-3 px-4 text-center">
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={`font-mono font-bold text-xs ${
+                              (emp.saldoBilletera ?? 38.8) >= 15
+                                ? "text-foreground font-black"
+                                : (emp.saldoBilletera ?? 38.8) > 0
+                                ? "text-amber-600 font-black"
+                                : (emp.saldoBilletera ?? 38.8) >= -20
+                                ? "text-orange-600 font-black"
+                                : "text-red-600 font-black"
+                            }`}>
+                              S/ {(emp.saldoBilletera ?? 38.8).toFixed(2)}
+                            </span>
+                            <Badge variant="outline" className={`text-[9px] px-1.5 py-0 font-bold ${
+                              (emp.saldoBilletera ?? 38.8) >= 15
+                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-200"
+                                : (emp.saldoBilletera ?? 38.8) > 0
+                                ? "bg-amber-500/10 text-amber-600 border-amber-200"
+                                : (emp.saldoBilletera ?? 38.8) >= -20
+                                ? "bg-orange-500/10 text-orange-600 border-orange-200"
+                                : "bg-red-500/10 text-red-600 border-red-200"
+                            }`}>
+                              {(emp.saldoBilletera ?? 38.8) >= 15
+                                ? "🟢 Óptimo"
+                                : (emp.saldoBilletera ?? 38.8) > 0
+                                ? "🟡 Alerta"
+                                : (emp.saldoBilletera ?? 38.8) >= -20
+                                ? "🟠 En Gracia"
+                                : "🔴 Pausado"}
+                            </Badge>
+                          </div>
                         </td>
 
                         {/* Pedidos del Mes */}
@@ -961,6 +1130,77 @@ export default function AdminSuscripcionesComisionesPage() {
                 <option value="PENDIENTE">Liquidación Pendiente de Cobro</option>
                 <option value="EXONERADO">Exonerado (Cortesía / Promoción 0%)</option>
               </select>
+            </div>
+
+            {/* Saldo de Billetera y Abono Manual */}
+            <div className="p-3.5 rounded-xl bg-orange-50/50 dark:bg-orange-950/20 border border-orange-500/20 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-foreground block text-xs">Saldo Actual en Billetera:</span>
+                  <span className="text-[10px] text-muted-foreground">Monedero prepago de comisiones</span>
+                </div>
+                <div className="text-right">
+                  <span className="font-mono font-black text-sm text-orange-600 block">
+                    S/ {(empresaEditando?.saldoBilletera ?? 38.8).toFixed(2)}
+                  </span>
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 font-bold">
+                    {empresaEditando?.estadoSemaforo === "VERDE"
+                      ? "🟢 Óptimo"
+                      : empresaEditando?.estadoSemaforo === "AMARILLO"
+                      ? "🟡 Alerta"
+                      : empresaEditando?.estadoSemaforo === "GRACIA"
+                      ? "🟠 En Gracia"
+                      : "🔴 Pausado"}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 pt-1 border-t border-orange-500/10">
+                <label className="text-[11px] font-semibold text-foreground block">
+                  Abonar / Recargar Saldo Manualmente (S/):
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    step="5"
+                    min="0"
+                    value={editMontoRecargaAdmin}
+                    onChange={(e) => setEditMontoRecargaAdmin(e.target.value)}
+                    placeholder="Ej: 50.00"
+                    className="h-8 text-xs font-mono font-bold bg-card"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditMontoRecargaAdmin("30.00")}
+                    className="h-8 text-xs font-bold shrink-0"
+                  >
+                    +30
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditMontoRecargaAdmin("50.00")}
+                    className="h-8 text-xs font-bold shrink-0"
+                  >
+                    +50
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditMontoRecargaAdmin("100.00")}
+                    className="h-8 text-xs font-bold shrink-0"
+                  >
+                    +100
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Ingresa un monto para abonar saldo directamente a esta distribuidora (depósito bancario, bono o regularización).
+                </p>
+              </div>
             </div>
           </div>
 
@@ -1154,6 +1394,101 @@ export default function AdminSuscripcionesComisionesPage() {
               className="text-xs"
             >
               Cerrar Simulador
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Vouchers y Pagos Reportados por Distribuidoras */}
+      <Dialog open={modalReportes} onOpenChange={setModalReportes}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-foreground">
+              <Receipt className="w-5 h-5 text-orange-600" />
+              Comprobantes de Comisión Reportados por Distribuidoras
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Revisa y valida los abonos de comisión quincenal reportados por las distribuidoras a las cuentas oficiales de RappiGas (BCP, BBVA, Interbank, Yape o Pasarela).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-2 space-y-3">
+            {reportesPagos.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground border rounded-xl bg-muted/20">
+                <Receipt className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
+                <p className="text-xs font-semibold text-foreground">No hay comprobantes pendientes de validación</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Cuando las distribuidoras abonen sus comisiones desde su panel, aparecerán en este buzón.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {reportesPagos.map((pago) => (
+                  <div
+                    key={pago.id}
+                    className="p-3.5 rounded-xl border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs hover:border-orange-500/30 transition"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs text-foreground">{pago.nombreEmpresa}</span>
+                        <Badge variant="outline" className="text-[10px] font-bold">
+                          {pago.metodo.replace("_", " ")}
+                        </Badge>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          pago.estado === "APROBADO"
+                            ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                            : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                        }`}>
+                          {pago.estado === "APROBADO" ? "Al Día / Aprobado" : "Pendiente de Validación"}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground flex flex-wrap items-center gap-3 font-mono">
+                        <span>Periodo: <strong className="text-foreground">{pago.periodoLiquidado}</strong></span>
+                        <span>•</span>
+                        <span>N° Operación: <strong className="text-foreground">{pago.numeroOperacion}</strong></span>
+                        <span>•</span>
+                        <span>Fecha: {pago.fechaReporte}</span>
+                      </div>
+                      {pago.observacionAdmin && (
+                        <p className="text-[10px] text-muted-foreground italic">
+                          Nota: {pago.observacionAdmin}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0 justify-between sm:justify-end">
+                      <div className="text-right">
+                        <span className="text-[10px] text-muted-foreground block">Monto Reportado:</span>
+                        <span className="font-mono font-black text-sm text-emerald-600">
+                          S/ {Number(pago.monto).toFixed(2)}
+                        </span>
+                      </div>
+
+                      {pago.estado !== "APROBADO" && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleAprobarPagoReportado(pago.id, pago.empresaPublicId)}
+                          className="h-7 text-xs px-2.5 font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          Validar y Aprobar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setModalReportes(false)}
+              className="text-xs"
+            >
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>

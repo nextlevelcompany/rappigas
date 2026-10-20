@@ -60,6 +60,9 @@ import {
   EsquemaComisionEmpresa,
   formatearComisionTexto,
   ESQUEMA_DEFAULT,
+  obtenerBilleteraEmpresa,
+  recargarBilletera,
+  BilleteraEmpresa,
 } from "@/librerias/comisiones";
 
 export interface ContactoItem {
@@ -94,13 +97,15 @@ export default function DetalleEmpresaAdminPage({ params }: Props) {
   >("estadisticas");
   const [isPending, startTransition] = useTransition();
 
-  // Gestión de Comisiones
+  // Gestión de Comisiones y Billetera
   const [esquemaComision, setEsquemaComision] = useState<EsquemaComisionEmpresa>(ESQUEMA_DEFAULT);
+  const [billetera, setBilletera] = useState<BilleteraEmpresa | null>(null);
   const [modalEditarComision, setModalEditarComision] = useState(false);
   const [tipoComisionEdit, setTipoComisionEdit] = useState<"FIJA" | "PORCENTUAL">("FIJA");
   const [tarifaFijaEdit, setTarifaFijaEdit] = useState(1.20);
   const [tasaPorcentualEdit, setTasaPorcentualEdit] = useState(3.0);
   const [estadoPagoEdit, setEstadoPagoEdit] = useState<"AL_DIA" | "PENDIENTE" | "OBSERVADO">("AL_DIA");
+  const [montoRecargaAdmin, setMontoRecargaAdmin] = useState<string>("");
 
   // Gestión de Contactos
   const [contactos, setContactos] = useState<ContactoItem[]>([]);
@@ -177,13 +182,14 @@ export default function DetalleEmpresaAdminPage({ params }: Props) {
         console.warn("No se pudieron cargar métricas de la empresa:", e);
       }
 
-      // Cargar esquema de comisiones configurado para esta distribuidora
+      // Cargar esquema de comisiones y billetera de esta distribuidora
       const esq = obtenerEsquemaEmpresa(publicId);
       setEsquemaComision(esq);
       setTipoComisionEdit(esq.tipo);
       setTarifaFijaEdit(esq.tarifaFija);
       setTasaPorcentualEdit(esq.tasaPorcentual);
       setEstadoPagoEdit(esq.estadoPago);
+      setBilletera(obtenerBilleteraEmpresa(publicId));
     } catch (err: any) {
       setError(err.message || "Error al cargar la información de la distribuidora");
     } finally {
@@ -975,20 +981,74 @@ export default function DetalleEmpresaAdminPage({ params }: Props) {
 
             <div className="p-3 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-card-foreground shadow-2xs space-y-1">
               <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                Saldo Neto a Liquidar
+                Billetera / Saldo Disponible
               </span>
-              <p className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                S/ {Math.max(
-                  (metricas?.ventasMes ?? 0) -
-                    (esquemaComision.tipo === "FIJA"
-                      ? (metricas?.totalPedidosMes ?? 0) * esquemaComision.tarifaFija
-                      : (metricas?.ventasMes ?? 0) * (esquemaComision.tasaPorcentual / 100)),
-                  0
-                ).toFixed(2)}
+              <p className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                S/ {(billetera?.saldoActual ?? 38.8).toFixed(2)}
               </p>
-              <span className="text-[10px] text-muted-foreground">A transferir al distribuidor</span>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0 font-bold bg-card">
+                  {(billetera?.saldoActual ?? 38.8) >= 15
+                    ? "🟢 Óptimo"
+                    : (billetera?.saldoActual ?? 38.8) > 0
+                    ? "🟡 Alerta"
+                    : (billetera?.saldoActual ?? 38.8) >= -20
+                    ? "🟠 En Gracia"
+                    : "🔴 Pausado"}
+                </Badge>
+                <span className="text-[10px] text-muted-foreground">Límite: S/ -20.00</span>
+              </div>
             </div>
           </div>
+
+          {/* Tabla de Auditoría de Movimientos de la Billetera */}
+          {billetera && (
+            <Card className="border border-border bg-card shadow-2xs overflow-hidden">
+              <CardHeader className="py-2.5 px-4 border-b bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Coins className="w-4 h-4 text-orange-600" />
+                    <CardTitle className="text-xs font-bold text-foreground uppercase tracking-wider">
+                      Auditoría de Billetera (Recargas y Deducciones por Pedido)
+                    </CardTitle>
+                  </div>
+                  <span className="text-[11px] font-mono text-muted-foreground">
+                    {billetera.movimientos.length} movimientos
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-muted/40 text-muted-foreground text-[10px] font-bold uppercase tracking-wider border-b">
+                      <tr>
+                        <th className="px-4 py-2">Fecha</th>
+                        <th className="px-4 py-2">Concepto</th>
+                        <th className="px-4 py-2 text-right">Monto</th>
+                        <th className="px-4 py-2 text-right">Saldo Posterior</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {billetera.movimientos.map((m) => (
+                        <tr key={m.id} className="hover:bg-muted/20 transition">
+                          <td className="px-4 py-2 text-muted-foreground">{m.fecha}</td>
+                          <td className="px-4 py-2 font-medium text-foreground">{m.referencia}</td>
+                          <td className={`px-4 py-2 text-right font-mono font-bold ${
+                            m.monto > 0 ? "text-emerald-600" : "text-orange-600"
+                          }`}>
+                            {m.monto > 0 ? `+ S/ ${m.monto.toFixed(2)}` : `- S/ ${Math.abs(m.monto).toFixed(2)}`}
+                          </td>
+                          <td className="px-4 py-2 text-right font-mono text-foreground font-semibold">
+                            S/ {m.saldoPosterior.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Comparativa de Modalidades */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2196,10 +2256,54 @@ export default function DetalleEmpresaAdminPage({ params }: Props) {
                 </select>
               </div>
 
+              {/* Saldo de Billetera y Abono Manual */}
+              <div className="p-3 rounded-xl bg-orange-50/50 dark:bg-orange-950/20 border border-orange-500/20 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-foreground">Saldo Actual en Billetera:</span>
+                  <span className="font-mono font-black text-sm text-orange-600">
+                    S/ {(billetera?.saldoActual ?? 38.8).toFixed(2)}
+                  </span>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                    Abonar Saldo Manualmente (S/):
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      step="5"
+                      min="0"
+                      value={montoRecargaAdmin}
+                      onChange={(e) => setMontoRecargaAdmin(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full px-3 py-1.5 text-xs rounded-xl border bg-background font-mono font-bold focus:ring-2 focus:ring-orange-500 outline-hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMontoRecargaAdmin("50.00")}
+                      className="h-7 text-xs font-bold shrink-0"
+                    >
+                      +50
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMontoRecargaAdmin("100.00")}
+                      className="h-7 text-xs font-bold shrink-0"
+                    >
+                      +100
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               <div className="p-2.5 rounded-xl bg-muted/50 border text-[11px] text-muted-foreground flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <span>
-                  Al guardar, este esquema se sincronizará automáticamente con el panel del distribuidor y con las liquidaciones en Finanzas.
+                  Al guardar, este esquema y saldo se sincronizarán automáticamente con el panel del distribuidor y con las liquidaciones en Finanzas.
                 </span>
               </div>
             </div>
@@ -2224,15 +2328,27 @@ export default function DetalleEmpresaAdminPage({ params }: Props) {
                   };
                   setEsquemaComision(nuevoEsquema);
                   guardarEsquemaEmpresa(publicId, nuevoEsquema);
+
+                  if (montoRecargaAdmin && parseFloat(montoRecargaAdmin) > 0) {
+                    const bAct = recargarBilletera(
+                      publicId,
+                      parseFloat(montoRecargaAdmin),
+                      "Abono / Recarga por Super Admin",
+                      "AJUSTE_ADMIN"
+                    );
+                    setBilletera(bAct);
+                    setMontoRecargaAdmin("");
+                  }
+
                   setModalEditarComision(false);
                   setMensaje({
                     tipo: "exito",
-                    texto: `Esquema de comisiones actualizado exitosamente a ${formatearComisionTexto(nuevoEsquema)} para ${empresa.nombreComercial}.`,
+                    texto: `Esquema de comisiones y saldo actualizados exitosamente para ${empresa.nombreComercial}.`,
                   });
                 }}
                 className="bg-orange-600 hover:bg-orange-700 text-white font-bold"
               >
-                Guardar Comisión
+                Guardar Comisión y Saldo
               </Button>
             </div>
           </div>
