@@ -2,12 +2,21 @@
 
 import React, { useEffect, useState, useTransition, useMemo } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { empresasApi, EmpresaDetalle } from "@/librerias/api/empresas.api";
 import { catalogoApi, ProductoDetalle } from "@/librerias/api/catalogo.api";
 import { pedidosApi, CrearPedidoDto, PedidoDetalle } from "@/librerias/api/pedidos.api";
 import { fidelizacionApi, BilleteraPuntos, ResultadoValidacionCupon } from "@/librerias/api/fidelizacion.api";
 import { finanzasApi, MetodoPago } from "@/librerias/api/finanzas.api";
 import { ubigeoApi, UbigeoItem } from "@/librerias/api/ubigeo.api";
+import {
+  obtenerCarritoGas,
+  sincronizarCarritoGasDesdeTienda,
+  vaciarCarritoGas,
+  guardarEmpresaSeleccionada,
+  guardarDireccionGas,
+} from "@/librerias/carrito-gas";
 import { useAuthStore } from "@/store/auth-store";
 import { authApi } from "@/librerias/api/auth.api";
 import {
@@ -148,7 +157,17 @@ export default function TiendaClienteGasPage() {
           const prods = await catalogoApi.listarProductosPublicos(inicial.publicId);
           const activos = prods.filter((p) => p.estado === "ACTIVO");
           setCatalogo(activos);
-          if (activos.length > 0) {
+          const gasGuardado = obtenerCarritoGas();
+          const mapGuardado: { [id: string]: number } = {};
+          activos.forEach((p) => {
+            const match = gasGuardado.find((it) => it.producto.publicId === p.publicId);
+            if (match && match.cantidad > 0) {
+              mapGuardado[p.publicId] = match.cantidad;
+            }
+          });
+          if (Object.keys(mapGuardado).length > 0) {
+            setCarrito(mapGuardado);
+          } else if (activos.length > 0) {
             setCarrito({ [activos[0].publicId]: 1 });
           }
         } catch {
@@ -488,6 +507,69 @@ export default function TiendaClienteGasPage() {
     });
   };
 
+  // Sincronizar carrito local hacia almacenamiento global de RappiGas
+  useEffect(() => {
+    if (catalogo.length > 0) {
+      sincronizarCarritoGasDesdeTienda(carrito, catalogo, empresaSeleccionada);
+    }
+  }, [carrito, catalogo, empresaSeleccionada]);
+
+  // Persistir empresa seleccionada
+  useEffect(() => {
+    if (empresaSeleccionada) {
+      guardarEmpresaSeleccionada(empresaSeleccionada);
+    }
+  }, [empresaSeleccionada]);
+
+  // Persistir dirección y coordenadas seleccionadas para el checkout
+  useEffect(() => {
+    guardarDireccionGas({
+      direccionExacta,
+      distrito: distritoDireccion,
+      ciudad: ciudadDireccion,
+      departamento: departamentoDireccion,
+      referencia,
+      latitud,
+      longitud,
+      telefono: telefonoYape,
+      notas,
+    });
+  }, [
+    direccionExacta,
+    distritoDireccion,
+    ciudadDireccion,
+    departamentoDireccion,
+    referencia,
+    latitud,
+    longitud,
+    telefonoYape,
+    notas,
+  ]);
+
+  // Escuchar actualizaciones del carrito de gas realizadas desde el header
+  useEffect(() => {
+    const handleSyncDesdeHeader = () => {
+      const items = obtenerCarritoGas();
+      const nuevoMap: { [id: string]: number } = {};
+      items.forEach((it) => {
+        nuevoMap[it.producto.publicId] = it.cantidad;
+      });
+      setCarrito((prev) => {
+        const prevKeys = Object.keys(prev);
+        const newKeys = Object.keys(nuevoMap);
+        if (
+          prevKeys.length === newKeys.length &&
+          prevKeys.every((k) => prev[k] === nuevoMap[k])
+        ) {
+          return prev;
+        }
+        return nuevoMap;
+      });
+    };
+    window.addEventListener("carrito_gas_actualizado", handleSyncDesdeHeader);
+    return () => window.removeEventListener("carrito_gas_actualizado", handleSyncDesdeHeader);
+  }, []);
+
   const calcularSubtotal = () => {
     return Object.entries(carrito).reduce((total, [publicId, cant]) => {
       const prod = catalogo.find((p) => p.publicId === publicId);
@@ -595,6 +677,7 @@ export default function TiendaClienteGasPage() {
 
         setPedidoConfirmado(nuevoPed);
         setCarrito({});
+        vaciarCarritoGas();
         setCuponAplicado(null);
       } catch (err: any) {
         setErrorEnvio(err.message || "Error al procesar el pedido.");
@@ -1656,38 +1739,98 @@ export default function TiendaClienteGasPage() {
               </div>
             )}
 
-            {/* Botón de Confirmación */}
-            <button
-              type="button"
-              onClick={handleConfirmarPedido}
-              disabled={
-                isPending ||
-                subtotal <= 0 ||
-                distribuidoraSinCobertura ||
-                !empresaSeleccionada
-              }
-              className={`w-full py-2.5 px-3 font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 ${
-                distribuidoraSinCobertura
-                  ? "bg-red-200 text-red-700 cursor-not-allowed"
-                  : !empresaSeleccionada
-                  ? "bg-slate-200 text-slate-500 cursor-not-allowed"
-                  : isPending || subtotal <= 0
-                  ? "bg-orange-300 text-white cursor-not-allowed"
-                  : "bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
-              }`}
-            >
-              <Flame className="w-3.5 h-3.5" />
-              {isPending
-                ? "Procesando..."
-                : !empresaSeleccionada
-                ? "Selecciona una Distribuidora"
-                : distribuidoraSinCobertura
-                ? "Sin Cobertura (Muy lejos)"
-                : `Pedir Gas • S/ ${totalPagar.toFixed(2)}`}
-            </button>
+            {/* Botones de Navegación del Flujo de Compra */}
+            <div className="space-y-2 pt-1">
+              <Link href="/cliente/carrito" className="block w-full">
+                <button
+                  type="button"
+                  disabled={subtotal <= 0}
+                  className={`w-full py-2.5 px-3 font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 ${
+                    subtotal <= 0
+                      ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                      : "bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
+                  }`}
+                >
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                  <span>
+                    Ver Carrito ({Object.values(carrito).reduce((a, b) => a + b, 0)}) • S/ {totalPagar.toFixed(2)}
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </Link>
+
+              <div className="grid grid-cols-2 gap-1.5">
+                <Link href="/cliente/checkout" className="block w-full">
+                  <button
+                    type="button"
+                    disabled={subtotal <= 0}
+                    className={`w-full py-2 px-2 font-bold text-[11px] rounded-xl border transition flex items-center justify-center gap-1 ${
+                      subtotal <= 0
+                        ? "border-slate-200 text-slate-400 cursor-not-allowed"
+                        : "border-orange-300 text-orange-700 hover:bg-orange-50 cursor-pointer"
+                    }`}
+                  >
+                    <span>Ir a Checkout</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleConfirmarPedido}
+                  disabled={
+                    isPending ||
+                    subtotal <= 0 ||
+                    distribuidoraSinCobertura ||
+                    !empresaSeleccionada
+                  }
+                  className={`w-full py-2 px-2 font-bold text-[11px] rounded-xl transition flex items-center justify-center gap-1 ${
+                    distribuidoraSinCobertura || !empresaSeleccionada || isPending || subtotal <= 0
+                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                      : "bg-slate-900 hover:bg-slate-800 text-white cursor-pointer"
+                  }`}
+                >
+                  <Flame className="w-3 h-3 text-amber-300" />
+                  <span>{isPending ? "Pidiendo..." : "Pedir Exprés"}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Barra Flotante Inferior de Carrito (visible al navegar productos) */}
+      {Object.keys(carrito).length > 0 && subtotal > 0 && (
+        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 z-40 animate-in slide-in-from-bottom-5">
+          <div className="bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-2xl border border-slate-800 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center shrink-0 shadow-xs">
+                <ShoppingBag className="w-5 h-5 text-white" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] text-slate-400 font-bold block uppercase">
+                  {Object.values(carrito).reduce((a, b) => a + b, 0)} balones seleccionados
+                </span>
+                <span className="text-xs font-black text-orange-400 font-mono">
+                  S/ {totalPagar.toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Link href="/cliente/carrito">
+                <Button
+                  size="sm"
+                  className="bg-orange-600 hover:bg-orange-700 text-white font-black text-xs rounded-xl shadow-md px-3.5 h-8 gap-1.5 cursor-pointer"
+                >
+                  <span>Ver Carrito</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

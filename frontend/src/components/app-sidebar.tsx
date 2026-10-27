@@ -61,6 +61,7 @@ const seccionFidelidadAdmin = {
   items: [
     { title: "Puntos", url: "/admin/puntos" },
     { title: "Premios", url: "/admin/premios" },
+    { title: "Canjes", url: "/admin/canjes" },
   ],
 };
 
@@ -277,6 +278,10 @@ const seccionClienteCompras = {
       url: "/cliente/tienda",
     },
     {
+      title: "Carrito",
+      url: "/cliente/carrito",
+    },
+    {
       title: "Pedidos",
       url: "/cliente/pedidos",
     },
@@ -292,6 +297,10 @@ const seccionClienteFidelidad = {
     {
       title: "Canjes",
       url: "/cliente/canjes",
+    },
+    {
+      title: "Historial",
+      url: "/cliente/canjes/historial",
     },
     {
       title: "Puntos",

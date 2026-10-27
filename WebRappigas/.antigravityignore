@@ -1,0 +1,143 @@
+# ==============================================================================
+# .antigravityignore
+# Exclusiones de contexto para el asistente de Inteligencia Artificial (Antigravity / Gemini)
+# Evita indexar dependencias masivas, archivos generados, binarios y secretos.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Dependencias y Gestores de Paquetes
+# ------------------------------------------------------------------------------
+node_modules/
+.pnp/
+.pnp.js
+.yarn/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# ------------------------------------------------------------------------------
+# 2. Compilaciones, Builds y Salidas de Next.js
+# ------------------------------------------------------------------------------
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# ------------------------------------------------------------------------------
+# 3. Secretos, Credenciales y Variables de Entorno
+# (Protege credenciales reales; conserva .env.example como referencia)
+# ------------------------------------------------------------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env*.local
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+id_rsa
+id_rsa.pub
+*.keystore
+secrets/
+credentials.json
+service-account*.json
+!*.example
+
+# ------------------------------------------------------------------------------
+# 4. Logs, Reportes y Archivos de Depuración
+# ------------------------------------------------------------------------------
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------------------------------------------------------------------------------
+# 5. Pruebas y Cobertura (Testing & Coverage)
+# ------------------------------------------------------------------------------
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+.cypress/
+
+# ------------------------------------------------------------------------------
+# 6. Caché y Archivos Temporales
+# ------------------------------------------------------------------------------
+.cache/
+.parcel-cache/
+.turbo/
+.swc/
+.temp/
+.tmp/
+tmp/
+
+# ------------------------------------------------------------------------------
+# 7. Despliegue y Plataformas Cloud
+# ------------------------------------------------------------------------------
+.vercel/
+.netlify/
+
+# ------------------------------------------------------------------------------
+# 8. Archivos del Sistema Operativo e IDEs
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+
+# ------------------------------------------------------------------------------
+# 9. Control de Versiones y Metadatos de IA
+# ------------------------------------------------------------------------------
+.git/
+.gemini/
+.antigravity/
+.system_generated/
+
+# ------------------------------------------------------------------------------
+# 10. Archivos Binarios, Fuentes y Medios Pesados
+# ------------------------------------------------------------------------------
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+*.pdf
+*.exe
+*.dll
+*.so
+*.dylib
+*.iso
+
+# Audio y Video
+*.mp4
+*.webm
+*.mov
+*.avi
+*.mkv
+*.mp3
+*.wav
+*.ogg
+
+# Tipografías binarias pesadas
+*.woff
+*.woff2
+*.ttf
+*.eot
+*.otf

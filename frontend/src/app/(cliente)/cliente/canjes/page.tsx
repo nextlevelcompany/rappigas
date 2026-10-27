@@ -16,10 +16,16 @@ import {
   obtenerCategorias,
 } from "./premios-data";
 import {
+  agregarAlCarritoCanjes,
+  obtenerCarritoCanjes,
+} from "./carrito-canjes";
+import { CarritoCanjesDrawer } from "./carrito-drawer";
+import {
   Flame,
   Gift,
   Sparkles,
   ShoppingBag,
+  Truck,
   ShieldCheck,
   Search,
   Filter,
@@ -75,6 +81,11 @@ export default function TiendaCanjesPage() {
   } | null>(null);
   const [copiado, setCopiado] = useState(false);
 
+  // Carrito de Canjes
+  const [carritoAbierto, setCarritoAbierto] = useState(false);
+  const [cantCarrito, setCantCarrito] = useState(0);
+  const [totalPuntosCarrito, setTotalPuntosCarrito] = useState(0);
+
   const cargarDatos = useCallback(async () => {
     try {
       setCargando(true);
@@ -107,13 +118,35 @@ export default function TiendaCanjesPage() {
     const handleCategoriasSync = () => {
       setCategorias(obtenerCategorias());
     };
+    const handleCarritoSync = () => {
+      const itms = obtenerCarritoCanjes();
+      setCantCarrito(itms.reduce((acc, it) => acc + it.cantidad, 0));
+      setTotalPuntosCarrito(itms.reduce((acc, it) => acc + it.premio.puntos * it.cantidad, 0));
+    };
+
+    handleCarritoSync();
+
+    const handleAbrirDrawer = () => {
+      setCarritoAbierto(true);
+    };
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("abrir") === "carrito") {
+        setCarritoAbierto(true);
+      }
+    }
 
     window.addEventListener("catalogo_premios_actualizado", handleSync);
     window.addEventListener("catalogo_categorias_actualizado", handleCategoriasSync);
+    window.addEventListener("carrito_canjes_actualizado", handleCarritoSync);
+    window.addEventListener("abrir_drawer_canjes", handleAbrirDrawer);
 
     return () => {
       window.removeEventListener("catalogo_premios_actualizado", handleSync);
       window.removeEventListener("catalogo_categorias_actualizado", handleCategoriasSync);
+      window.removeEventListener("carrito_canjes_actualizado", handleCarritoSync);
+      window.removeEventListener("abrir_drawer_canjes", handleAbrirDrawer);
     };
   }, [cargarDatos]);
 
@@ -197,16 +230,9 @@ export default function TiendaCanjesPage() {
   };
 
   const handleCanjear = (premio: PremioCanje) => {
-    if (saldo < premio.puntos) {
-      alert(`Necesitas ${premio.puntos} puntos para canjear este premio. Tu saldo actual es de ${saldo} pts.`);
-      return;
-    }
-
-    const codigoGenerado = `${premio.codigoCupon}-${Math.floor(1000 + Math.random() * 9000)}`;
-    setCanjeExitoso({
-      premio,
-      codigoCupon: codigoGenerado,
-    });
+    // Agregar al carrito de canjes para confirmar todo junto
+    agregarAlCarritoCanjes(premio, 1);
+    setCarritoAbierto(true);
   };
 
   const handleCopiarCodigo = () => {
@@ -349,11 +375,36 @@ export default function TiendaCanjesPage() {
             </button>
 
             <Link
+              href="/cliente/canjes/historial"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white font-bold rounded-lg text-xs transition cursor-pointer border border-white/20"
+              title="Ver mis canjes realizados y su estado de entrega"
+            >
+              <Truck className="w-3.5 h-3.5 text-amber-200" />
+              <span>Mis Canjes</span>
+            </Link>
+
+            <Link
               href="/cliente/puntos"
               className="inline-flex items-center gap-1 px-3 py-1.5 bg-white text-orange-600 hover:bg-orange-50 font-black rounded-lg text-xs shadow-xs transition cursor-pointer"
             >
               <span>Ver Historial de Puntos</span>
             </Link>
+
+            {/* Botón Carrito de Canjes */}
+            <button
+              type="button"
+              onClick={() => setCarritoAbierto(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white font-black rounded-lg text-xs shadow-md transition cursor-pointer border border-white/30"
+              title="Abrir carrito de canjes para confirmar todo"
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>Carrito ({cantCarrito})</span>
+              {totalPuntosCarrito > 0 && (
+                <span className="font-mono text-[10px] bg-white/20 px-1 py-0.2 rounded font-bold">
+                  {totalPuntosCarrito} pts
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
@@ -957,6 +1008,18 @@ export default function TiendaCanjesPage() {
           )}
         </div>
       </div>
+
+      {/* Drawer del Carrito de Canjes */}
+      <CarritoCanjesDrawer
+        abierto={carritoAbierto}
+        onCerrar={() => setCarritoAbierto(false)}
+        saldoPuntos={saldo}
+        onPuntosActualizados={(nuevo) => {
+          if (billetera) {
+            setBilletera({ ...billetera, saldoPuntos: nuevo });
+          }
+        }}
+      />
     </div>
   );
 }

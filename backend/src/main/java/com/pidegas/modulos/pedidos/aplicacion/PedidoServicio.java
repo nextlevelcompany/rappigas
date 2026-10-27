@@ -104,17 +104,20 @@ public class PedidoServicio {
         }
 
         // Validación espacial PostGIS
-        List<ZonaCobertura> zonasCubiertas = zonaCoberturaRepositorio.buscarZonasTenantQueCubrenPunto(
-                empresa.getId(),
-                dto.longitud(),
-                dto.latitud()
-        );
-
-        if (zonasCubiertas.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Lo sentimos, la dirección de entrega (" + dto.direccionEntrega() +
-                    ") se encuentra fuera de la zona de cobertura de " + empresa.getNombreComercial() + "."
+        List<ZonaCobertura> zonasConfiguradas = zonaCoberturaRepositorio.findByTenantIdAndActivaTrue(empresa.getId());
+        if (!zonasConfiguradas.isEmpty()) {
+            List<ZonaCobertura> zonasCubiertas = zonaCoberturaRepositorio.buscarZonasTenantQueCubrenPunto(
+                    empresa.getId(),
+                    dto.longitud(),
+                    dto.latitud()
             );
+
+            if (zonasCubiertas.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "Lo sentimos, la dirección de entrega (" + dto.direccionEntrega() +
+                        ") se encuentra fuera de la zona de cobertura de " + empresa.getNombreComercial() + "."
+                );
+            }
         }
 
         if (dto.items() == null || dto.items().isEmpty()) {

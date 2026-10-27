@@ -26,6 +26,7 @@ import {
   Flame,
   ArrowUpRight,
   ArrowDownRight,
+  Truck,
 } from "lucide-react";
 
 interface ClientePuntosAdmin {
@@ -408,6 +409,14 @@ export default function AdminPuntosClientesPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/admin/canjes"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-lg text-xs transition border border-white/20"
+          >
+            <Truck className="w-3.5 h-3.5 text-amber-300" />
+            <span>Despacho de Canjes</span>
+          </Link>
+
           <Link
             href="/admin/premios"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-lg text-xs shadow-2xs transition"

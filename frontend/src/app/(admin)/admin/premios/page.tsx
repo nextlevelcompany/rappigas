@@ -34,6 +34,7 @@ import {
   FileText,
   Tag,
   Info,
+  Truck,
 } from "lucide-react";
 import {
   PremioCanje,
@@ -498,6 +499,16 @@ export default function AdminPremiosCanjesPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Enlace a Canjes en Curso y Entregados */}
+          <Link
+            href="/admin/canjes"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-xs font-bold transition border border-amber-400/30 shadow-2xs"
+            title="Ver canjes solicitados, en curso y entregados"
+          >
+            <Truck className="w-3.5 h-3.5 text-amber-400" />
+            <span>Despacho Canjes</span>
+          </Link>
+
           {/* Botón Configurar Categorías */}
           <button
             type="button"
@@ -507,17 +518,6 @@ export default function AdminPremiosCanjesPage() {
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-amber-300" />
             <span>Configurar Categorías ({kpis.totalCategorias})</span>
-          </button>
-
-          {/* Botón Restablecer Catálogo */}
-          <button
-            type="button"
-            onClick={handleRestablecerCatalogo}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white rounded-lg text-[11px] font-semibold transition cursor-pointer"
-            title="Restablecer los 100 premios originales"
-          >
-            <RefreshCw className="w-3 h-3" />
-            <span>Restablecer</span>
           </button>
 
           {/* Botón Agregar Premio */}
@@ -1621,17 +1621,8 @@ export default function AdminPremiosCanjesPage() {
               </div>
             </div>
 
-            {/* Opciones de restablecimiento y cierre */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={handleRestablecerCategoriasDefault}
-                className="text-[10px] text-slate-400 hover:text-slate-600 flex items-center gap-1 underline cursor-pointer"
-              >
-                <RefreshCw className="w-2.5 h-2.5" />
-                <span>Restablecer 8 Categorías Predeterminadas</span>
-              </button>
-
+            {/* Cierre */}
+            <div className="flex items-center justify-end pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setModalCategoriasAbierto(false)}
