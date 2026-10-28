@@ -14,6 +14,10 @@ export interface UIThemeState {
   customLogoSidebarOffset: number // in pixels (-20 to 40, default 0)
   customFaviconUrl: string
   
+  // Web Logo Configuration
+  customWebLogoUrl: string
+  customWebLogoHeight: number // in pixels, default 44
+  
   // WhatsApp Configuration
   whatsappNumber: string // ej: "51999999999" o "+51 999 999 999"
   whatsappDefaultMessage: string // ej: "Hola RappiGas, deseo pedir un balón de gas"
@@ -45,6 +49,9 @@ export interface UIThemeState {
   setCustomLogoSidebarAlign: (align: "left" | "center" | "right") => void
   setCustomLogoSidebarOffset: (offset: number) => void
   setCustomFaviconUrl: (url: string) => void
+  setCustomWebLogoUrl: (url: string) => void
+  setCustomWebLogoHeight: (height: number) => void
+  resetWebLogo: () => void
   setWhatsappNumber: (number: string) => void
   setWhatsappDefaultMessage: (message: string) => void
   setWhatsappEnabled: (enabled: boolean) => void
@@ -68,6 +75,8 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
   customLogoSidebarAlign: "left", // Default aligned to the left
   customLogoSidebarOffset: 8, // 8px default padding from left
   customFaviconUrl: "",
+  customWebLogoUrl: "",
+  customWebLogoHeight: 44, // 44px default
   whatsappNumber: "51999999999",
   whatsappDefaultMessage: "Hola RappiGas, deseo pedir un balón de gas",
   whatsappEnabled: true,
@@ -216,6 +225,39 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
     set({ customFaviconUrl })
   },
 
+  setCustomWebLogoUrl: (customWebLogoUrl) => {
+    if (typeof window !== "undefined") {
+      try {
+        if (customWebLogoUrl) {
+          localStorage.setItem("ui-custom-web-logo", customWebLogoUrl)
+        } else {
+          localStorage.removeItem("ui-custom-web-logo")
+        }
+      } catch (err) {
+        console.warn("No se pudo guardar ui-custom-web-logo en localStorage:", err)
+      }
+    }
+    set({ customWebLogoUrl })
+  },
+
+  setCustomWebLogoHeight: (customWebLogoHeight) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("ui-custom-web-logo-height", customWebLogoHeight.toString())
+    }
+    set({ customWebLogoHeight })
+  },
+
+  resetWebLogo: () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("ui-custom-web-logo")
+      localStorage.removeItem("ui-custom-web-logo-height")
+    }
+    set({
+      customWebLogoUrl: "",
+      customWebLogoHeight: 44,
+    })
+  },
+
   setWhatsappNumber: (whatsappNumber) => {
     if (typeof window !== "undefined") {
       localStorage.setItem("ui-whatsapp-number", whatsappNumber)
@@ -254,6 +296,8 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
     if (typeof window !== "undefined") {
       localStorage.removeItem("ui-custom-logo")
       localStorage.removeItem("ui-custom-logo-height")
+      localStorage.removeItem("ui-custom-web-logo")
+      localStorage.removeItem("ui-custom-web-logo-height")
       localStorage.removeItem("ui-custom-logo-align")
       localStorage.removeItem("ui-custom-logo-offset")
       localStorage.removeItem("ui-custom-favicon")
@@ -278,6 +322,8 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
       localStorage.removeItem("ui-sidebar-style")
       localStorage.removeItem("ui-custom-logo")
       localStorage.removeItem("ui-custom-logo-height")
+      localStorage.removeItem("ui-custom-web-logo")
+      localStorage.removeItem("ui-custom-web-logo-height")
       localStorage.removeItem("ui-custom-logo-align")
       localStorage.removeItem("ui-custom-logo-offset")
       localStorage.removeItem("ui-custom-favicon")
@@ -318,6 +364,8 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
       const savedSidebar = localStorage.getItem("ui-sidebar-style") || "default"
       const savedLogo = localStorage.getItem("ui-custom-logo") || ""
       const savedLogoHeight = localStorage.getItem("ui-custom-logo-height")
+      const savedWebLogo = localStorage.getItem("ui-custom-web-logo") || ""
+      const savedWebLogoHeight = localStorage.getItem("ui-custom-web-logo-height")
       const savedLogoAlign = localStorage.getItem("ui-custom-logo-align") as "left" | "center" | "right" | null
       const savedLogoOffset = localStorage.getItem("ui-custom-logo-offset")
       const savedFavicon = localStorage.getItem("ui-custom-favicon") || ""
@@ -336,6 +384,8 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
         sidebarStyle: savedSidebar,
         customLogoUrl: savedLogo,
         customLogoHeight: savedLogoHeight ? parseInt(savedLogoHeight, 10) : 44,
+        customWebLogoUrl: savedWebLogo,
+        customWebLogoHeight: savedWebLogoHeight ? parseInt(savedWebLogoHeight, 10) : 44,
         customLogoSidebarAlign: savedLogoAlign || "left",
         customLogoSidebarOffset: savedLogoOffset ? parseInt(savedLogoOffset, 10) : 8,
         customFaviconUrl: savedFavicon,

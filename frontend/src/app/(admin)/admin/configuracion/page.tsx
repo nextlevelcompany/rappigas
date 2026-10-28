@@ -138,6 +138,8 @@ export default function ConfiguracionTemasPage() {
     customLogoSidebarAlign,
     customLogoSidebarOffset,
     customFaviconUrl,
+    customWebLogoUrl,
+    customWebLogoHeight,
     whatsappNumber,
     whatsappDefaultMessage,
     whatsappEnabled,
@@ -156,6 +158,9 @@ export default function ConfiguracionTemasPage() {
     resetSidebarIconColor,
     setCustomLogoUrl,
     setCustomLogoHeight,
+    setCustomWebLogoUrl,
+    setCustomWebLogoHeight,
+    resetWebLogo,
     setCustomLogoSidebarAlign,
     setCustomLogoSidebarOffset,
     setCustomFaviconUrl,
@@ -172,15 +177,18 @@ export default function ConfiguracionTemasPage() {
   const [customHex, setCustomHex] = useState(primaryColor || "#ea580c");
   const [customIconHex, setCustomIconHex] = useState(sidebarIconColor?.startsWith("#") ? sidebarIconColor : "#ea580c");
   const [urlLogoInput, setUrlLogoInput] = useState("");
+  const [urlWebLogoInput, setUrlWebLogoInput] = useState("");
   const [urlFaviconInput, setUrlFaviconInput] = useState("");
   const [wspNumeroInput, setWspNumeroInput] = useState(whatsappNumber || "51999999999");
   const [wspMensajeInput, setWspMensajeInput] = useState(whatsappDefaultMessage || "Hola RappiGas, deseo pedir un balón de gas");
   const [wspActivoInput, setWspActivoInput] = useState(whatsappEnabled !== false);
   const [isDraggingLogo, setIsDraggingLogo] = useState(false);
+  const [isDraggingWebLogo, setIsDraggingWebLogo] = useState(false);
   const [isDraggingFavicon, setIsDraggingFavicon] = useState(false);
   const [montado, setMontado] = useState(false);
 
   const fileLogoInputRef = React.useRef<HTMLInputElement>(null);
+  const fileWebLogoInputRef = React.useRef<HTMLInputElement>(null);
   const fileFaviconInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -224,7 +232,7 @@ export default function ConfiguracionTemasPage() {
   };
 
   // Manejador de subida de archivos (PNG, JPG, SVG, WEBP, ICO)
-  const handleProcessImageFile = (file: File, type: "logo" | "favicon") => {
+  const handleProcessImageFile = (file: File, type: "logo" | "favicon" | "webLogo") => {
     const fileNameLower = file.name.toLowerCase();
     const isIco = fileNameLower.endsWith(".ico") || file.type.includes("icon");
     const isSvg = fileNameLower.endsWith(".svg") || file.type === "image/svg+xml";
@@ -295,8 +303,13 @@ export default function ConfiguracionTemasPage() {
       const dataUrl = e.target?.result as string;
       if (type === "logo") {
         setCustomLogoUrl(dataUrl);
-        toast.success("Logotipo actualizado", {
-          description: "El nuevo logo se aplicó a la web, panel y menús en tiempo real.",
+        toast.success("Logotipo principal actualizado", {
+          description: "El nuevo logo se aplicó a la plataforma y menús en tiempo real.",
+        });
+      } else if (type === "webLogo") {
+        setCustomWebLogoUrl(dataUrl);
+        toast.success("Logotipo de la Web Pública actualizado", {
+          description: "El nuevo logo se aplicó a la cabecera y pie de página de la web pública.",
         });
       } else {
         syncFaviconServerAndLocal(dataUrl);
@@ -362,6 +375,7 @@ export default function ConfiguracionTemasPage() {
     setMode("system");
     setCustomHex("#ea580c");
     setUrlLogoInput("");
+    setUrlWebLogoInput("");
     setUrlFaviconInput("");
     setWspNumeroInput("51999999999");
     setWspMensajeInput("Hola RappiGas, deseo pedir un balón de gas");
@@ -675,6 +689,196 @@ export default function ConfiguracionTemasPage() {
               </div>
             </div>
 
+            {/* Tarjeta: Logotipo de la Web Pública */}
+            <div className="p-5 rounded-3xl bg-card border border-border shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
+                    <Globe className="w-3.5 h-3.5 text-orange-500" />
+                    Logotipo de la Web Pública (Cabecera y Footer)
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Logotipo visible para clientes en la cabecera y pie de página de la web pública
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {customLogoUrl && customWebLogoUrl !== customLogoUrl && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setCustomWebLogoUrl(customLogoUrl);
+                        toast.success("Logotipo de la web sincronizado con el principal");
+                      }}
+                      className="text-xs h-7 px-2.5 gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      Usar Logo Principal
+                    </Button>
+                  )}
+                  {customWebLogoUrl && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setCustomWebLogoUrl("");
+                        toast.info("Logotipo de la web restaurado al predeterminado");
+                      }}
+                      className="text-xs text-destructive hover:bg-destructive/10 h-7 px-2.5 gap-1.5"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Restaurar
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Zona Drag & Drop / Selector Web Logo */}
+              <input
+                ref={fileWebLogoInputRef}
+                type="file"
+                accept=".png,.jpg,.jpeg,.svg,.webp,image/png,image/jpeg,image/svg+xml,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleProcessImageFile(file, "webLogo");
+                  e.target.value = "";
+                }}
+              />
+
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDraggingWebLogo(true);
+                }}
+                onDragLeave={() => setIsDraggingWebLogo(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDraggingWebLogo(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleProcessImageFile(file, "webLogo");
+                }}
+                onClick={() => fileWebLogoInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2 ${
+                  isDraggingWebLogo
+                    ? "border-orange-500 bg-orange-500/10"
+                    : "border-muted-foreground/25 hover:border-orange-500 hover:bg-muted/40"
+                }`}
+              >
+                <div className="p-3 rounded-2xl bg-orange-500/10 text-orange-600">
+                  <Upload className="w-6 h-6" />
+                </div>
+                <div className="text-xs font-bold text-foreground">
+                  Haga clic para subir el logo de la web o arrastre el archivo aquí
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Formatos recomendados: PNG o SVG transparente (Max 2MB)
+                </p>
+                {customWebLogoUrl ? (
+                  <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Logo personalizado activo para la web
+                  </div>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground">
+                    (Usa por defecto: {customLogoUrl ? "Logotipo Principal" : "Logo oficial RappiGas"})
+                  </span>
+                )}
+              </div>
+
+              {/* URL externa opcional */}
+              <div className="pt-2 border-t border-border/60">
+                <label className="text-[11px] font-semibold text-muted-foreground block mb-1.5">
+                  O vincular mediante URL de imagen para la web:
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Globe className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="url"
+                      placeholder="https://ejemplo.com/logo-web.png"
+                      value={urlWebLogoInput}
+                      onChange={(e) => setUrlWebLogoInput(e.target.value)}
+                      className="pl-8 text-xs h-9"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    className="h-9 text-xs"
+                    onClick={() => {
+                      if (urlWebLogoInput.trim()) {
+                        setCustomWebLogoUrl(urlWebLogoInput.trim());
+                        toast.success("Logo de la web actualizado desde URL");
+                      }
+                    }}
+                  >
+                    Aplicar a la Web
+                  </Button>
+                </div>
+              </div>
+
+              {/* Control de Altura del Logo en la Web */}
+              <div className="pt-3 border-t border-border/60 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-[11px] font-bold text-foreground block">
+                      Altura del Logotipo en la Web:
+                    </label>
+                    <p className="text-[10px] text-muted-foreground">
+                      Ajuste el tamaño del logo para la cabecera de la web pública
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-600 border border-orange-500/20">
+                    {customWebLogoHeight || 44} px
+                  </span>
+                </div>
+
+                {/* Presets Rápidos */}
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { label: "Compacto", val: 36 },
+                    { label: "Estándar", val: 44 },
+                    { label: "Mediano", val: 52 },
+                    { label: "Grande", val: 64 },
+                  ].map((preset) => {
+                    const isSelected = (customWebLogoHeight || 44) === preset.val;
+                    return (
+                      <button
+                        key={preset.val}
+                        type="button"
+                        onClick={() => {
+                          setCustomWebLogoHeight(preset.val);
+                          toast.success(`Tamaño de logo web ajustado a ${preset.val}px`);
+                        }}
+                        className={`py-1.5 px-2 rounded-xl text-xs font-semibold border transition cursor-pointer text-center ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            : "bg-muted/40 hover:bg-muted text-foreground border-border"
+                        }`}
+                      >
+                        {preset.label} ({preset.val}px)
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Slider */}
+                <div className="flex items-center gap-3 pt-1">
+                  <span className="text-[10px] font-mono text-muted-foreground">24px</span>
+                  <input
+                    type="range"
+                    min={24}
+                    max={80}
+                    step={2}
+                    value={customWebLogoHeight || 44}
+                    onChange={(e) => setCustomWebLogoHeight(parseInt(e.target.value, 10))}
+                    className="w-full accent-primary h-2 bg-muted rounded-lg cursor-pointer"
+                  />
+                  <span className="text-[10px] font-mono text-muted-foreground">80px</span>
+                </div>
+              </div>
+            </div>
+
             {/* Tarjeta: Favicon del Navegador */}
             <div
               onDragOver={(e) => {
@@ -875,9 +1079,32 @@ export default function ConfiguracionTemasPage() {
                       Cabecera Web Pública (Fondo Blanco):
                     </span>
                     <div className="p-3 bg-white rounded-2xl border border-neutral-200 shadow-xs flex items-center justify-between">
-                      <BrandLogo variant="dark" />
-                      <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-orange-500 text-white">
+                      <img
+                        src={customWebLogoUrl || customLogoUrl || "/assets/img/logo/Logo_rappi_gas.png"}
+                        alt="Logo Web Preview"
+                        style={{ maxHeight: `${customWebLogoHeight || 44}px`, width: "auto" }}
+                        className="object-contain"
+                      />
+                      <span className="text-[10px] font-bold px-3 py-1 rounded-full text-white" style={{ background: "linear-gradient(135deg, #FF5722 0%, #D84315 100%)" }}>
                         Pedir Ahora
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Mockup 2B: Pie de Página Web Pública (Fondo Oscuro) */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-semibold text-muted-foreground">
+                      Pie de Página Web (Fondo Oscuro #0B132B):
+                    </span>
+                    <div className="p-3 bg-[#0B132B] rounded-2xl border border-slate-800 shadow-xs flex items-center justify-between">
+                      <img
+                        src={customWebLogoUrl || customLogoUrl || "/assets/img/logo/Logo_rappi_gas.png"}
+                        alt="Logo Web Footer Preview"
+                        style={{ maxHeight: "36px", width: "auto" }}
+                        className="object-contain"
+                      />
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        © 2026 RappiGas
                       </span>
                     </div>
                   </div>

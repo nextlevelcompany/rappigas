@@ -4,12 +4,39 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Nav from './Nav';
+import { useAuthStore } from '@/store/auth-store';
+import { useUIThemeStore } from '@/store/ui-theme.store';
 
 export default function HeaderPrincipal({ variant }) {
   const pathname = usePathname();
   const [mobileToggle, setMobileToggle] = useState(false);
   const [isSticky, setIsSticky] = useState();
   const [prevScrollPos, setPrevScrollPos] = useState(0);
+
+  const { estaAutenticado, usuario, cargarSesionDesdeStorage } = useAuthStore();
+  const {
+    customWebLogoUrl,
+    customWebLogoHeight,
+    customLogoUrl,
+    customLogoHeight,
+    loadTheme,
+  } = useUIThemeStore();
+
+  useEffect(() => {
+    cargarSesionDesdeStorage();
+    loadTheme();
+  }, [cargarSesionDesdeStorage, loadTheme]);
+
+  const webLogo = customWebLogoUrl || customLogoUrl || '/assets/img/logo/Logo_rappi_gas.png';
+  const logoHeight = customWebLogoHeight || customLogoHeight || 44;
+
+  const dashboardUrl = usuario?.rol === 'ADMIN'
+    ? '/admin/dashboard'
+    : usuario?.rol === 'EMPRESA'
+    ? '/empresa/dashboard'
+    : usuario?.rol === 'REPARTIDOR'
+    ? '/repartidor/pedidos'
+    : '/cliente/tienda';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -54,17 +81,20 @@ export default function HeaderPrincipal({ variant }) {
                 </div>
               </div>
               <div className="col-lg-6 col-md-5 col-12 text-md-end text-start mt-1 mt-md-0">
-                <div className="d-flex align-items-center justify-content-md-end gap-3" style={{ fontSize: '13px' }}>
+                <div className="d-flex align-items-center justify-md-end justify-content-start gap-3" style={{ fontSize: '13px' }}>
                   <Link
-                    href="/distribuidores"
+                    href="/auth/registro-empresa"
                     className="text-warning text-decoration-none fw-bold"
-                    style={{
-                      fontSize: '13px',
-                      textDecoration: pathname === '/distribuidores' ? 'underline' : 'none',
-                    }}
                   >
-                    <i className="bi bi-shop me-1"></i> ¿Eres Distribuidor? Regístrate aquí
+                    <i className="bi bi-briefcase me-1"></i> ¿Eres Distribuidor? Afíliate
                   </Link>
+                  <span className="text-white-50">|</span>
+                  <a
+                    href="tel:977665554"
+                    className="text-white text-decoration-none"
+                  >
+                    <i className="bi bi-telephone me-1 text-danger"></i> Central: 977 665 554
+                  </a>
                 </div>
               </div>
             </div>
@@ -72,33 +102,27 @@ export default function HeaderPrincipal({ variant }) {
         </div>
 
         {/* Main Header */}
-        <div className="cs_main_header cs_accent_bg">
+        <div className="cs_main_header">
           <div className="container">
             <div className="cs_main_header_in">
-              {/* Brand / Logo */}
+              {/* Logo */}
               <div className="cs_main_header_left">
-                <Link
-                  href="/"
-                  className="cs_site_branding text-decoration-none"
-                  style={{ display: 'flex', alignItems: 'center' }}
-                >
+                <Link className="cs_site_branding" href="/">
                   <img
-                    src="/assets/img/logo/Logo_rappi_gas.png"
-                    alt="RappiGas - Energía Rápida & Segura para tu Hogar"
+                    src={webLogo}
+                    alt="Logo RappiGas Perú"
                     style={{
-                      height: '75px',
-                      maxWidth: '280px',
+                      maxHeight: `${logoHeight}px`,
+                      width: 'auto',
                       objectFit: 'contain',
-                      display: 'block',
-                      transition: 'all 0.3s ease',
                     }}
                   />
                 </Link>
               </div>
 
-              {/* Navigation Menu */}
-              <div className="cs_main_header_center1">
-                <div className="cs_nav cs_primary_font fw-medium">
+              {/* Navigation Center */}
+              <div className="cs_main_header_center">
+                <div className="cs_nav cs_primary_font">
                   <span
                     className={
                       mobileToggle
@@ -116,23 +140,41 @@ export default function HeaderPrincipal({ variant }) {
               {/* Right Action Buttons */}
               <div className="cs_main_header_right header_right_one">
                 <div className="header1-buttons d-flex align-items-center gap-2">
-                  {/* Botón Secundario: Iniciar Sesión */}
-                  <Link
-                    href="/login"
-                    className="btn fw-bold px-3 py-2 text-decoration-none"
-                    style={{
-                      borderRadius: '8px',
-                      border: '1.5px solid #0d6efd',
-                      backgroundColor: pathname === '/login' ? '#0d6efd' : 'transparent',
-                      color: pathname === '/login' ? '#ffffff' : '#0d6efd',
-                      fontSize: '14px',
-                      transition: 'all 0.3s ease',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <i className="bi bi-person-fill me-1"></i> Iniciar Sesión
-                  </Link>
+                  {/* Botón Secundario: Iniciar Sesión / Mi Panel */}
+                  {estaAutenticado && usuario ? (
+                    <Link
+                      href={dashboardUrl}
+                      className="btn fw-bold px-3 py-2 text-decoration-none text-white"
+                      style={{
+                        borderRadius: '8px',
+                        backgroundColor: '#10B981',
+                        border: '1.5px solid #10B981',
+                        fontSize: '14px',
+                        transition: 'all 0.3s ease',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <i className="bi bi-person-circle me-1"></i> Mi Panel ({usuario.nombres || 'Usuario'})
+                    </Link>
+                  ) : (
+                    <a
+                      href="/auth/login"
+                      className="btn fw-bold px-3 py-2 text-decoration-none"
+                      style={{
+                        borderRadius: '8px',
+                        border: '1.5px solid #0d6efd',
+                        backgroundColor: (pathname === '/login' || pathname === '/auth/login') ? '#0d6efd' : 'transparent',
+                        color: (pathname === '/login' || pathname === '/auth/login') ? '#ffffff' : '#0d6efd',
+                        fontSize: '14px',
+                        transition: 'all 0.3s ease',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <i className="bi bi-person-fill me-1"></i> Iniciar Sesión
+                    </a>
+                  )}
 
                   {/* Botón Primario: Pedir Balón de Gas */}
                   <Link

@@ -21,14 +21,14 @@ export function BrandLogo({
   size = "md",
   variant = "auto",
 }: BrandLogoProps) {
-  const { customLogoUrl, customLogoHeight } = useUIThemeStore();
+  const { customLogoUrl, customLogoHeight, customWebLogoUrl } = useUIThemeStore();
   const [montado, setMontado] = useState(false);
 
   useEffect(() => {
     setMontado(true);
   }, []);
 
-  const logoUrl = montado ? customLogoUrl : "";
+  const logoUrl = montado ? (customLogoUrl || customWebLogoUrl || "") : "";
   const baseHeight = montado ? (customLogoHeight || 44) : 44;
 
   // Calculamos la altura según el tamaño del contexto (en la barra lateral 'sm' suele ser más compacto)

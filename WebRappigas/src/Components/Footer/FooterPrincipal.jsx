@@ -1,11 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useUIThemeStore } from '@/store/ui-theme.store';
 
 export default function FooterPrincipal() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+
+  const { customWebLogoUrl, customLogoUrl, loadTheme } = useUIThemeStore();
+
+  useEffect(() => {
+    loadTheme();
+  }, [loadTheme]);
+
+  const webLogo = customWebLogoUrl || customLogoUrl || '/assets/img/logo/Logo_rappi_gas.png';
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -650,7 +659,7 @@ export default function FooterPrincipal() {
           <div className="brand-block">
             <Link href="/" className="d-inline-block">
               <img
-                src="/assets/img/logo/Logo_rappi_gas.png"
+                src={webLogo}
                 alt="RappiGas Perú"
                 className="brand-logo-img"
               />
@@ -739,7 +748,7 @@ export default function FooterPrincipal() {
                 <Link href="/contacto">Central de Pedidos</Link>
               </li>
               <li>
-                <Link href="/login">Acceso a tu Cuenta</Link>
+                <a href="/auth/login">Acceso a tu Cuenta</a>
               </li>
             </ul>
           </div>
