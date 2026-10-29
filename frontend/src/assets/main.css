@@ -5308,14 +5308,14 @@ a.header__search.header-search-btn p {
 }
 .about2 .about2-images .image1 {
   position: absolute;
-  top: 0;
+  top: -45px;
   left: 0;
   z-index: 9;
 }
 @media (max-width: 767px) {
   .about2 .about2-images .image1 {
     position: absolute;
-    top: 140px;
+    top: 15px;
     left: 0;
     z-index: 9;
   }
@@ -23081,15 +23081,32 @@ li.has-dropdown1 span {
   opacity: 0;
   visibility: hidden;
   transition: all 0.4s ease;
-  background-color: #000026;
+  background-color: #ffffff !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 .header_style_3.cs-gescout_sticky{
-  background-color: #123CDD;
+  background-color: #ffffff !important;
 }
 .cs-gescout_show {
   top: 0 !important;
   opacity: 1;
   visibility: visible;
+}
+.cs-gescout_sticky .cs_top_header {
+  display: none !important;
+}
+.cs-gescout_sticky .cs_main_header {
+  background-color: #ffffff !important;
+}
+.cs-gescout_sticky .cs_nav .cs_nav_list > li > a {
+  color: #1E293B !important;
+}
+.cs-gescout_sticky .cs_nav .cs_nav_list > li.active > a,
+.cs-gescout_sticky .cs_nav .cs_nav_list > li.current-menu-item > a {
+  color: #FF5722 !important;
+}
+.cs-gescout_sticky .cs_nav .cs_nav_list > li > a:hover {
+  color: #FF5722 !important;
 }
 .cs_site_branding {
   display: inline-block;
@@ -23223,15 +23240,15 @@ li.has-dropdown1 span {
     width: 230px;
     background-color:#fff;
     position: absolute;
-    border-top: 2px solid #0e38b1;
-    -webkit-box-shadow: 0px 1px 2px 0px rgba(2, 0, 181, 0.1);
-    box-shadow: 0px 1px 2px 0px rgba(2, 0, 181, 0.1);
+    border-top: 3px solid #FF5722;
+    -webkit-box-shadow: 0px 10px 25px 0px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 10px 25px 0px rgba(0, 0, 0, 0.1);
     padding: 10px 0;
     z-index: 100;
     opacity: 0;
     visibility: hidden;
     display: block !important;
-    border-radius: 0 0 5px 5px;
+    border-radius: 0 0 8px 8px;
     -webkit-transition: all 0.4s ease;
     transition: all 0.4s ease;
     color: var(--heading-color);
@@ -23260,6 +23277,12 @@ li.has-dropdown1 span {
     display: block;
     line-height: inherit;
     padding: 10px 20px;
+    color: #1E293B;
+    transition: all 0.2s ease;
+ }
+  .cs_nav .cs_nav_list ul a:hover {
+    color: #FF5722 !important;
+    background-color: #FFF7ED;
  }
   .cs_nav .cs_nav_list ul ul {
     top: 15px;

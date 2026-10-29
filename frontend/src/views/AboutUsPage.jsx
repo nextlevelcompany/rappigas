@@ -176,9 +176,10 @@ export default function AboutUsPage() {
 
         .about-us-wrapper .about2-images .image1 {
           position: absolute;
-          top: 0;
+          top: -45px;
           left: 0;
           z-index: 3;
+          transition: all 0.3s ease;
         }
 
         .about-us-wrapper .about2-images .image1 img {
@@ -580,6 +581,9 @@ export default function AboutUsPage() {
           .about-us-wrapper .about2-images {
             height: 560px;
           }
+          .about-us-wrapper .about2-images .image1 {
+            top: 15px !important;
+          }
           .about-us-wrapper .about2-images .counter-box {
             top: 10px;
             right: 10px;
@@ -615,7 +619,7 @@ export default function AboutUsPage() {
       {/* 1. SECCIÓN HERO / BREADCRUMB: ENCABEZADO DE PÁGINA        */}
       {/* ========================================================= */}
       <section id="nosotros-hero" aria-label="Encabezado Sobre Nosotros">
-        <Breadcrumb Title="Sobre Nosotros • Trayectoria y Compromiso" />
+        <Breadcrumb Title="Nosotros" />
       </section>
 
       {/* ========================================================= */}

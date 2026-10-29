@@ -834,12 +834,13 @@ export default function ConfiguracionTemasPage() {
                 </div>
 
                 {/* Presets Rápidos */}
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-5 gap-1.5">
                   {[
-                    { label: "Compacto", val: 36 },
+                    { label: "Compacto", val: 34 },
                     { label: "Estándar", val: 44 },
-                    { label: "Mediano", val: 52 },
-                    { label: "Grande", val: 64 },
+                    { label: "Mediano", val: 54 },
+                    { label: "Grande", val: 66 },
+                    { label: "Extra", val: 78 },
                   ].map((preset) => {
                     const isSelected = (customWebLogoHeight || 44) === preset.val;
                     return (
@@ -850,9 +851,9 @@ export default function ConfiguracionTemasPage() {
                           setCustomWebLogoHeight(preset.val);
                           toast.success(`Tamaño de logo web ajustado a ${preset.val}px`);
                         }}
-                        className={`py-1.5 px-2 rounded-xl text-xs font-semibold border transition cursor-pointer text-center ${
+                        className={`py-1.5 px-1.5 rounded-xl text-[11px] font-semibold border transition cursor-pointer text-center ${
                           isSelected
-                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            ? "bg-orange-500 text-white border-orange-500 shadow-xs"
                             : "bg-muted/40 hover:bg-muted text-foreground border-border"
                         }`}
                       >
@@ -862,19 +863,19 @@ export default function ConfiguracionTemasPage() {
                   })}
                 </div>
 
-                {/* Slider */}
+                {/* Slider de ajuste fino */}
                 <div className="flex items-center gap-3 pt-1">
                   <span className="text-[10px] font-mono text-muted-foreground">24px</span>
                   <input
                     type="range"
                     min={24}
-                    max={80}
-                    step={2}
+                    max={86}
+                    step={1}
                     value={customWebLogoHeight || 44}
                     onChange={(e) => setCustomWebLogoHeight(parseInt(e.target.value, 10))}
-                    className="w-full accent-primary h-2 bg-muted rounded-lg cursor-pointer"
+                    className="w-full accent-orange-500 h-2 bg-muted rounded-lg cursor-pointer"
                   />
-                  <span className="text-[10px] font-mono text-muted-foreground">80px</span>
+                  <span className="text-[10px] font-mono text-muted-foreground">86px</span>
                 </div>
               </div>
             </div>
@@ -1075,15 +1076,20 @@ export default function ConfiguracionTemasPage() {
 
                   {/* Mockup 2: Cabecera Web Pública (Fondo Blanco) */}
                   <div className="space-y-1.5">
-                    <span className="text-[10px] font-semibold text-muted-foreground">
-                      Cabecera Web Pública (Fondo Blanco):
-                    </span>
-                    <div className="p-3 bg-white rounded-2xl border border-neutral-200 shadow-xs flex items-center justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-muted-foreground">
+                        Cabecera Web Pública (Fondo Blanco):
+                      </span>
+                      <span className="text-[10px] font-mono text-orange-600 font-bold">
+                        {customWebLogoHeight || 44}px
+                      </span>
+                    </div>
+                    <div className="p-3 bg-white rounded-2xl border border-neutral-200 shadow-xs flex items-center justify-between min-h-[58px]">
                       <img
                         src={customWebLogoUrl || customLogoUrl || "/assets/img/logo/Logo_rappi_gas.png"}
                         alt="Logo Web Preview"
                         style={{ maxHeight: `${customWebLogoHeight || 44}px`, width: "auto" }}
-                        className="object-contain"
+                        className="object-contain transition-all"
                       />
                       <span className="text-[10px] font-bold px-3 py-1 rounded-full text-white" style={{ background: "linear-gradient(135deg, #FF5722 0%, #D84315 100%)" }}>
                         Pedir Ahora
@@ -1093,15 +1099,20 @@ export default function ConfiguracionTemasPage() {
 
                   {/* Mockup 2B: Pie de Página Web Pública (Fondo Oscuro) */}
                   <div className="space-y-1.5">
-                    <span className="text-[10px] font-semibold text-muted-foreground">
-                      Pie de Página Web (Fondo Oscuro #0B132B):
-                    </span>
-                    <div className="p-3 bg-[#0B132B] rounded-2xl border border-slate-800 shadow-xs flex items-center justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-muted-foreground">
+                        Pie de Página Web (Fondo Oscuro #0B132B):
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400 font-bold">
+                        {customWebLogoHeight || 44}px
+                      </span>
+                    </div>
+                    <div className="p-3 bg-[#0B132B] rounded-2xl border border-slate-800 shadow-xs flex items-center justify-between min-h-[54px]">
                       <img
                         src={customWebLogoUrl || customLogoUrl || "/assets/img/logo/Logo_rappi_gas.png"}
                         alt="Logo Web Footer Preview"
-                        style={{ maxHeight: "36px", width: "auto" }}
-                        className="object-contain"
+                        style={{ maxHeight: `${customWebLogoHeight || 44}px`, width: "auto" }}
+                        className="object-contain transition-all"
                       />
                       <span className="text-[10px] text-slate-400 font-mono">
                         © 2026 RappiGas

@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { ThemeProvider } from "next-themes"
 
 import UIThemeProvider from "@/providers/ui-theme-provider"
+import LocatorSetup from "@/components/Common/LocatorSetup"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -72,6 +73,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className={inter.className}>
+        <LocatorSetup />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

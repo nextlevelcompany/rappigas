@@ -41,12 +41,12 @@ export default function HeaderPrincipal({ variant }) {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollPos = window.scrollY;
-      if (currentScrollPos > prevScrollPos) {
+      if (currentScrollPos <= 40) {
+        setIsSticky('');
+      } else if (currentScrollPos > prevScrollPos) {
         setIsSticky('cs-gescout_sticky');
-      } else if (currentScrollPos !== 0) {
-        setIsSticky('cs-gescout_show cs-gescout_sticky');
       } else {
-        setIsSticky();
+        setIsSticky('cs-gescout_show cs-gescout_sticky');
       }
       setPrevScrollPos(currentScrollPos);
     };
@@ -65,12 +65,16 @@ export default function HeaderPrincipal({ variant }) {
         } cs_sticky_header cs_site_header_full_width ${
           mobileToggle ? 'cs_mobile_toggle_active' : ''
         } ${isSticky ? isSticky : ''}`}
+        style={{
+          backgroundColor: '#ffffff',
+          boxShadow: isSticky ? '0 4px 20px rgba(0, 0, 0, 0.08)' : 'none',
+        }}
       >
         {/* Top Header */}
-        <div className="cs_top_header" style={{ background: '#0b1538', borderBottom: '2px solid rgba(255,255,255,0.08)' }}>
-          <div className="container">
-            <div className="row align-items-center py-0">
-              <div className="col-lg-6 col-md-7 col-12">
+        {!isSticky && (
+          <div className="cs_top_header" style={{ background: '#0b1538', borderBottom: '2px solid rgba(255,255,255,0.08)' }}>
+            <div className="container">
+              <div className="d-flex align-items-center justify-content-between flex-wrap py-1 gap-2">
                 <div className="pera d-flex align-items-center gap-2">
                   <span className="badge bg-warning text-dark px-2 py-1 fw-bold" style={{ fontSize: '10px' }}>
                     <i className="bi bi-shield-check me-1"></i> Descargar Aplicación
@@ -79,19 +83,18 @@ export default function HeaderPrincipal({ variant }) {
                     Gas de Cocina para el Hogar y Negocios
                   </p>
                 </div>
-              </div>
-              <div className="col-lg-6 col-md-5 col-12 text-md-end text-start mt-1 mt-md-0">
-                <div className="d-flex align-items-center justify-md-end justify-content-start gap-3" style={{ fontSize: '13px' }}>
+
+                <div className="d-flex align-items-center justify-content-end gap-3 ms-auto" style={{ fontSize: '13px' }}>
                   <Link
                     href="/auth/registro-empresa"
-                    className="text-warning text-decoration-none fw-bold"
+                    className="text-warning text-decoration-none fw-bold d-inline-flex align-items-center"
                   >
                     <i className="bi bi-briefcase me-1"></i> ¿Eres Distribuidor? Afíliate
                   </Link>
                   <span className="text-white-50">|</span>
                   <a
                     href="tel:977665554"
-                    className="text-white text-decoration-none"
+                    className="text-white text-decoration-none d-inline-flex align-items-center"
                   >
                     <i className="bi bi-telephone me-1 text-danger"></i> Central: 977 665 554
                   </a>
@@ -99,15 +102,15 @@ export default function HeaderPrincipal({ variant }) {
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Main Header */}
-        <div className="cs_main_header">
+        <div className="cs_main_header" style={{ backgroundColor: '#ffffff' }}>
           <div className="container">
-            <div className="cs_main_header_in">
+            <div className="cs_main_header_in" style={{ minHeight: '80px', height: 'auto', paddingTop: '6px', paddingBottom: '6px' }}>
               {/* Logo */}
-              <div className="cs_main_header_left">
-                <Link className="cs_site_branding" href="/">
+              <div className="cs_main_header_left d-flex align-items-center">
+                <Link className="cs_site_branding d-flex align-items-center" href="/">
                   <img
                     src={webLogo}
                     alt="Logo RappiGas Perú"
@@ -158,14 +161,14 @@ export default function HeaderPrincipal({ variant }) {
                       <i className="bi bi-person-circle me-1"></i> Mi Panel ({usuario.nombres || 'Usuario'})
                     </Link>
                   ) : (
-                    <a
+                    <Link
                       href="/auth/login"
                       className="btn fw-bold px-3 py-2 text-decoration-none"
                       style={{
                         borderRadius: '8px',
-                        border: '1.5px solid #0d6efd',
-                        backgroundColor: (pathname === '/login' || pathname === '/auth/login') ? '#0d6efd' : 'transparent',
-                        color: (pathname === '/login' || pathname === '/auth/login') ? '#ffffff' : '#0d6efd',
+                        border: '1.5px solid #FF5722',
+                        backgroundColor: (pathname === '/login' || pathname === '/auth/login') ? '#FF5722' : 'transparent',
+                        color: (pathname === '/login' || pathname === '/auth/login') ? '#ffffff' : '#FF5722',
                         fontSize: '14px',
                         transition: 'all 0.3s ease',
                         display: 'inline-flex',
@@ -173,7 +176,7 @@ export default function HeaderPrincipal({ variant }) {
                       }}
                     >
                       <i className="bi bi-person-fill me-1"></i> Iniciar Sesión
-                    </a>
+                    </Link>
                   )}
 
                   {/* Botón Primario: Pedir Balón de Gas */}

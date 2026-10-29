@@ -60,8 +60,8 @@ const ClubRappipuntosPremios = () => {
                     <img src={item.img} alt={item.title} />
                   </div>
                   <div className="heading">
-                    <h3><Link href="/fidelidad">{item.title}</Link></h3>
-                    <Link href="/fidelidad" className="learn">{item.btnName} <span>
+                    <h3><Link href="/premios/catalogo">{item.title}</Link></h3>
+                    <Link href="/premios/catalogo" className="learn">{item.btnName} <span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" className="bi bi-arrow-right-short" viewBox="0 0 16 16">
                         <path fillRule="evenodd" d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8"/>
                       </svg>
@@ -70,6 +70,29 @@ const ClubRappipuntosPremios = () => {
                 </div>
                 ))}
                 </Slider>
+              </div>
+            </div>
+
+            <div className="space30"></div>
+            <div className="row">
+              <div className="col-12 text-center">
+                <Link
+                  href="/premios/catalogo"
+                  className="btn text-white fw-bold px-4 py-3"
+                  style={{
+                    background: 'linear-gradient(135deg, #FF5722 0%, #D84315 100%)',
+                    borderRadius: '10px',
+                    boxShadow: '0 8px 20px rgba(216, 67, 21, 0.35)',
+                    fontSize: '15px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <i className="bi bi-gift-fill"></i>
+                  <span>Explorar Catálogo Completo de Premios (+100 Productos)</span>
+                  <i className="bi bi-arrow-right"></i>
+                </Link>
               </div>
             </div>
           </div>

@@ -8,7 +8,7 @@ import ClubRappipuntosPremios from '../components/Project/ClubRappipuntosPremios
 const LoyaltyPage = () => {
   return (
     <div>
-      <Breadcrumb Title="Club de Recompensas Rappipuntos" />
+      <Breadcrumb Title="Club de Premios y Recompensas" />
       <GasLoyalty />
       <ClubRappipuntosPremios />
     </div>

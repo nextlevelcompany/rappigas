@@ -5,7 +5,6 @@ import '@/assets/main.css';
 
 import HeaderPrincipal from '@/components/Header/HeaderPrincipal';
 import FooterPrincipal from '@/components/Footer/FooterPrincipal';
-import LocatorSetup from '@/components/Common/LocatorSetup';
 
 export const metadata = {
   title: 'RappiGas - Tu Gas de Cocina Rápido & Seguro | Pedidos con Balanza Digital y Premios',
@@ -18,7 +17,6 @@ export const metadata = {
 export default function PublicLayout({ children }) {
   return (
     <div className="main-page-area">
-      <LocatorSetup />
       <HeaderPrincipal />
       <main>{children}</main>
       <FooterPrincipal />

@@ -8,13 +8,20 @@ export default function FooterPrincipal() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
-  const { customWebLogoUrl, customLogoUrl, loadTheme } = useUIThemeStore();
+  const {
+    customWebLogoUrl,
+    customWebLogoHeight,
+    customLogoUrl,
+    customLogoHeight,
+    loadTheme,
+  } = useUIThemeStore();
 
   useEffect(() => {
     loadTheme();
   }, [loadTheme]);
 
   const webLogo = customWebLogoUrl || customLogoUrl || '/assets/img/logo/Logo_rappi_gas.png';
+  const footerLogoHeight = customWebLogoHeight || customLogoHeight || 40;
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -289,7 +296,7 @@ export default function FooterPrincipal() {
         }
 
         .rappigas-main-footer .brand-logo-img {
-          height: 38px;
+          max-height: 50px;
           width: auto;
           object-fit: contain;
           display: block;
@@ -662,6 +669,10 @@ export default function FooterPrincipal() {
                 src={webLogo}
                 alt="RappiGas Perú"
                 className="brand-logo-img"
+                style={{
+                  maxHeight: `${footerLogoHeight}px`,
+                  width: 'auto',
+                }}
               />
             </Link>
             <p className="brand-description">
@@ -739,7 +750,10 @@ export default function FooterPrincipal() {
                 <Link href="/nosotros">Sobre Nosotros</Link>
               </li>
               <li>
-                <Link href="/fidelidad">Club Rappipuntos</Link>
+                <Link href="/premios">Club de Premios</Link>
+              </li>
+              <li>
+                <Link href="/premios/catalogo">Catálogo de Canjes</Link>
               </li>
               <li>
                 <Link href="/distribuidores">Afiliar Distribuidora</Link>

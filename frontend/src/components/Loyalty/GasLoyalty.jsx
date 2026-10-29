@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 
 export default function GasLoyalty() {
-  const [showPrizesModal, setShowPrizesModal] = useState(false);
   const [phonePoints, setPhonePoints] = useState('');
   const [pointsResult, setPointsResult] = useState(null);
 
@@ -32,15 +32,6 @@ export default function GasLoyalty() {
       desc: 'Acumulas tus puntos y canjeas de manera transparente y directa en la plataforma.',
       icon: 'bi-trophy',
     },
-  ];
-
-  const prizesList = [
-    { title: 'Vale de Descuento S/ 10', points: '150 Puntos', tag: 'Descuento Express', icon: 'bi-receipt' },
-    { title: 'Vale de Descuento S/ 20', points: '280 Puntos', tag: 'Ahorro Máximo', icon: 'bi-tag-fill' },
-    { title: 'Balón de Gas 10kg Gratis', points: '500 Puntos', tag: 'El Más Canjeado', icon: 'bi-fire' },
-    { title: 'Sartén Antiadherente Tefal', points: '650 Puntos', tag: 'Cocina & Chef', icon: 'bi-egg-fried' },
-    { title: 'Licuadora Oster 2 Velocidades', points: '950 Puntos', tag: 'Electrohogar', icon: 'bi-cup-hot' },
-    { title: 'Freidora de Aire Digital 4.5L', points: '1,400 Puntos', tag: 'Premio Mayor', icon: 'bi-basket2' },
   ];
 
   const handleCheckPoints = (e) => {
@@ -113,19 +104,36 @@ export default function GasLoyalty() {
               </div>
 
               {/* CTA Button */}
-              <div className="mt-4 pt-2">
-                <button
-                  onClick={() => setShowPrizesModal(true)}
+              <div className="mt-4 pt-2 d-flex flex-wrap gap-3">
+                <Link
+                  href="/premios/catalogo"
                   className="btn text-white fw-bold px-4 py-3"
                   style={{
                     background: 'linear-gradient(135deg, #FF5722 0%, #D84315 100%)',
                     borderRadius: '8px',
                     fontSize: '15px',
                     boxShadow: '0 6px 20px rgba(255, 87, 34, 0.4)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
                   }}
                 >
-                  <i className="bi bi-gift-fill me-2"></i> Ver Catálogo de Premios a Canjear
-                </button>
+                  <i className="bi bi-gift-fill"></i> Ver Catálogo Completo (+100 Premios)
+                </Link>
+
+                <Link
+                  href="/pedir-gas"
+                  className="btn btn-outline-light fw-bold px-4 py-3"
+                  style={{
+                    borderRadius: '8px',
+                    fontSize: '15px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <i className="bi bi-fire"></i> Pedir Gas y Ganar Puntos
+                </Link>
               </div>
             </div>
           </div>
@@ -198,104 +206,35 @@ export default function GasLoyalty() {
                     </div>
                   </div>
                   <div className="mt-2 text-success fw-semibold" style={{ fontSize: '12px' }}>
-                    <i className="bi bi-check-circle-fill me-1"></i> ¡Tienes suficiente saldo para canjear un Vale de S/ 10!
+                    <i className="bi bi-check-circle-fill me-1"></i> ¡Tienes suficiente saldo para canjear en el catálogo!
                   </div>
                 </div>
               )}
 
               {/* Sample Prizes Preview */}
               <div className="mt-3 pt-3 border-top">
-                <span className="text-muted d-block mb-2" style={{ fontSize: '12px' }}>Próximos premios destacados:</span>
+                <span className="text-muted d-block mb-2" style={{ fontSize: '12px' }}>Premios destacados en catálogo:</span>
                 <div className="d-flex justify-content-between align-items-center mb-1" style={{ fontSize: '13px' }}>
                   <span><i className="bi bi-check-circle text-warning me-1"></i> Vale S/ 10</span>
                   <strong className="text-danger">150 pts</strong>
                 </div>
-                <div className="d-flex justify-content-between align-items-center" style={{ fontSize: '13px' }}>
+                <div className="d-flex justify-content-between align-items-center mb-2" style={{ fontSize: '13px' }}>
                   <span><i className="bi bi-check-circle text-warning me-1"></i> Balón 10kg Gratis</span>
                   <strong className="text-danger">500 pts</strong>
                 </div>
+                <Link
+                  href="/premios/catalogo"
+                  className="text-decoration-none fw-bold text-warning-emphasis d-flex align-items-center justify-content-center gap-1 mt-2 pt-2 border-top"
+                  style={{ fontSize: '12px' }}
+                >
+                  <span>Ver todos los 100 premios</span>
+                  <i className="bi bi-arrow-right"></i>
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* MODAL: Catálogo de Premios a Canjear */}
-      {showPrizesModal && (
-        <div
-          className="modal fade show d-block"
-          tabIndex="-1"
-          style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 100000 }}
-        >
-          <div className="modal-dialog modal-dialog-centered modal-lg">
-            <div className="modal-content rounded-4 border-0 shadow-lg p-4 text-dark">
-              <div className="modal-header border-0 pb-0">
-                <div>
-                  <span className="badge bg-warning text-dark mb-1">Catálogo Oficial de Fidelidad</span>
-                  <h4 className="modal-title fw-bold" style={{ color: '#0F2137' }}>Premios Disponibles para Canje</h4>
-                </div>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowPrizesModal(false)}
-                ></button>
-              </div>
-
-              <div className="modal-body pt-3">
-                <p className="text-muted" style={{ fontSize: '14px' }}>
-                  Canjea tus puntos acumulados en cualquier momento directamente al realizar tu pedido o desde tu cuenta RappiGas.
-                </p>
-
-                <div className="row g-3">
-                  {prizesList.map((prize, i) => (
-                    <div key={i} className="col-md-6">
-                      <div
-                        className="p-3 rounded-3 d-flex align-items-center justify-content-between border"
-                        style={{ background: '#F8FAFC' }}
-                      >
-                        <div className="d-flex align-items-center gap-3">
-                          <div
-                            style={{
-                              width: '44px',
-                              height: '44px',
-                              borderRadius: '10px',
-                              background: '#FFF7ED',
-                              color: '#FF5722',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '20px',
-                            }}
-                          >
-                            <i className={`bi ${prize.icon}`}></i>
-                          </div>
-                          <div>
-                            <span className="badge bg-light text-secondary border mb-1" style={{ fontSize: '10px' }}>
-                              {prize.tag}
-                            </span>
-                            <h6 className="fw-bold mb-0 text-dark" style={{ fontSize: '14px' }}>{prize.title}</h6>
-                          </div>
-                        </div>
-                        <div className="text-end">
-                          <span className="badge bg-danger rounded-pill fw-bold" style={{ fontSize: '12px' }}>
-                            {prize.points}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-4 p-3 rounded-3 text-center" style={{ background: '#FFFBEB', border: '1px solid #FDE68A' }}>
-                  <span className="fw-semibold text-warning-emphasis" style={{ fontSize: '13px' }}>
-                    <i className="bi bi-info-circle-fill me-1"></i> Cada balón que pides acumula automáticamente +50 puntos. ¡Pide hoy y empieza a sumar!
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 }

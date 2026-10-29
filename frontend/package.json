@@ -53,6 +53,8 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@locator/runtime": "^0.5.1",
+    "@locator/webpack-loader": "^0.5.1",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^20",
     "@types/react": "^19",
