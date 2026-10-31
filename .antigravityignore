@@ -1,0 +1,83 @@
+# ==============================================================================
+# ANTIGRAVITY IGNORE (.antigravityignore)
+# Archivos y directorios excluidos de análisis, búsqueda e indexación por Antigravity
+# ==============================================================================
+
+# Dependencias y herramientas
+antigravity-ignore/
+node_modules/
+**/node_modules/
+tools/
+package-lock.json
+
+# Salidas de compilación y empaquetado
+.next/
+frontend/.next/
+**/.next/
+target/
+backend/target/
+**/target/
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+*.class
+**/*.class
+*.jar
+**/*.jar
+*.war
+**/*.war
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Archivos pesados, subidas y binarios
+uploads/
+**/uploads/
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+*.docx
+**/*.docx
+~$*.docx
+*.pdf
+**/*.pdf
+*.xlsx
+**/*.xlsx
+
+# Variables de entorno y credenciales sensibles
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+
+# Git, IDEs y sistema operativo
+.git/
+.github/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Logs y depuración
+logs/
+**/logs/
+*.log
+**/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cobertura de pruebas y caché
+coverage/
+**/coverage/
+.nyc_output/
+.cache/
+**/.cache/

@@ -10,8 +10,7 @@ import { useUIThemeStore } from '@/store/ui-theme.store';
 export default function HeaderPrincipal({ variant }) {
   const pathname = usePathname();
   const [mobileToggle, setMobileToggle] = useState(false);
-  const [isSticky, setIsSticky] = useState();
-  const [prevScrollPos, setPrevScrollPos] = useState(0);
+  const [isSticky, setIsSticky] = useState('');
 
   const { estaAutenticado, usuario, cargarSesionDesdeStorage } = useAuthStore();
   const {
@@ -43,19 +42,16 @@ export default function HeaderPrincipal({ variant }) {
       const currentScrollPos = window.scrollY;
       if (currentScrollPos <= 40) {
         setIsSticky('');
-      } else if (currentScrollPos > prevScrollPos) {
-        setIsSticky('cs-gescout_sticky');
       } else {
         setIsSticky('cs-gescout_show cs-gescout_sticky');
       }
-      setPrevScrollPos(currentScrollPos);
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [prevScrollPos]);
+  }, []);
 
   return (
     <div className='header-area2 header_nav_03' id="inicio">

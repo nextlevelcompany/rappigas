@@ -1,6 +1,6 @@
-import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'slick-carousel/slick/slick.css';
+import '@/assets/public-layout-shim.css';
 import '@/assets/main.css';
 
 import HeaderPrincipal from '@/components/Header/HeaderPrincipal';
