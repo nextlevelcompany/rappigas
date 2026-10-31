@@ -360,7 +360,7 @@ export default function RegistroEmpresaPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-800 dark:text-neutral-100 font-sans selection:bg-orange-500 selection:text-white">
       {/* ========================================================
-          1. HEADER TOP UTILITY BAR (Estilo Mediplace index.html)
+          1. HEADER TOP UTILITY BAR (Oficial RappiGas)
          ======================================================== */}
       <div className="bg-[#03246b] text-white text-xs py-2.5 px-4 sm:px-6 lg:px-8 border-b border-blue-900/40">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
@@ -400,7 +400,7 @@ export default function RegistroEmpresaPage() {
       </div>
 
       {/* ========================================================
-          2. NAVEGACIÓN PRINCIPAL (Estilo main-header de Mediplace)
+          2. NAVEGACIÓN PRINCIPAL (Cabecera RappiGas)
          ======================================================== */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
@@ -409,7 +409,7 @@ export default function RegistroEmpresaPage() {
             <BrandLogo variant="dark" />
           </Link>
 
-          {/* Menú de Enlaces Estilo Mediplace */}
+          {/* Menú de Enlaces Estilo RappiGas */}
           <nav className="hidden lg:flex items-center gap-8 text-sm font-semibold text-[#03246b]">
             <Link href="/" className="hover:text-orange-600 transition">
               Inicio
@@ -428,7 +428,7 @@ export default function RegistroEmpresaPage() {
             </a>
           </nav>
 
-          {/* Botones de Acción Estilo Mediplace thm-btn */}
+          {/* Botones de Acción Estilo RappiGas */}
           <div className="flex items-center gap-4">
             <Link
               href="/auth/login"
@@ -452,19 +452,19 @@ export default function RegistroEmpresaPage() {
 
 
       {/* ========================================================
-          4. SECCIÓN 1: ABOUT ONE (Adaptado fielmente de Mediplace index.html)
+          4. SECCIÓN 1: ABOUT ONE (Diseño Corporativo RappiGas)
          ======================================================== */}
       <section id="beneficios" className="py-20 lg:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
-          {/* Columna Izquierda: Composición de Imágenes Mediplace (about-one__left) */}
+          {/* Columna Izquierda: Composición de Imágenes RappiGas */}
           <div className="lg:col-span-5 relative">
             <div className="relative mx-auto max-w-md lg:max-w-none pb-14 sm:pb-20 lg:pb-10">
               
               {/* Imagen 1 (about-one__img-one) */}
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-100 dark:border-neutral-800 aspect-4/5 w-full bg-slate-100 dark:bg-neutral-800">
                 <Image
-                  src="/mediplace/images/resources/about-one-img-1.jpg?v=2"
+                  src="/assets/img/about/about2-img1.png"
                   alt="Operaciones y distribución de gas RappiGas"
                   fill
                   unoptimized
@@ -475,7 +475,7 @@ export default function RegistroEmpresaPage() {
               {/* Imagen 2 Superpuesta (about-one__img-two) */}
               <div className="absolute -bottom-6 -right-4 sm:-bottom-8 sm:-right-6 w-48 sm:w-60 aspect-4/3 rounded-3xl overflow-hidden shadow-2xl border-6 sm:border-8 border-white dark:border-neutral-900 bg-slate-200 dark:bg-neutral-800 z-10">
                 <Image
-                  src="/mediplace/images/resources/about-one-img-2.jpg?v=2"
+                  src="/assets/img/about/about2-img2.png"
                   alt="Pesaje exacto y balanza digital"
                   fill
                   unoptimized
@@ -517,17 +517,17 @@ export default function RegistroEmpresaPage() {
             </div>
           </div>
 
-          {/* Columna Derecha: Contenido Mediplace (about-one__right) */}
+          {/* Columna Derecha: Contenido RappiGas */}
           <div className="lg:col-span-7 space-y-6">
             
-            {/* Tagline estilo Mediplace (section-title__tagline-box) */}
+            {/* Tagline estilo RappiGas (section-title__tagline-box) */}
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 text-orange-600 text-xs font-black uppercase tracking-widest bg-orange-50 dark:bg-orange-950/40 px-3.5 py-1.5 rounded-full border border-orange-200 dark:border-orange-900">
                 <Store className="w-3.5 h-3.5 text-orange-600" />
                 <span>Alianza Estratégica B2B</span>
               </div>
 
-              {/* Título Principal Mediplace (section-title__title title-animation) */}
+              {/* Título Principal RappiGas */}
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#03246b] dark:text-white tracking-tight leading-[1.15]">
                 Soluciones Avanzadas para <br />
                 <span className="text-orange-600 underline decoration-orange-600/30 underline-offset-8">
@@ -659,12 +659,12 @@ export default function RegistroEmpresaPage() {
       </section>
 
       {/* ========================================================
-          5. SECCIÓN 2: FORMULARIO OFICIAL (Estilo Appointment Three de Mediplace index.html)
+          5. SECCIÓN 2: FORMULARIO OFICIAL (Estilo Appointment Three de RappiGas)
          ======================================================== */}
       <section id="formulario" className="py-20 bg-slate-50 dark:bg-neutral-900/50 border-y border-slate-200/80 dark:border-neutral-800 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto space-y-10">
           
-          {/* Encabezado Centrado estilo Mediplace (section-title text-center) */}
+          {/* Encabezado Centrado estilo RappiGas (section-title text-center) */}
           <div className="text-center space-y-3 max-w-2xl mx-auto">
             <div className="inline-flex items-center gap-2 text-orange-600 text-xs font-black uppercase tracking-widest bg-orange-50 px-3.5 py-1.5 rounded-full border border-orange-200">
               <Store className="w-3.5 h-3.5" />
@@ -681,7 +681,7 @@ export default function RegistroEmpresaPage() {
             </p>
           </div>
 
-          {/* Tarjeta del Formulario estilo Mediplace Appointment Form */}
+          {/* Tarjeta del Formulario estilo RappiGas Appointment Form */}
           <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-slate-200/90 dark:border-neutral-800 shadow-xl p-7 sm:p-12 relative">
             {exito ? (
               /* PANTALLA DE ÉXITO */
@@ -1644,11 +1644,11 @@ export default function RegistroEmpresaPage() {
       </section>
 
       {/* ========================================================
-          6. SECCIÓN 3: BANNER CTA DE ASESORÍA (Estilo slogan-one de Mediplace)
+          6. SECCIÓN 3: BANNER CTA DE ASESORÍA (Estilo slogan-one de RappiGas)
          ======================================================== */}
       <section id="asesoria" className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="rounded-[2.5rem] bg-gradient-to-br from-[#021849] via-[#03246b] to-[#021849] text-white p-10 sm:p-16 text-center relative overflow-hidden shadow-2xl border border-blue-900/60">
-          {/* Formas y brillos decorativos estilo Mediplace */}
+          {/* Formas y brillos decorativos estilo RappiGas */}
           <div className="absolute top-0 right-10 w-96 h-96 bg-orange-600/15 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-10 left-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px] opacity-5 pointer-events-none" />
@@ -1698,12 +1698,12 @@ export default function RegistroEmpresaPage() {
       </section>
 
       {/* ========================================================
-          7. SECCIÓN 4: SOPORTE TÉCNICO Y CONTACTO (Estilo Mediplace)
+          7. SECCIÓN 4: SOPORTE TÉCNICO Y CONTACTO (Estilo RappiGas)
          ======================================================== */}
       <section id="contacto" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-slate-200 dark:border-neutral-800">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
-          {/* Columna Izquierda: Tarjeta Corporativa Navy estilo Mediplace */}
+          {/* Columna Izquierda: Tarjeta Corporativa Navy estilo RappiGas */}
           <div className="lg:col-span-5 relative">
             <div className="rounded-[2rem] p-8 sm:p-10 bg-[#03246b] text-white shadow-2xl border border-blue-900 relative overflow-hidden space-y-6">
               
@@ -1816,7 +1816,7 @@ export default function RegistroEmpresaPage() {
       </section>
 
       {/* ========================================================
-          8. FOOTER CORPORATIVO (Estilo site-footer de Mediplace)
+          8. FOOTER CORPORATIVO (Estilo site-footer de RappiGas)
          ======================================================== */}
       <footer className="bg-[#021849] text-white pt-16 pb-8 border-t border-blue-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1878,13 +1878,13 @@ export default function RegistroEmpresaPage() {
               </ul>
             </div>
 
-            {/* Columna 4: Galería de Despacho (Estilo Mediplace) */}
+            {/* Columna 4: Galería de Despacho (Estilo RappiGas) */}
             <div className="space-y-3">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider">Galería de Despacho</h4>
               <div className="grid grid-cols-3 gap-2">
                 <div className="relative h-16 rounded-xl overflow-hidden bg-blue-900 border border-blue-800">
                   <Image
-                    src="/mediplace/images/resources/footer-widget-two-gallery-1-1.jpg"
+                    src="/assets/img/work/work-img1.png"
                     alt="Despacho 1"
                     fill
                     className="object-cover"
@@ -1892,7 +1892,7 @@ export default function RegistroEmpresaPage() {
                 </div>
                 <div className="relative h-16 rounded-xl overflow-hidden bg-blue-900 border border-blue-800">
                   <Image
-                    src="/mediplace/images/resources/footer-widget-two-gallery-1-2.jpg"
+                    src="/assets/img/work/work-img2.png"
                     alt="Despacho 2"
                     fill
                     className="object-cover"
@@ -1900,7 +1900,7 @@ export default function RegistroEmpresaPage() {
                 </div>
                 <div className="relative h-16 rounded-xl overflow-hidden bg-blue-900 border border-blue-800">
                   <Image
-                    src="/mediplace/images/resources/footer-widget-two-gallery-1-3.jpg"
+                    src="/assets/img/work/work-img3.png"
                     alt="Despacho 3"
                     fill
                     className="object-cover"
@@ -1908,7 +1908,7 @@ export default function RegistroEmpresaPage() {
                 </div>
                 <div className="relative h-16 rounded-xl overflow-hidden bg-blue-900 border border-blue-800">
                   <Image
-                    src="/mediplace/images/resources/footer-widget-two-gallery-1-4.jpg"
+                    src="/assets/img/work/project-img1.png"
                     alt="Despacho 4"
                     fill
                     className="object-cover"
@@ -1916,7 +1916,7 @@ export default function RegistroEmpresaPage() {
                 </div>
                 <div className="relative h-16 rounded-xl overflow-hidden bg-blue-900 border border-blue-800">
                   <Image
-                    src="/mediplace/images/resources/footer-widget-two-gallery-1-5.jpg"
+                    src="/assets/img/work/project-img2.png"
                     alt="Despacho 5"
                     fill
                     className="object-cover"
@@ -1924,7 +1924,7 @@ export default function RegistroEmpresaPage() {
                 </div>
                 <div className="relative h-16 rounded-xl overflow-hidden bg-blue-900 border border-blue-800">
                   <Image
-                    src="/mediplace/images/resources/footer-widget-two-gallery-1-6.jpg"
+                    src="/assets/img/work/project-img3.png"
                     alt="Despacho 6"
                     fill
                     className="object-cover"
