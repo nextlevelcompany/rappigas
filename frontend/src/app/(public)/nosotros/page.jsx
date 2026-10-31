@@ -1,10 +1,10 @@
-import AboutUsPage from '@/views/AboutUsPage';
+import NosotrosContent from './NosotrosContent';
 
 export const metadata = {
   title: 'Sobre Nosotros - Sellos de Garantía y Seguridad | RappiGas',
-  description: 'Conoce los estándares técnicos certificados, prueba hidrostática y pesaje en balanza digital de RappiGas.',
+  description: 'Conoce la historia, sellos Osinergmin y compromiso de pesaje exacto de RappiGas Perú.',
 };
 
 export default function Page() {
-  return <AboutUsPage />;
+  return <NosotrosContent />;
 }

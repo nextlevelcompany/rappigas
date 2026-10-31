@@ -1,10 +1,10 @@
-import CoveragePage from '@/views/CoveragePage';
+import CoberturaContent from './CoberturaContent';
 
 export const metadata = {
   title: 'Cobertura & Distribuidores Autorizados | RappiGas',
-  description: 'Despacho express en Lima Norte, Lima Centro, Lima Moderna, Callao y principales provincias.',
+  description: 'Consulta las zonas de cobertura, distritos atendidos y distribuidores oficiales de RappiGas.',
 };
 
 export default function Page() {
-  return <CoveragePage />;
+  return <CoberturaContent />;
 }

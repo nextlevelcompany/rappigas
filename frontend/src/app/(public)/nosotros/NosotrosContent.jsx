@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Breadcrumb from '../components/Common/Breadcrumb';
+import Breadcrumb from '@/components/Common/Breadcrumb';
 
-export default function AboutUsPage() {
+export default function NosotrosContent() {
   return (
     <main className="about-us-wrapper" id="pagina-sobre-nosotros" suppressHydrationWarning>
       <style dangerouslySetInnerHTML={{ __html: `

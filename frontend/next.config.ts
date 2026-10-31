@@ -2,6 +2,20 @@ import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  async redirects() {
+    return [
+      { source: '/about', destination: '/nosotros', permanent: true },
+      { source: '/contact', destination: '/contacto', permanent: true },
+      { source: '/fidelidad', destination: '/premios', permanent: true },
+      { source: '/catalogo', destination: '/premios/catalogo', permanent: true },
+      { source: '/libro-reclamaciones', destination: '/libro-de-reclamaciones', permanent: true },
+      { source: '/login', destination: '/auth/login', permanent: true },
+      { source: '/politica-privacidad', destination: '/nosotros', permanent: false },
+      { source: '/service', destination: '/productos', permanent: true },
+      { source: '/terminos-condiciones', destination: '/nosotros', permanent: false },
+      { source: '/terminos-servicio', destination: '/nosotros', permanent: false },
+    ];
+  },
   turbopack: {
     rules: {
       "**/*.{tsx,jsx}": {

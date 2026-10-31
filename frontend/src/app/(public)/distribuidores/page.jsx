@@ -1,4 +1,4 @@
-import DistributorPage from '@/views/DistributorPage';
+import DistribuidoresContent from './DistribuidoresContent';
 
 export const metadata = {
   title: 'Registro de Distribuidoras Autorizadas | RappiGas',
@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <DistributorPage />;
+  return <DistribuidoresContent />;
 }

@@ -5,16 +5,16 @@ import React from 'react';
 // =========================================================================
 // IMPORTACIÓN DE SECCIONES CON NOMBRES DESCRIPTIVOS Y COHERENTES
 // =========================================================================
-import HeroSliderSection from "../components/HeroBanner/HomeHeroBanner";
-import BarraGarantiasSection from "../components/Award/HomeGarantias";
-import SobreRappigasSection from "../components/About/HomeSobreNosotros";
-import AppRecompensasSection from "../components/Cta/AppDownloadCTA";
-import ComoFuncionaSection from "../components/Choose/HomeComoFunciona";
-import ClubRappipuntosSection from "../components/Project/ClubRappipuntosPremios";
-import CatalogoBalonesSection from "../components/Pricing/HomeCatalogoPrecios";
-import GuiaCrearCuentaSection from "../components/HowTo/HowToCreateAccount";
+import HeroSliderSection from "@/components/HeroBanner/HomeHeroBanner";
+import BarraGarantiasSection from "@/components/Award/HomeGarantias";
+import SobreRappigasSection from "@/components/About/HomeSobreNosotros";
+import AppRecompensasSection from "@/components/Cta/AppDownloadCTA";
+import ComoFuncionaSection from "@/components/Choose/HomeComoFunciona";
+import ClubRappipuntosSection from "@/components/Project/ClubRappipuntosPremios";
+import CatalogoBalonesSection from "@/components/Pricing/HomeCatalogoPrecios";
+import GuiaCrearCuentaSection from "@/components/HowTo/HowToCreateAccount";
 
-const Home = () => {
+const HomeContent = () => {
     return (
         <main className="home-page1" id="pagina-inicio">
             {/* 1. SECCIÓN HERO: Slider Principal con Pedidos y Promociones */}
@@ -60,4 +60,4 @@ const Home = () => {
     );
 };
 
-export default Home;
+export default HomeContent;

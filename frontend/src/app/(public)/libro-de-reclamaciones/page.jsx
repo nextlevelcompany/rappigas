@@ -1,10 +1,10 @@
-import ComplaintsBookPage from '@/views/ComplaintsBookPage';
+import LibroReclamacionesContent from './LibroReclamacionesContent';
 
 export const metadata = {
   title: 'Libro de Reclamaciones Virtual | RappiGas Perú',
-  description: 'Hoja de reclamación virtual conforme a la Ley N° 29571.',
+  description: 'Formulario oficial de reclamos y quejas conforme a la normativa de Indecopi y Ley N° 29571.',
 };
 
 export default function Page() {
-  return <ComplaintsBookPage />;
+  return <LibroReclamacionesContent />;
 }

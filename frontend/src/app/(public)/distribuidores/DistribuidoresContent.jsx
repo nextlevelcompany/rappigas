@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import Breadcrumb from '../components/Common/Breadcrumb';
+import Breadcrumb from '@/components/Common/Breadcrumb';
 
-const DistributorPage = () => {
+const DistribuidoresContent = () => {
   const [registered, setRegistered] = useState(false);
 
   const handleSubmit = (e) => {
@@ -153,4 +153,4 @@ const DistributorPage = () => {
   );
 };
 
-export default DistributorPage;
+export default DistribuidoresContent;
