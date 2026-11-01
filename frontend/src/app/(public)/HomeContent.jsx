@@ -5,14 +5,14 @@ import React from 'react';
 // =========================================================================
 // IMPORTACIÓN DE SECCIONES CON NOMBRES DESCRIPTIVOS Y COHERENTES
 // =========================================================================
-import HeroSliderSection from "@/components/HeroBanner/HomeHeroBanner";
-import BarraGarantiasSection from "@/components/Award/HomeGarantias";
-import SobreRappigasSection from "@/components/About/HomeSobreNosotros";
-import AppRecompensasSection from "@/components/Cta/AppDownloadCTA";
-import ComoFuncionaSection from "@/components/Choose/HomeComoFunciona";
-import ClubRappipuntosSection from "@/components/Project/ClubRappipuntosPremios";
-import CatalogoBalonesSection from "@/components/Pricing/HomeCatalogoPrecios";
-import GuiaCrearCuentaSection from "@/components/HowTo/HowToCreateAccount";
+import HeroSliderSection from "./_inicio/HomeHeroBanner";
+import BarraGarantiasSection from "./_inicio/HomeGarantias";
+import SobreRappigasSection from "./_inicio/HomeSobreNosotros";
+import AppRecompensasSection from "./_inicio/AppDownloadCTA";
+import ComoFuncionaSection from "./_inicio/HomeComoFunciona";
+import ClubRappipuntosSection from "./_inicio/ClubRappipuntosPremios";
+import CatalogoBalonesSection from "./_inicio/HomeCatalogoPrecios";
+import GuiaCrearCuentaSection from "./_inicio/HowToCreateAccount";
 
 const HomeContent = () => {
     return (

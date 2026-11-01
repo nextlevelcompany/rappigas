@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import Breadcrumb from '@/components/Common/Breadcrumb';
-import GasLoyalty from '@/components/Loyalty/GasLoyalty';
-import ClubRappipuntosPremios from '@/components/Project/ClubRappipuntosPremios';
+import Breadcrumb from '@/app/(public)/_layout/Breadcrumb';
+import GasLoyalty from './GasLoyalty';
+import ClubRappipuntosPremios from './ClubRappipuntosPremios';
 
 const PremiosContent = () => {
   return (

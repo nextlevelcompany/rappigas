@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import Breadcrumb from '@/components/Common/Breadcrumb';
-import GasCatalog from '@/components/Products/GasCatalog';
-import GasPaymentMethods from '@/components/PaymentMethods/GasPaymentMethods';
-import GasFaq from '@/components/Faq/GasFaq';
+import Breadcrumb from '@/app/(public)/_layout/Breadcrumb';
+import GasCatalog from './GasCatalog';
+import GasPaymentMethods from './GasPaymentMethods';
+import GasFaq from './GasFaq';
 
 const ProductosContent = () => {
   return (

@@ -4,7 +4,7 @@ import { Inter } from "next/font/google"
 import { ThemeProvider } from "next-themes"
 
 import UIThemeProvider from "@/providers/ui-theme-provider"
-import LocatorSetup from "@/components/Common/LocatorSetup"
+import LocatorSetup from "@/components/LocatorSetup"
 
 const inter = Inter({
   subsets: ["latin"],

@@ -1,4 +1,4 @@
-import SectionTitle from "../Common/SectionTitle";
+import SectionTitle from "./SectionTitle";
 import HomePricingCard from "./HomePricingCard";
 
 const HomeCatalogoPrecios = () => {

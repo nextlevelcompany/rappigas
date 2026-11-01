@@ -82,9 +82,17 @@ export default function DetallePremioPage() {
     window.addEventListener("catalogo_premios_actualizado", handleSync);
     window.addEventListener("carrito_canjes_actualizado", handleCarritoSync);
 
+    const handleStorageSync = (e: StorageEvent) => {
+      if (e.key === "rappigas_catalogo_premios") {
+        setCatalogo(obtenerCatalogoPremios());
+      }
+    };
+    window.addEventListener("storage", handleStorageSync);
+
     return () => {
       window.removeEventListener("catalogo_premios_actualizado", handleSync);
       window.removeEventListener("carrito_canjes_actualizado", handleCarritoSync);
+      window.removeEventListener("storage", handleStorageSync);
     };
   }, []);
 
@@ -332,6 +340,12 @@ export default function DetallePremioPage() {
           <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs relative overflow-hidden flex flex-col items-center justify-center min-h-[340px] sm:min-h-[420px]">
             {/* Badges superiores sobre la imagen */}
             <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
+              {premio.destacado && (
+                <span className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs border border-amber-300 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 fill-white text-white" />
+                  <span>⭐ TOP DESTACADO EN TIENDA</span>
+                </span>
+              )}
               <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-orange-50 text-orange-600 border border-orange-200 flex items-center gap-1">
                 <span>{categoriaInfo?.icono}</span>
                 <span>{categoriaInfo?.nombre}</span>

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import Breadcrumb from '@/components/Common/Breadcrumb';
-import GasPaymentMethods from '@/components/PaymentMethods/GasPaymentMethods';
+import Breadcrumb from '@/app/(public)/_layout/Breadcrumb';
+import GasPaymentMethods from './GasPaymentMethods';
 
 const PedirGasContent = () => {
   const [selectedProduct, setSelectedProduct] = useState('premium');

@@ -3,8 +3,8 @@ import 'slick-carousel/slick/slick.css';
 import '@/assets/public-layout-shim.css';
 import '@/assets/main.css';
 
-import HeaderPrincipal from '@/components/Header/HeaderPrincipal';
-import FooterPrincipal from '@/components/Footer/FooterPrincipal';
+import HeaderPrincipal from './_layout/HeaderPrincipal';
+import FooterPrincipal from './_layout/FooterPrincipal';
 
 export const metadata = {
   title: 'RappiGas - Tu Gas de Cocina Rápido & Seguro | Pedidos con Balanza Digital y Premios',

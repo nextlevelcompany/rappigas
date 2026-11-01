@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import data from '../../Data/Home1/choose1.json';
+import data from './choose1.json';
 
 const HomeComoFunciona = () => {
     const mainContent = {

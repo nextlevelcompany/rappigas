@@ -1296,6 +1296,7 @@ export function guardarCatalogoPremios(premios: PremioCanje[]) {
   try {
     localStorage.setItem(STORAGE_KEY_PREMIOS, JSON.stringify(premios));
     window.dispatchEvent(new Event("catalogo_premios_actualizado"));
+    window.dispatchEvent(new CustomEvent("rappigas_catalogo_sincronizado", { detail: premios }));
   } catch (err) {
     console.error("Error al guardar catálogo de premios:", err);
   }
@@ -1307,6 +1308,10 @@ export function agregarPremio(nuevo: Omit<PremioCanje, "id">): PremioCanje {
   const premioCompleto: PremioCanje = { ...nuevo, id };
   const actualizado = [premioCompleto, ...catalogo];
   guardarCatalogoPremios(actualizado);
+  const idx = PREMIOS_ZETA_PREMIA.findIndex((p) => p.id === id);
+  if (idx === -1) {
+    PREMIOS_ZETA_PREMIA.unshift(premioCompleto);
+  }
   return premioCompleto;
 }
 
@@ -1322,6 +1327,10 @@ export function actualizarPremio(id: string, cambios: Partial<PremioCanje>): Pre
   });
   if (encontrado) {
     guardarCatalogoPremios(actualizado);
+    const memIdx = PREMIOS_ZETA_PREMIA.findIndex((p) => p.id === id);
+    if (memIdx !== -1) {
+      PREMIOS_ZETA_PREMIA[memIdx] = { ...PREMIOS_ZETA_PREMIA[memIdx], ...cambios };
+    }
   }
   return encontrado;
 }
@@ -1331,6 +1340,10 @@ export function eliminarPremio(id: string): boolean {
   const filtrado = catalogo.filter((p) => p.id !== id);
   if (filtrado.length !== catalogo.length) {
     guardarCatalogoPremios(filtrado);
+    const memIdx = PREMIOS_ZETA_PREMIA.findIndex((p) => p.id === id);
+    if (memIdx !== -1) {
+      PREMIOS_ZETA_PREMIA.splice(memIdx, 1);
+    }
     return true;
   }
   return false;
@@ -1338,6 +1351,73 @@ export function eliminarPremio(id: string): boolean {
 
 export function actualizarStockPremio(id: string, nuevoStock: number): boolean {
   return !!actualizarPremio(id, { stock: Math.max(0, nuevoStock) });
+}
+
+// =============================================================================
+// REGLAS DE EQUIVALENCIA Y CÁLCULO DE PUNTOS COMERCIALES (OPCIÓN 1)
+// =============================================================================
+export interface RatioCategoriaInfo {
+  ratio: number;
+  etiqueta: string;
+  motivo: string;
+}
+
+export function obtenerRatioPorCategoria(categoria: string): RatioCategoriaInfo {
+  let ratios = {
+    ratioValesGas: 8.7,       // Balones y vales: margen de caja protegido
+    ratioMenajeCocina: 7.5,   // Ollas y sartenes: canje rápido con margen mayorista
+    ratioElectroHogar: 7.8,   // Electrodomésticos: balance comercial
+    puntosPorSol: 8.0,        // Tasa general base
+  };
+
+  if (typeof window !== "undefined") {
+    try {
+      const cfg = localStorage.getItem("rappigas_puntos_config_v2");
+      if (cfg) {
+        const parsed = JSON.parse(cfg);
+        ratios = { ...ratios, ...parsed };
+      }
+    } catch {
+      // Ignorar fallback
+    }
+  }
+
+  const cat = (categoria || "").toUpperCase();
+  if (cat.includes("GAS") || cat.includes("VALE")) {
+    return {
+      ratio: ratios.ratioValesGas || 8.7,
+      etiqueta: "Vales y Balones (Opción 1)",
+      motivo: "Protección de caja y margen de gas",
+    };
+  }
+  if (cat.includes("COCINA") || cat.includes("MENAJE")) {
+    return {
+      ratio: ratios.ratioMenajeCocina || 7.5,
+      etiqueta: "Cocina y Menaje (Opción 1)",
+      motivo: "Rotación rápida e incentivo fidelizador",
+    };
+  }
+  if (cat.includes("ELECTRO") || cat.includes("TECNOLOG") || cat.includes("HOGAR")) {
+    return {
+      ratio: ratios.ratioElectroHogar || 7.8,
+      etiqueta: "Electrohogar (Opción 1)",
+      motivo: "Equilibrio comercial y valor percibido",
+    };
+  }
+
+  return {
+    ratio: ratios.puntosPorSol || 8.0,
+    etiqueta: "General / Estándar",
+    motivo: "Tasa base estándar",
+  };
+}
+
+export function calcularPuntosSugeridos(valorSoles: number, categoria: string): number {
+  if (valorSoles <= 0) return 0;
+  const { ratio } = obtenerRatioPorCategoria(categoria);
+  const puntosBrutos = Math.round(valorSoles * ratio);
+  // Redondeo comercial amigable a decenas
+  return Math.max(10, Math.round(puntosBrutos / 10) * 10);
 }
 
 // =============================================================================

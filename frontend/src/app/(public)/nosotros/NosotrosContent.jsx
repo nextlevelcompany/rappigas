@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Breadcrumb from '@/components/Common/Breadcrumb';
+import Breadcrumb from '@/app/(public)/_layout/Breadcrumb';
 
 export default function NosotrosContent() {
   return (

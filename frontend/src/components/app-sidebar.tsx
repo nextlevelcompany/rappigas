@@ -59,7 +59,8 @@ const seccionFidelidadAdmin = {
   icon: <Gift className="w-5 h-5" />,
   isActive: false,
   items: [
-    { title: "Puntos", url: "/admin/puntos" },
+    { title: "Puntos Clientes", url: "/admin/puntos" },
+    { title: "Reglas y Tasas", url: "/admin/puntos/configuracion" },
     { title: "Premios", url: "/admin/premios" },
     { title: "Canjes", url: "/admin/canjes" },
   ],

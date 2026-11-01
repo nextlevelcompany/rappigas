@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Breadcrumb from '@/components/Common/Breadcrumb';
+import Breadcrumb from '@/app/(public)/_layout/Breadcrumb';
 
 const LibroReclamacionesContent = () => {
   const [submitted, setSubmitted] = useState(false);

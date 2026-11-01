@@ -35,7 +35,9 @@ import {
   Tag,
   Info,
   Truck,
+  Calculator,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   PremioCanje,
   CategoriaPremio,
@@ -53,6 +55,8 @@ import {
   eliminarPremio,
   actualizarStockPremio,
   PREMIOS_ZETA_PREMIA,
+  obtenerRatioPorCategoria,
+  calcularPuntosSugeridos,
 } from "@/app/(cliente)/cliente/canjes/premios-data";
 
 // Paletas de color disponibles para categorías personalizadas
@@ -156,6 +160,16 @@ export default function AdminPremiosCanjesPage() {
     especificaciones: [],
   });
 
+  // Estado para auto-calcular puntos según reglas de equivalencia (Opción 1)
+  const [autoCalcularPuntos, setAutoCalcularPuntos] = useState<boolean>(true);
+
+  // Reglas de equivalencia comercial dinámicas (Opción 1)
+  const ratioInfo = useMemo(() => obtenerRatioPorCategoria(formData.categoria), [formData.categoria]);
+  const puntosSugeridos = useMemo(
+    () => calcularPuntosSugeridos(formData.valorSoles, formData.categoria),
+    [formData.valorSoles, formData.categoria]
+  );
+
   // Referencia para input de archivo
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -248,12 +262,14 @@ export default function AdminPremiosCanjesPage() {
   const handleAbrirCrear = () => {
     setPremioEnEdicion(null);
     const primeraCatValida = categorias.find((c) => c.id !== "TODOS")?.id || "GAS_VALES";
+    const valorInicial = 30.0;
+    const ptsInicial = calcularPuntosSugeridos(valorInicial, primeraCatValida);
     setFormData({
       nombre: "",
       categoria: primeraCatValida,
       marca: "RappiGas",
-      puntos: 250,
-      valorSoles: 30.0,
+      puntos: ptsInicial,
+      valorSoles: valorInicial,
       stock: 25,
       imagen: "/products/01.png",
       descripcion: "Nuevo premio oficial para canje de fidelidad RappiGas.",
@@ -264,6 +280,7 @@ export default function AdminPremiosCanjesPage() {
         { clave: "Material", valor: "Alta durabilidad" },
       ],
     });
+    setAutoCalcularPuntos(true);
     setModalAbierto(true);
   };
 
@@ -284,6 +301,9 @@ export default function AdminPremiosCanjesPage() {
         { clave: "Garantía", valor: "12 meses oficial" },
       ],
     });
+    // Si los puntos actuales están muy cerca de la regla calculada, dejar activado auto-calcular
+    const regla = calcularPuntosSugeridos(premio.valorSoles, premio.categoria);
+    setAutoCalcularPuntos(Math.abs(premio.puntos - regla) <= 5);
     setModalAbierto(true);
   };
 
@@ -296,8 +316,14 @@ export default function AdminPremiosCanjesPage() {
 
     if (premioEnEdicion) {
       actualizarPremio(premioEnEdicion.id, formData);
+      toast.success("Premio actualizado en Tienda", {
+        description: `"${formData.nombre}" guardado con ${formData.puntos.toLocaleString()} PTS (${formData.destacado ? "⭐ Destacado en Tienda" : "Estándar"}).`,
+      });
     } else {
       agregarPremio(formData);
+      toast.success("Premio publicado con éxito", {
+        description: `"${formData.nombre}" agregado con ${formData.puntos.toLocaleString()} PTS (${formData.destacado ? "⭐ Destacado en Tienda" : "Estándar"}).`,
+      });
     }
 
     setModalAbierto(false);
@@ -1132,7 +1158,15 @@ export default function AdminPremiosCanjesPage() {
                     </label>
                     <select
                       value={formData.categoria}
-                      onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
+                      onChange={(e) => {
+                        const nuevaCat = e.target.value;
+                        if (autoCalcularPuntos) {
+                          const pts = calcularPuntosSugeridos(formData.valorSoles, nuevaCat);
+                          setFormData({ ...formData, categoria: nuevaCat, puntos: pts });
+                        } else {
+                          setFormData({ ...formData, categoria: nuevaCat });
+                        }
+                      }}
                       className="w-full text-xs font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white focus:outline-hidden focus:border-orange-500"
                     >
                       {categorias
@@ -1309,42 +1343,117 @@ export default function AdminPremiosCanjesPage() {
               </div>
 
               {/* SECCIÓN 3: PUNTOS, PRECIOS, STOCK Y CUPÓN */}
-              <div className="space-y-2.5 bg-slate-50/70 p-3 rounded-xl border border-slate-200">
-                <div className="flex items-center gap-1.5 text-[#03246b] font-bold text-xs pb-1 border-b border-slate-200">
-                  <Ticket className="w-3.5 h-3.5 text-orange-500" />
-                  <span>Puntos, Precios, Stock y Cupón</span>
+              <div className="space-y-3 bg-gradient-to-br from-slate-50 via-white to-slate-50/80 p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200">
+                  <div className="flex items-center gap-1.5 text-[#03246b] font-bold text-xs">
+                    <Ticket className="w-4 h-4 text-orange-500" />
+                    <span>Puntos, Precios, Stock y Cupón</span>
+                  </div>
+
+                  {/* Insignia y Regla de Equivalencia Comercial (Opción 1) */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                      <Calculator className="w-3 h-3 text-indigo-600" />
+                      <span>{ratioInfo.etiqueta}: {ratioInfo.ratio.toFixed(1)} pts / S/.</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, puntos: puntosSugeridos }))}
+                      className="text-[10px] font-bold text-orange-700 hover:text-orange-800 bg-orange-50 hover:bg-orange-100 border border-orange-200 px-2 py-0.5 rounded-md transition cursor-pointer flex items-center gap-1"
+                      title="Sincronizar puntos automáticamente con la regla comercial"
+                    >
+                      <span>⚡ Usar Regla ({puntosSugeridos.toLocaleString()} PTS)</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   {/* Puntos Canje */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-slate-500 block">
-                      Puntos Canje *
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-bold uppercase text-slate-500 block">
+                        Puntos Canje *
+                      </label>
+                      {formData.puntos === puntosSugeridos ? (
+                        <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded">
+                          ✓ Regla Opción 1
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1 rounded">
+                          Manual
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="number"
                       min={1}
                       value={formData.puntos}
-                      onChange={(e) => setFormData({ ...formData, puntos: Math.max(1, parseInt(e.target.value) || 0) })}
+                      onChange={(e) => {
+                        setAutoCalcularPuntos(false);
+                        setFormData({ ...formData, puntos: Math.max(1, parseInt(e.target.value) || 0) });
+                      }}
                       className="w-full text-xs font-mono font-black px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white focus:outline-hidden focus:border-orange-500 text-orange-600"
                       required
                     />
+                    <div className="text-[9px] text-slate-400 font-mono flex items-center justify-between">
+                      <span>Sugerido: {puntosSugeridos} pts</span>
+                      {formData.puntos !== puntosSugeridos && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, puntos: puntosSugeridos })}
+                          className="text-orange-600 hover:underline font-bold text-[9px] cursor-pointer"
+                        >
+                          Ajustar
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Valor en Soles */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-slate-500 block">
-                      Valor Soles (S/) *
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-bold uppercase text-slate-500 block">
+                        Valor Soles (S/) *
+                      </label>
+                      <span className="text-[9px] font-mono text-slate-400">
+                        {formData.valorSoles > 0 ? (formData.puntos / formData.valorSoles).toFixed(1) : 0} pts/S/.
+                      </span>
+                    </div>
                     <input
                       type="number"
-                      min={0.1}
-                      step={0.1}
+                      min={0}
+                      step="any"
                       value={formData.valorSoles}
-                      onChange={(e) => setFormData({ ...formData, valorSoles: Math.max(0.1, parseFloat(e.target.value) || 0) })}
+                      onChange={(e) => {
+                        const nuevoValor = Math.max(0, parseFloat(e.target.value) || 0);
+                        if (autoCalcularPuntos) {
+                          const pts = calcularPuntosSugeridos(nuevoValor, formData.categoria);
+                          setFormData({ ...formData, valorSoles: nuevoValor, puntos: pts });
+                        } else {
+                          setFormData({ ...formData, valorSoles: nuevoValor });
+                        }
+                      }}
                       className="w-full text-xs font-mono font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white focus:outline-hidden focus:border-orange-500"
                       required
                     />
+                    <label className="flex items-center gap-1 text-[9px] text-slate-500 cursor-pointer select-none pt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={autoCalcularPuntos}
+                        onChange={(e) => {
+                          const activado = e.target.checked;
+                          setAutoCalcularPuntos(activado);
+                          if (activado) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              puntos: calcularPuntosSugeridos(prev.valorSoles, prev.categoria),
+                            }));
+                          }
+                        }}
+                        className="w-3 h-3 text-orange-600 rounded"
+                      />
+                      <span>Auto-calcular puntos</span>
+                    </label>
                   </div>
 
                   {/* Stock Disponible */}
@@ -1360,6 +1469,9 @@ export default function AdminPremiosCanjesPage() {
                       className="w-full text-xs font-mono font-black px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white focus:outline-hidden focus:border-orange-500 text-emerald-600"
                       required
                     />
+                    <span className="text-[9px] text-slate-400 block">
+                      {formData.stock === 0 ? "⚠️ Agotado" : formData.stock <= 5 ? "⚠️ Stock Crítico" : "✓ Disponible"}
+                    </span>
                   </div>
 
                   {/* Código Cupón */}
@@ -1371,27 +1483,39 @@ export default function AdminPremiosCanjesPage() {
                       type="text"
                       placeholder="CANJE10"
                       value={formData.codigoCupon}
-                      onChange={(e) => setFormData({ ...formData, codigoCupon: e.target.value.toUpperCase() })}
+                      onChange={(e) => setFormData({ ...formData, codigoCupon: e.target.value.toUpperCase().replace(/\s+/g, "") })}
                       className="w-full text-xs font-mono font-black px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white focus:outline-hidden focus:border-orange-500 text-[#03246b]"
                       required
                     />
+                    <span className="text-[9px] text-slate-400 block truncate" title="Código de validación">
+                      Clave de validación
+                    </span>
                   </div>
                 </div>
 
-                {/* Destacado */}
-                <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between">
-                  <div>
-                    <span className="font-bold text-slate-800 text-[11px] block">Destacar Premio en Tienda</span>
-                    <span className="text-[10px] text-slate-400">Aparecerá con distintivo especial y prioridad en búsquedas.</span>
+                {/* Destacar Premio en Tienda y Catálogo */}
+                <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 flex items-center justify-between">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5 border border-amber-200 shadow-2xs">
+                      <Sparkles className="w-4 h-4 fill-amber-500 text-amber-500" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-amber-950 text-xs block">
+                        Destacar Premio en Tienda y Catálogo
+                      </span>
+                      <span className="text-[10px] text-amber-900/80 leading-relaxed block">
+                        Aparecerá con insignia distintiva <strong className="font-semibold text-amber-950">⭐ TOP DESTACADO</strong> en el catálogo y tienda de canjes, con prioridad de visualización y filtro exclusivo.
+                      </span>
+                    </div>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
                     <input
                       type="checkbox"
                       checked={formData.destacado}
                       onChange={(e) => setFormData({ ...formData, destacado: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-8 h-4 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-orange-600"></div>
+                    <div className="w-9 h-5 bg-slate-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600"></div>
                   </label>
                 </div>
               </div>

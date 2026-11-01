@@ -56,7 +56,7 @@ import { useAuthStore } from "@/store/auth-store";
 
 type ModoVista = "grid3" | "grid4" | "lista";
 type RangoPuntos = "TODOS" | "HASTA_100" | "101_250" | "251_500" | "MAS_500";
-type OrdenOpcion = "PUNTOS_ASC" | "PUNTOS_DESC" | "NOMBRE_ASC" | "VALOR_DESC";
+type OrdenOpcion = "PUNTOS_ASC" | "PUNTOS_DESC" | "NOMBRE_ASC" | "VALOR_DESC" | "DESTACADOS";
 
 interface CatalogoCanjesContentProps {
   modo?: "publico" | "cliente";
@@ -82,6 +82,7 @@ export default function CatalogoCanjesContent({
   const [rangoPuntos, setRangoPuntos] = useState<RangoPuntos>("TODOS");
   const [marcaSeleccionada, setMarcaSeleccionada] = useState<string>("TODAS");
   const [soloAlcanzables, setSoloAlcanzables] = useState<boolean>(false);
+  const [soloDestacados, setSoloDestacados] = useState<boolean>(false);
   const [orden, setOrden] = useState<OrdenOpcion>("PUNTOS_ASC");
 
   // Paginación
@@ -164,16 +165,27 @@ export default function CatalogoCanjesContent({
       }
     }
 
+    const handleStorageSync = (e: StorageEvent) => {
+      if (e.key === "rappigas_catalogo_premios") {
+        setCatalogoPremios(obtenerCatalogoPremios());
+      }
+      if (e.key === "rappigas_catalogo_categorias") {
+        setCategorias(obtenerCategorias());
+      }
+    };
+
     window.addEventListener("catalogo_premios_actualizado", handleSync);
     window.addEventListener("catalogo_categorias_actualizado", handleCategoriasSync);
     window.addEventListener("carrito_canjes_actualizado", handleCarritoSync);
     window.addEventListener("abrir_drawer_canjes", handleAbrirDrawer);
+    window.addEventListener("storage", handleStorageSync);
 
     return () => {
       window.removeEventListener("catalogo_premios_actualizado", handleSync);
       window.removeEventListener("catalogo_categorias_actualizado", handleCategoriasSync);
       window.removeEventListener("carrito_canjes_actualizado", handleCarritoSync);
       window.removeEventListener("abrir_drawer_canjes", handleAbrirDrawer);
+      window.removeEventListener("storage", handleStorageSync);
     };
   }, [cargarDatos]);
 
@@ -216,11 +228,17 @@ export default function CatalogoCanjesContent({
       if (rangoPuntos === "MAS_500" && p.puntos <= 500) return false;
 
       if (soloAlcanzables && esClienteAutenticado && saldo < p.puntos) return false;
+      if (soloDestacados && !p.destacado) return false;
 
       return true;
     });
 
     res = [...res].sort((a, b) => {
+      if (orden === "DESTACADOS") {
+        if (a.destacado && !b.destacado) return -1;
+        if (!a.destacado && b.destacado) return 1;
+        return a.puntos - b.puntos;
+      }
       if (orden === "PUNTOS_ASC") return a.puntos - b.puntos;
       if (orden === "PUNTOS_DESC") return b.puntos - a.puntos;
       if (orden === "NOMBRE_ASC") return a.nombre.localeCompare(b.nombre);
@@ -235,6 +253,7 @@ export default function CatalogoCanjesContent({
     marcaSeleccionada,
     rangoPuntos,
     soloAlcanzables,
+    soloDestacados,
     orden,
     saldo,
     catalogoPremios,
@@ -261,6 +280,7 @@ export default function CatalogoCanjesContent({
     setRangoPuntos("TODOS");
     setMarcaSeleccionada("TODAS");
     setSoloAlcanzables(false);
+    setSoloDestacados(false);
     setOrden("PUNTOS_ASC");
   };
 
@@ -478,9 +498,22 @@ export default function CatalogoCanjesContent({
             <SlidersHorizontal className="w-3.5 h-3.5 text-orange-400 shrink-0" />
             <span>{mostrarFiltros ? "Ocultar Filtros" : "Mostrar Filtros"}</span>
           </button>
+          <button
+            type="button"
+            onClick={() => setSoloDestacados((prev) => !prev)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer border shadow-2xs ${
+              soloDestacados
+                ? "bg-amber-500 text-white border-amber-600 shadow-2xs"
+                : "bg-white hover:bg-amber-50 text-amber-900 border-amber-200"
+            }`}
+            title="Ver únicamente premios destacados en tienda"
+          >
+            <Sparkles className={`w-3.5 h-3.5 ${soloDestacados ? "fill-white text-white" : "fill-amber-500 text-amber-500"}`} />
+            <span>{soloDestacados ? "Ver Todos" : "⭐ Destacados"}</span>
+          </button>
 
           <span className="text-slate-500 font-medium text-[11px] sm:text-xs">
-            Mostrando <strong className="text-slate-800 font-bold">{premiosFiltrados.length}</strong> de {PREMIOS_ZETA_PREMIA.length} premios
+            Mostrando <strong className="text-slate-800 font-bold">{premiosFiltrados.length}</strong> de {catalogoPremios.length} premios
           </span>
         </div>
 
@@ -492,6 +525,7 @@ export default function CatalogoCanjesContent({
               onChange={(e) => setOrden(e.target.value as OrdenOpcion)}
               className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 cursor-pointer focus:outline-hidden focus:border-orange-500"
             >
+              <option value="DESTACADOS">⭐ Premios Destacados</option>
               <option value="PUNTOS_ASC">Menor a mayor puntaje</option>
               <option value="PUNTOS_DESC">Mayor a menor puntaje</option>
               <option value="NOMBRE_ASC">Nombre (A - Z)</option>
@@ -693,6 +727,12 @@ export default function CatalogoCanjesContent({
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
+                          {premio.destacado && (
+                            <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-2xs border border-amber-300 flex items-center gap-1 uppercase">
+                              <Sparkles className="w-2.5 h-2.5 fill-white text-white" />
+                              <span>Top Destacado</span>
+                            </span>
+                          )}
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
                             {premio.marca}
                           </span>
@@ -793,6 +833,12 @@ export default function CatalogoCanjesContent({
 
                       {/* Imagen del Producto */}
                       <div className="w-full h-44 sm:h-48 bg-gradient-to-b from-slate-50 to-slate-100/70 rounded-xl p-4 flex items-center justify-center border border-slate-100/90 overflow-hidden relative shadow-inner">
+                        {premio.destacado && (
+                          <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 text-white text-[9px] font-black shadow-md border border-amber-300 uppercase tracking-wider animate-in fade-in">
+                            <Sparkles className="w-2.5 h-2.5 fill-white text-white" />
+                            <span>Top Destacado</span>
+                          </div>
+                        )}
                         <img
                           src={premio.imagen}
                           alt={premio.nombre}

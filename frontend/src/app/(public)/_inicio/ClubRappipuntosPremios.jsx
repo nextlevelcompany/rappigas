@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import Slider from "react-slick";
-import data from '../../Data/Home1/project1.json';
-import SectionTitle from "../Common/SectionTitle";
+import data from './project1.json';
+import SectionTitle from "./SectionTitle";
 
 const ClubRappipuntosPremios = () => {
     const settings = {
