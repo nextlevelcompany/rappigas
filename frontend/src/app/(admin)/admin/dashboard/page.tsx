@@ -14,6 +14,7 @@ import {
   DollarSign,
   Users,
   Truck,
+  Package,
   CheckCircle2,
   AlertCircle,
   RefreshCw,
@@ -304,6 +305,35 @@ export default function AdminDashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Acceso Rápido al Catálogo Global de Productos de Distribuidores */}
+      <div className="p-4 rounded-xl border border-slate-200 bg-gradient-to-r from-orange-50/70 via-white to-amber-50/50 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <Package className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-sm text-slate-900 tracking-tight">
+                Catálogo Global de Productos de la Red
+              </h3>
+              <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-[10px] font-bold">
+                Módulo Independiente
+              </Badge>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Supervisa balones de gas (10kg, 15kg, 45kg), válvulas, especificaciones y precios actualizados por las distribuidoras en todo el Perú.
+            </p>
+          </div>
+        </div>
+
+        <Link href="/admin/productos" className="shrink-0 self-end sm:self-auto">
+          <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs gap-1.5 shadow-xs cursor-pointer">
+            <span>Ver Catálogo Completo</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }

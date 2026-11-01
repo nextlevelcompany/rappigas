@@ -18,7 +18,7 @@ import {
   HomeAlt,
   MessageCircleQuestionMark,
 } from "@boxicons/react";
-import { Truck, ShoppingBag, Navigation, ChartBar, Building, CreditCard, ClipboardList, HelpCircle, Palette, Settings, ShieldCheck, Tag, PackageCheck, Boxes, LayoutDashboard, Gift, LifeBuoy } from "lucide-react";
+import { Truck, ShoppingBag, Navigation, ChartBar, Building, CreditCard, ClipboardList, HelpCircle, Palette, Settings, ShieldCheck, Tag, Package, PackageCheck, Boxes, LayoutDashboard, Gift, LifeBuoy } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { useUIThemeStore } from "@/store/ui-theme.store";
 import { BrandLogo } from "@/components/brand-logo";
@@ -36,6 +36,19 @@ const seccionDashboard = {
       title: "Panel Global",
       url: "/admin/dashboard",
     },
+  ],
+};
+
+//--- Catálogo de Productos de Distribuidores (Módulo Principal)
+const seccionProductosAdmin = {
+  title: "PRODUCTOS",
+  url: "#",
+  icon: <Package className="w-5 h-5" />,
+  isActive: false,
+  items: [
+    { title: "Catálogo de Red", url: "/admin/productos" },
+    { title: "Stock y Abastecimiento", url: "/admin/productos/stock" },
+    { title: "Estadísticas y Ventas", url: "/admin/productos/estadisticas" },
   ],
 };
 
@@ -371,6 +384,7 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
     // Super Admin sees the new structured menu
     itemsNavegacion = [
       seccionDashboard,
+      seccionProductosAdmin,
       seccionCRM,
       seccionFidelidadAdmin,
       seccionFinanzas,
