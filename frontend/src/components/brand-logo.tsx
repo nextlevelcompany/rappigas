@@ -21,17 +21,19 @@ export function BrandLogo({
   size = "md",
   variant = "auto",
 }: BrandLogoProps) {
-  const { customLogoUrl, customLogoHeight, customWebLogoUrl } = useUIThemeStore();
+  const { customLogoUrl, customLogoHeight, customWebLogoUrl, customWebLogoHeight } = useUIThemeStore();
   const [montado, setMontado] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     setMontado(true);
   }, []);
 
-  const logoUrl = montado ? (customLogoUrl || customWebLogoUrl || "") : "";
-  const baseHeight = montado ? (customLogoHeight || 44) : 44;
+  const defaultLogo = "/assets/img/logo/Logo_rappi_gas.png";
+  const logoUrl = montado ? (customLogoUrl || customWebLogoUrl || defaultLogo) : defaultLogo;
+  const baseHeight = montado ? (customLogoHeight || customWebLogoHeight || 52) : 52;
 
-  // Calculamos la altura según el tamaño del contexto (en la barra lateral 'sm' suele ser más compacto)
+  // Calculamos la altura según el tamaño del contexto
   const computedHeight =
     size === "sm"
       ? Math.round(baseHeight * 0.75)
@@ -39,14 +41,17 @@ export function BrandLogo({
       ? Math.round(baseHeight * 1.35)
       : baseHeight;
 
-  if (logoUrl) {
+  if (logoUrl && !imgError) {
     return (
       <div className={`flex items-center gap-2.5 ${className}`}>
         <img
           src={logoUrl}
-          alt="Logo"
+          alt="Logo RappiGas"
           style={{ height: `${computedHeight}px` }}
-          className={`w-auto object-contain transition-all ${iconClassName}`}
+          className={`w-auto object-contain transition-all ${
+            variant === "light" ? "brightness-0 invert drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" : ""
+          } ${iconClassName}`}
+          onError={() => setImgError(true)}
         />
       </div>
     );

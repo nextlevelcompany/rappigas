@@ -52,8 +52,12 @@ const crearIconoCliente = () => {
   });
 };
 
-// Icono personalizado para distribuidora autorizada
-const crearIconoDistribuidora = (esDirecta: boolean, esSeleccionada: boolean) => {
+// Icono personalizado para distribuidora autorizada con nombre visible en el mapa
+const crearIconoDistribuidora = (
+  esDirecta: boolean,
+  esSeleccionada: boolean,
+  nombreComercial?: string
+) => {
   let bg = "#475569";
   let iconEmoji = "🏪";
   let ringStyle = "";
@@ -64,41 +68,66 @@ const crearIconoDistribuidora = (esDirecta: boolean, esSeleccionada: boolean) =>
   }
 
   if (esSeleccionada) {
-    bg = "#e11d48";
+    bg = "#dc2626";
     iconEmoji = "🔥";
     ringStyle =
-      "box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.4), 0 4px 14px rgba(0, 0, 0, 0.3); transform: rotate(-45deg) scale(1.15);";
+      "box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.45), 0 6px 16px rgba(0, 0, 0, 0.35); transform: rotate(-45deg) scale(1.18);";
   } else {
     ringStyle = `box-shadow: 0 3px 10px ${
       esDirecta ? "rgba(234, 88, 12, 0.45)" : "rgba(71, 85, 105, 0.4)"
     }; transform: rotate(-45deg);`;
   }
 
+  const nombreMostrar = nombreComercial || "Distribuidora";
+  const nombreCorto =
+    nombreMostrar.length > 22 ? nombreMostrar.substring(0, 20) + "..." : nombreMostrar;
+
   return L.divIcon({
     className: `pidegas-pin-distribuidora ${esSeleccionada ? "seleccionada" : ""}`,
     html: `
-      <div style="position: relative; width: 36px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-        <div style="
-          width: 32px;
-          height: 32px;
-          background: ${bg};
-          border: 2px solid #ffffff;
-          border-radius: 50% 50% 50% 0;
-          ${ringStyle}
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s ease-in-out;
-        ">
-          <div style="transform: rotate(45deg); color: #ffffff; font-size: 13px; font-weight: bold; line-height: 1;">
-            ${iconEmoji}
+      <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer; pointer-events: auto; width: 150px; margin-left: -75px; margin-top: -46px;">
+        <div style="position: relative; width: 36px; height: 42px; display: flex; align-items: center; justify-content: center;">
+          <div style="
+            width: 32px;
+            height: 32px;
+            background: ${bg};
+            border: 2px solid #ffffff;
+            border-radius: 50% 50% 50% 0;
+            ${ringStyle}
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease-in-out;
+          ">
+            <div style="transform: rotate(45deg); color: #ffffff; font-size: 13px; font-weight: bold; line-height: 1;">
+              ${iconEmoji}
+            </div>
           </div>
+        </div>
+        <div style="
+          margin-top: 1px;
+          background: ${esSeleccionada ? "#ea580c" : "#0f172a"};
+          color: #ffffff;
+          font-size: 9.5px;
+          font-weight: 800;
+          padding: 2px 8px;
+          border-radius: 9999px;
+          white-space: nowrap;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+          border: 1.5px solid ${esSeleccionada ? "#fed7aa" : "#ffffff"};
+          max-width: 145px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          text-align: center;
+          letter-spacing: -0.2px;
+        ">
+          ${esSeleccionada ? "✓ " : ""}${nombreCorto}
         </div>
       </div>
     `,
-    iconSize: [36, 42],
-    iconAnchor: [18, 42],
-    popupAnchor: [0, -42],
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
+    popupAnchor: [0, -46],
   });
 };
 
@@ -212,7 +241,14 @@ export function MapaCoberturaDistribuidores({
       resizeObserver.observe(mapContainerRef.current);
     }
 
+    // Asegurar renderizado correcto al aparecer el mapa
+    const timeoutId = setTimeout(() => {
+      mapa.invalidateSize();
+      mapa.setView([latCliente, lngCliente], 14);
+    }, 150);
+
     return () => {
+      clearTimeout(timeoutId);
       resizeObserver.disconnect();
       mapa.remove();
       mapInstanceRef.current = null;
@@ -228,16 +264,20 @@ export function MapaCoberturaDistribuidores({
     if (!markerClienteRef.current || !mapInstanceRef.current) return;
 
     const currentPos = markerClienteRef.current.getLatLng();
+    const distancia = Math.hypot(currentPos.lat - latCliente, currentPos.lng - lngCliente);
+
     // Si la posición difiere significativamente (por ejemplo, búsqueda por texto o distrito)
-    if (
-      Math.abs(currentPos.lat - latCliente) > 0.0001 ||
-      Math.abs(currentPos.lng - lngCliente) > 0.0001
-    ) {
+    if (distancia > 0.0001) {
       markerClienteRef.current.setLatLng([latCliente, lngCliente]);
       circleClienteRef.current?.setLatLng([latCliente, lngCliente]);
 
-      // Desplazamiento suave (panTo) MANTENIENDO el zoom actual del usuario
-      mapInstanceRef.current.panTo([latCliente, lngCliente], { animate: true });
+      // Si la distancia es considerable (> 0.08 grados aprox 9 km), saltar con setView para evitar saltos raros de panTo
+      if (distancia > 0.08) {
+        mapInstanceRef.current.setView([latCliente, lngCliente], 14);
+      } else {
+        mapInstanceRef.current.panTo([latCliente, lngCliente], { animate: true });
+      }
+      mapInstanceRef.current.invalidateSize();
     }
 
     if (direccionCliente) {
@@ -276,47 +316,52 @@ export function MapaCoberturaDistribuidores({
       const esSeleccionada = dist.publicId === distribuidoraSeleccionadaId;
 
       const markerEmp = L.marker([latEmp, lngEmp], {
-        icon: crearIconoDistribuidora(esDirecta, esSeleccionada),
-        zIndexOffset: esSeleccionada ? 1000 : esDirecta ? 500 : 100,
+        icon: crearIconoDistribuidora(esDirecta, esSeleccionada, dist.nombreComercial),
+        zIndexOffset: esSeleccionada ? 1200 : esDirecta ? 600 : 200,
       });
 
       const etiquetaZona = esDirecta
-        ? `<span style="background: #dcfce7; color: #166534; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 9999px;">
-             ⚡ DIRECTA (${tiempoMin}-${tiempoMax} MIN)
+        ? `<span style="background: #dcfce7; color: #166534; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 9999px;">
+             ⚡ VENDEDOR DIRECTO (${tiempoMin}-${tiempoMax} MIN)
            </span>`
-        : `<span style="background: #f1f5f9; color: #475569; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 9999px;">
+        : `<span style="background: #f1f5f9; color: #475569; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 9999px;">
              📍 ${dist.zonaNombre || "DISTRIBUIDORA"} (${distKm} KM)
            </span>`;
 
       const popupHtml = `
-        <div style="font-family: inherit; font-size: 11px; line-height: 1.35; min-width: 200px; padding: 2px;">
-          <div style="margin-bottom: 4px;">
+        <div style="font-family: inherit; font-size: 11px; line-height: 1.35; min-width: 220px; padding: 3px;">
+          <div style="margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
             ${etiquetaZona}
+            ${esSeleccionada ? `<span style="background: #ea580c; color: #ffffff; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 9999px;">✓ ASIGNADA</span>` : ""}
           </div>
-          <b style="color: #0f172a; font-size: 12px; display: block;">${dist.nombreComercial}</b>
-          <div style="color: #64748b; font-size: 10px; margin-top: 2px;">
-            RUC: ${dist.ruc} • Distribuidor Oficial
+          <b style="color: #03246b; font-size: 13px; display: block; font-weight: 900; line-height: 1.2;">
+            ${dist.nombreComercial}
+          </b>
+          <div style="color: #64748b; font-size: 10px; margin-top: 3px; font-weight: 600;">
+            RUC: ${dist.ruc} • Distribuidor Oficial Autorizado
           </div>
-          <div style="color: #475569; font-size: 10px; margin-top: 2px;">
-            ${dist.direccionFiscal ? dist.direccionFiscal.split("[GPS:")[0].trim() : "Local Autorizado"}
+          <div style="color: #475569; font-size: 10px; margin-top: 3px;">
+            📍 ${dist.direccionFiscal ? dist.direccionFiscal.split("[GPS:")[0].trim() : "Local Autorizado"}
           </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 5px; padding: 3px 6px; background: #f8fafc; border-radius: 6px; font-size: 10px;">
-            <span style="color: #ea580c; font-weight: 800;">📍 A ${distKm} km</span>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding: 4px 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 10px;">
+            <span style="color: #ea580c; font-weight: 800;">📍 Distancia: ${distKm} km</span>
             <span style="color: #16a34a; font-weight: 800;">⏱️ ${tiempoMin}-${tiempoMax} min</span>
           </div>
           <button id="btn-sel-${dist.publicId}" style="
-            margin-top: 6px;
+            margin-top: 8px;
             width: 100%;
-            background: #ea580c;
+            background: ${esSeleccionada ? "#16a34a" : "#ea580c"};
             color: #ffffff;
             border: none;
-            padding: 6px 8px;
-            border-radius: 6px;
+            padding: 7px 10px;
+            border-radius: 8px;
             font-size: 11px;
             font-weight: 800;
             cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
           ">
-            ${esSeleccionada ? "✓ Distribuidora Seleccionada" : "Elegir esta Distribuidora"}
+            ${esSeleccionada ? "✓ Distribuidor Seleccionado para Vender" : "🛒 Elegir este Distribuidor para Comprar"}
           </button>
         </div>
       `;

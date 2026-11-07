@@ -58,17 +58,74 @@ export const UBIGEO_COORDENADAS_PERU: Record<string, { lat: number; lng: number;
 
   // CIUDADES Y REGIONES PRINCIPALES DE PERÚ
   "040101": { lat: -16.4090, lng: -71.5375, nombre: "Arequipa (Cercado)" },
-  "130101": { lat: -8.1117, lng: -79.0287, nombre: "Trujillo" },
-  "140101": { lat: -6.7714, lng: -79.8409, nombre: "Chiclayo" },
-  "200101": { lat: -5.1945, lng: -80.6328, nombre: "Piura" },
-  "110101": { lat: -14.0678, lng: -75.7286, nombre: "Ica" },
+  "040103": { lat: -16.3764, lng: -71.5514, nombre: "Cayma" },
+  "040104": { lat: -16.3686, lng: -71.5647, nombre: "Cerro Colorado" },
+  "040126": { lat: -16.3881, lng: -71.5411, nombre: "Yanahuara" },
+  "040114": { lat: -16.4278, lng: -71.5056, nombre: "Paucarpata" },
+  "040110": { lat: -16.3986, lng: -71.5228, nombre: "Miraflores (Arequipa)" },
+  "040129": { lat: -16.4258, lng: -71.5239, nombre: "José Luis Bustamante y Rivero" },
+  "040119": { lat: -16.4628, lng: -71.5267, nombre: "Socabaya" },
+
+  // CUSCO (0801xx)
   "080101": { lat: -13.5320, lng: -71.9675, nombre: "Cusco" },
+  "080108": { lat: -13.5250, lng: -71.9575, nombre: "Wanchaq" },
+  "080106": { lat: -13.5350, lng: -71.9840, nombre: "Santiago" },
+  "080105": { lat: -13.5300, lng: -71.9333, nombre: "San Sebastián" },
+  "080104": { lat: -13.5467, lng: -71.8989, nombre: "San Jerónimo" },
+
+  // LA LIBERTAD (1301xx)
+  "130101": { lat: -8.1117, lng: -79.0287, nombre: "Trujillo" },
+  "130111": { lat: -8.1364, lng: -79.0436, nombre: "Víctor Larco Herrera" },
+  "130104": { lat: -8.0833, lng: -79.1167, nombre: "Huanchaco" },
+  "130102": { lat: -8.0850, lng: -79.0028, nombre: "El Porvenir" },
+  "130105": { lat: -8.0700, lng: -79.0389, nombre: "La Esperanza" },
+  "130103": { lat: -8.0864, lng: -79.0200, nombre: "Florencia de Mora" },
+  "130107": { lat: -8.1714, lng: -79.0089, nombre: "Moche" },
+
+  // LAMBAYEQUE (1401xx)
+  "140101": { lat: -6.7714, lng: -79.8409, nombre: "Chiclayo" },
+  "140105": { lat: -6.7583, lng: -79.8431, nombre: "José Leonardo Ortiz" },
+  "140114": { lat: -6.7867, lng: -79.8400, nombre: "La Victoria (Chiclayo)" },
+  "140112": { lat: -6.8333, lng: -79.9333, nombre: "Pimentel" },
+  "140301": { lat: -6.7028, lng: -79.9042, nombre: "Lambayeque" },
+  "140201": { lat: -6.6389, lng: -79.7889, nombre: "Ferreñafe" },
+
+  // PIURA (2001xx)
+  "200101": { lat: -5.1945, lng: -80.6328, nombre: "Piura" },
+  "200104": { lat: -5.1983, lng: -80.6186, nombre: "Castilla" },
+  "200105": { lat: -5.2667, lng: -80.6833, nombre: "Catacaos" },
+  "200114": { lat: -5.1833, lng: -80.6550, nombre: "Veintiséis de Octubre" },
+  "200601": { lat: -4.9039, lng: -80.6853, nombre: "Sullana" },
+  "200701": { lat: -4.5772, lng: -81.2719, nombre: "Talara" },
+
+  // JUNIN (1201xx)
   "120101": { lat: -12.0651, lng: -75.2049, nombre: "Huancayo" },
+  "120114": { lat: -12.0469, lng: -75.2181, nombre: "El Tambo" },
+  "120107": { lat: -12.0833, lng: -75.2000, nombre: "Chilca" },
+
+  // ICA (1101xx)
+  "110101": { lat: -14.0678, lng: -75.7286, nombre: "Ica" },
+  "110105": { lat: -14.0533, lng: -75.7067, nombre: "Parcona" },
+  "110112": { lat: -14.0167, lng: -75.7583, nombre: "Subtanjalla" },
+  "110201": { lat: -13.4167, lng: -76.1333, nombre: "Chincha Alta" },
+  "110501": { lat: -13.7103, lng: -76.2053, nombre: "Pisco" },
+
+  // ANCASH (0201xx / 0218xx)
   "020101": { lat: -9.5278, lng: -77.5278, nombre: "Huaraz" },
-  "160101": { lat: -3.7491, lng: -73.2538, nombre: "Iquitos" },
-  "220101": { lat: -6.4854, lng: -76.3689, nombre: "Moyobamba / Tarapoto" },
+  "021801": { lat: -9.0764, lng: -78.5925, nombre: "Chimbote" },
+  "021809": { lat: -9.1233, lng: -78.5300, nombre: "Nuevo Chimbote" },
+
+  // TACNA (2301xx)
   "230101": { lat: -18.0066, lng: -70.2463, nombre: "Tacna" },
+  "230110": { lat: -18.0461, lng: -70.2522, nombre: "Crnl. Gregorio Albarracín" },
+  "230102": { lat: -18.0011, lng: -70.2458, nombre: "Alto de la Alianza" },
+
+  // OTRAS CAPITALES Y REGIONES
+  "160101": { lat: -3.7491, lng: -73.2538, nombre: "Iquitos" },
+  "220101": { lat: -6.4854, lng: -76.3689, nombre: "Tarapoto" },
+  "220901": { lat: -6.0342, lng: -76.9744, nombre: "Moyobamba" },
   "210101": { lat: -15.8422, lng: -70.0199, nombre: "Puno" },
+  "211101": { lat: -15.4986, lng: -70.1331, nombre: "Juliaca" },
   "250101": { lat: -8.3791, lng: -74.5539, nombre: "Pucallpa" },
   "060101": { lat: -7.1617, lng: -78.5128, nombre: "Cajamarca" },
   "050101": { lat: -13.1588, lng: -74.2239, nombre: "Ayacucho" },
@@ -131,11 +188,41 @@ export const calcularDistanciaKm = (
   return Number((R * c).toFixed(1));
 };
 
+// Mapeo de departamento a prefijo de código INEI (2 dígitos)
+export const DEPARTAMENTO_PREFIJO_INEI: Record<string, string> = {
+  AMAZONAS: "01",
+  ANCASH: "02",
+  APURIMAC: "03",
+  AREQUIPA: "04",
+  AYACUCHO: "05",
+  CAJAMARCA: "06",
+  CALLAO: "07",
+  CUSCO: "08",
+  HUANCAVELICA: "09",
+  HUANUCO: "10",
+  ICA: "11",
+  JUNIN: "12",
+  "LA LIBERTAD": "13",
+  LAMBAYEQUE: "14",
+  LIMA: "15",
+  LORETO: "16",
+  "MADRE DE DIOS": "17",
+  MOQUEGUA: "18",
+  PASCO: "19",
+  PIURA: "20",
+  PUNO: "21",
+  "SAN MARTIN": "22",
+  TACNA: "23",
+  TUMBES: "24",
+  UCAYALI: "25",
+};
+
 // Resolver coordenadas de un Ubigeo INEI de Perú
 export const obtenerCoordenadasPorUbigeo = (
   codigoInei?: string,
   departamento?: string,
-  distrito?: string
+  distrito?: string,
+  provincia?: string
 ): { lat: number; lng: number } => {
   if (codigoInei && UBIGEO_COORDENADAS_PERU[codigoInei]) {
     return {
@@ -144,27 +231,122 @@ export const obtenerCoordenadasPorUbigeo = (
     };
   }
 
-  // Buscar por nombre de distrito en la tabla de ubigeos
+  const depNorm = departamento ? departamento.trim().toUpperCase() : "";
+  const prefijoEsperado = depNorm ? DEPARTAMENTO_PREFIJO_INEI[depNorm] : "";
+
+  // 1. Buscar por nombre de distrito en la tabla de ubigeos filtrando preferentemente por departamento
   if (distrito) {
     const distNorm = distrito.trim().toUpperCase();
-    for (const [_, data] of Object.entries(UBIGEO_COORDENADAS_PERU)) {
+
+    // Primero intentar coincidencia dentro del mismo departamento
+    if (prefijoEsperado) {
+      for (const [code, data] of Object.entries(UBIGEO_COORDENADAS_PERU)) {
+        if (code.startsWith(prefijoEsperado) && data.nombre.toUpperCase().includes(distNorm)) {
+          return { lat: data.lat, lng: data.lng };
+        }
+      }
+    }
+
+    // Si no se encuentra dentro del departamento o no se especificó, buscar globalmente solo si no hay conflicto de departamento
+    for (const [code, data] of Object.entries(UBIGEO_COORDENADAS_PERU)) {
       if (data.nombre.toUpperCase().includes(distNorm)) {
+        // Evitar asignar distrito de Lima si el departamento seleccionado no es Lima o Callao
+        if (depNorm && depNorm !== "LIMA" && depNorm !== "CALLAO" && (code.startsWith("15") || code.startsWith("07"))) {
+          continue;
+        }
         return { lat: data.lat, lng: data.lng };
       }
     }
   }
 
-  // Si no coincide distrito, usar centroide del departamento
-  if (departamento) {
-    const depNorm = departamento.trim().toUpperCase();
-    if (DEPARTAMENTO_COORDENADAS_PERU[depNorm]) {
-      return DEPARTAMENTO_COORDENADAS_PERU[depNorm];
+  // 2. Si no coincide distrito pero hay provincia
+  if (provincia) {
+    const provNorm = provincia.trim().toUpperCase();
+    if (prefijoEsperado) {
+      for (const [code, data] of Object.entries(UBIGEO_COORDENADAS_PERU)) {
+        if (code.startsWith(prefijoEsperado) && data.nombre.toUpperCase().includes(provNorm)) {
+          return { lat: data.lat, lng: data.lng };
+        }
+      }
     }
+  }
+
+  // 3. Usar centroide del departamento
+  if (depNorm && DEPARTAMENTO_COORDENADAS_PERU[depNorm]) {
+    return DEPARTAMENTO_COORDENADAS_PERU[depNorm];
   }
 
   // Defecto: Los Olivos / Lima Centro
   return { lat: -11.9912, lng: -77.0711 };
 };
+
+// Cache en memoria para geocodificación de Nominatim
+const cacheGeocodificacion = new Map<string, { lat: number; lng: number }>();
+
+// Geocodificar texto o dirección en Perú vía OpenStreetMap Nominatim
+export async function geocodificarUbicacionPeru(
+  query: string
+): Promise<{ lat: number; lng: number; nombre?: string } | null> {
+  const clave = query.trim().toLowerCase();
+  if (!clave) return null;
+  if (cacheGeocodificacion.has(clave)) {
+    return cacheGeocodificacion.get(clave)!;
+  }
+
+  try {
+    const encoded = encodeURIComponent(query);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1&countrycodes=pe`,
+      { headers: { "Accept-Language": "es" } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) {
+      const p = data[0];
+      const resultado = {
+        lat: Number(Number(p.lat).toFixed(6)),
+        lng: Number(Number(p.lon).toFixed(6)),
+        nombre: p.display_name,
+      };
+      cacheGeocodificacion.set(clave, resultado);
+      return resultado;
+    }
+  } catch (err) {
+    console.warn("Error en geocodificación de ubicación:", err);
+  }
+  return null;
+}
+
+// Geocodificación inversa (coordenadas a dirección en Perú)
+export async function geocodificarInversaPeru(
+  lat: number,
+  lng: number
+): Promise<{ direccion: string; distrito?: string; provincia?: string; departamento?: string } | null> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+      { headers: { "Accept-Language": "es" } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data && data.display_name) {
+      const addr = data.address || {};
+      const calle = addr.road || addr.pedestrian || addr.suburb || "";
+      const numero = addr.house_number ? ` ${addr.house_number}` : "";
+      const distrito = addr.city_district || addr.suburb || addr.town || addr.village || "";
+      const textoCorto = [calle + numero, distrito].filter(Boolean).join(", ");
+      return {
+        direccion: textoCorto || data.display_name,
+        distrito: addr.city_district || addr.suburb || addr.town || addr.municipality,
+        provincia: addr.county || addr.city,
+        departamento: addr.state,
+      };
+    }
+  } catch (err) {
+    console.warn("Error geocodificación inversa:", err);
+  }
+  return null;
+}
 
 // Resolver coordenadas de una empresa según GPS explícito, Ubigeo o reconocimiento de distrito
 export const obtenerCoordenadasDistribuidora = (

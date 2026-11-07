@@ -125,6 +125,8 @@ export default function TiendaClienteGasPage() {
 
   // Estados de interfaz y filtrado de mapa
   const [vistaModo, setVistaModo] = useState<"mapa" | "lista">("mapa");
+  const [vistaPrincipal, setVistaPrincipal] = useState<"catalogo" | "mapa">("catalogo");
+  const [filtroTipoGas, setFiltroTipoGas] = useState<string>("TODOS");
   const [mapaExpandido, setMapaExpandido] = useState(false);
   const [busquedaDistribuidor, setBusquedaDistribuidor] = useState("");
   const [filtroMarca, setFiltroMarca] = useState<string>("TODAS");
@@ -416,6 +418,11 @@ export default function TiendaClienteGasPage() {
       })
       .sort((a, b) => a.distanciaKm - b.distanciaKm);
   }, [empresas, latitud, longitud]);
+
+  const catalogoFiltrado = useMemo(() => {
+    if (filtroTipoGas === "TODOS") return catalogo;
+    return catalogo.filter((p) => p.tipoGas === filtroTipoGas);
+  }, [catalogo, filtroTipoGas]);
 
   const distribuidoresFiltrados = useMemo(() => {
     return distribuidoresConDistancia.filter((emp) => {
@@ -836,7 +843,286 @@ export default function TiendaClienteGasPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Columna Izquierda: Mapa + Distribuidores + Catálogo */}
         <div className="lg:col-span-2 space-y-3">
-          {/* Tarjeta del Mapa y Localización */}
+          {/* Selector de Vista: Catálogo Directo (Default) vs Mapa y Distribuidores */}
+          <div className="bg-white rounded-2xl p-2 border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setVistaPrincipal("catalogo")}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                  vistaPrincipal === "catalogo"
+                    ? "bg-orange-600 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                }`}
+              >
+                <Flame className="w-4 h-4 text-amber-300" />
+                Catálogo de Balones
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                  vistaPrincipal === "catalogo" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                }`}>
+                  {catalogo.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setVistaPrincipal("mapa")}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                  vistaPrincipal === "mapa"
+                    ? "bg-orange-600 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                }`}
+              >
+                <MapIcon className="w-4 h-4 text-amber-300" />
+                Ver Mapa y Plantas
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                  vistaPrincipal === "mapa" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                }`}>
+                  {distribuidoresFiltrados.length}
+                </span>
+              </button>
+            </div>
+
+            {/* Planta Asignada */}
+            {distribuidoraActiva && (
+              <div className="flex items-center justify-between sm:justify-end gap-2 text-xs">
+                <div className="flex items-center gap-1.5 text-slate-700">
+                  <span className="text-[10px] text-slate-400">Planta Asignada:</span>
+                  <span className="font-bold text-slate-900 truncate max-w-[140px]">
+                    {distribuidoraActiva.nombreComercial}
+                  </span>
+                  <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
+                    ⚡ {distribuidoraActiva.tiempoMin}-{distribuidoraActiva.tiempoMax} min
+                  </span>
+                </div>
+                {vistaPrincipal === "catalogo" && (
+                  <button
+                    type="button"
+                    onClick={() => setVistaPrincipal("mapa")}
+                    className="text-[11px] text-orange-600 font-bold hover:underline shrink-0"
+                  >
+                    Cambiar
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* VISTA 1: CATÁLOGO DE PRODUCTOS (PRODUCT-FIRST) */}
+          {vistaPrincipal === "catalogo" && (
+            <div className="space-y-3">
+              {/* Filtros Rápidos por Categoría */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                {[
+                  { id: "TODOS", label: "🔥 Todos los Balones" },
+                  { id: "GLP_10KG", label: "🏠 10kg Doméstico" },
+                  { id: "GLP_15KG", label: "🏢 15kg Comercial" },
+                  { id: "GLP_45KG", label: "🏭 45kg Industrial" },
+                  { id: "VALVULA_ACCESORIO", label: "🛡️ Válvulas y Reguladores" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setFiltroTipoGas(tab.id)}
+                    className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition ${
+                      filtroTipoGas === tab.id
+                        ? "bg-orange-600 text-white shadow-xs"
+                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+                        {/* SECCIÓN DEL CATÁLOGO DE BALONES DE GAS */}
+          <div id="seccion-catalogo" className="space-y-2 pt-1">
+            <div className="flex items-center justify-between px-0.5">
+              <div className="flex items-center gap-1.5">
+                <Flame className="w-4 h-4 text-orange-600" />
+                <h2 className="text-xs sm:text-sm font-black text-slate-900">
+                  Balones de Gas Disponibles
+                </h2>
+                <span className="text-[10px] text-slate-500">
+                  ({empresaSeleccionada?.nombreComercial || "Ninguna distribuidora seleccionada"})
+                </span>
+              </div>
+              <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
+                {catalogoFiltrado.length} cilindros
+              </span>
+            </div>
+
+            {!empresaSeleccionada ? (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-1.5">
+                <ShoppingBag className="w-6 h-6 text-slate-400 mx-auto" />
+                <p className="text-xs font-bold text-slate-800">
+                  Ninguna distribuidora seleccionada
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  Haz clic en cualquier distribuidora en el mapa para cargar sus balones disponibles.
+                </p>
+              </div>
+            ) : catalogoFiltrado.length === 0 ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center space-y-1.5">
+                <AlertCircle className="w-5 h-5 text-amber-600 mx-auto" />
+                <p className="text-xs font-bold text-amber-900">
+                  No hay balones en el catálogo de esta distribuidora
+                </p>
+                <p className="text-[11px] text-amber-700">
+                  Prueba seleccionando <strong>Solgas Los Olivos</strong> u otra distribuidora en el mapa.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {catalogoFiltrado.map((prod) => {
+                  const cantidad = carrito[prod.publicId] || 0;
+                  const imgUrl = obtenerImagenProducto(prod);
+                  return (
+                    <div
+                      key={prod.publicId}
+                      className={`bg-white rounded-xl border p-2.5 shadow-2xs transition flex flex-col justify-between group ${
+                        cantidad > 0
+                          ? "border-orange-500 ring-1 ring-orange-300 bg-orange-50/10"
+                          : "border-slate-200 hover:border-orange-300"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        {/* Contenedor de Imagen con Efecto Hover Zoom Flotante */}
+                        <div className="relative group/zoom shrink-0">
+                          {/* Miniatura */}
+                          <div className="w-12 h-14 rounded-xl bg-gradient-to-b from-slate-50 to-orange-50/40 border border-slate-200/90 p-1 flex items-center justify-center shadow-2xs transition-all duration-200 cursor-zoom-in hover:border-orange-400 hover:shadow-md">
+                            <img
+                              src={imgUrl}
+                              alt={prod.nombre}
+                              className="h-12 w-auto max-w-full object-contain drop-shadow-xs transition-transform duration-200 group-hover/zoom:scale-110"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src =
+                                  "/products/balon-10kg-premium.svg";
+                              }}
+                            />
+                          </div>
+
+                          {/* Vista Ampliada Flotante al pasar el cursor */}
+                          <div className="absolute left-14 -top-3 z-[60] pointer-events-none opacity-0 invisible group-hover/zoom:opacity-100 group-hover/zoom:visible transition-all duration-200 transform scale-95 group-hover/zoom:scale-100">
+                            <div className="w-52 bg-white rounded-2xl border-2 border-orange-400 p-2.5 shadow-2xl space-y-1.5 backdrop-blur-md">
+                              <div className="w-full h-44 bg-gradient-to-b from-slate-50 via-white to-orange-50/30 rounded-xl p-2 flex items-center justify-center border border-slate-100">
+                                <img
+                                  src={imgUrl}
+                                  alt={prod.nombre}
+                                  className="h-40 w-auto max-w-full object-contain drop-shadow-md"
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).src =
+                                      "/products/balon-10kg-premium.svg";
+                                  }}
+                                />
+                              </div>
+                              <div className="text-center px-1">
+                                <p className="font-black text-slate-900 text-xs leading-snug line-clamp-1">
+                                  {prod.nombre}
+                                </p>
+                                <div className="mt-1 flex items-center justify-center gap-1.5 text-[10px]">
+                                  <span className="font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
+                                    S/ {Number(prod.precio).toFixed(2)}
+                                  </span>
+                                  <span className="font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-md">
+                                    {prod.tipoValvula}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-1">
+                            <h3 className="font-bold text-slate-900 text-xs truncate">
+                              {prod.nombre}
+                            </h3>
+                            <span className="text-xs sm:text-sm font-black text-slate-900 shrink-0">
+                              S/ {Number(prod.precio).toFixed(2)}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">
+                            {prod.descripcion}
+                          </p>
+                          <div className="mt-1 flex items-center gap-1">
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
+                              {prod.tipoValvula}
+                            </span>
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-orange-50 text-orange-700 border border-orange-100">
+                              {prod.tipoGas}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between">
+                        <span className="text-[9px] text-emerald-700 font-semibold">
+                          ✓ Garantía Oficial
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {cantidad > 0 ? (
+                            <div className="flex items-center gap-1.5 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200">
+                              <button
+                                type="button"
+                                onClick={() => modificarCantidad(prod.publicId, -1)}
+                                className="w-5 h-5 rounded bg-white shadow-2xs flex items-center justify-center text-slate-700 hover:bg-slate-200 font-bold cursor-pointer"
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="font-bold text-xs w-4 text-center text-slate-900">
+                                {cantidad}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => modificarCantidad(prod.publicId, 1)}
+                                className="w-5 h-5 rounded bg-orange-600 text-white shadow-2xs flex items-center justify-center hover:bg-orange-700 font-bold cursor-pointer"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => modificarCantidad(prod.publicId, 1)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white text-[11px] font-bold rounded-lg shadow-2xs transition cursor-pointer"
+                            >
+                              <Plus className="w-3 h-3" />
+                              Agregar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+              {/* Banner de Garantía y Confianza */}
+              <div className="p-3 bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 rounded-2xl border border-orange-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-slate-700">
+                  <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <span>
+                    <strong>Pesaje garantizado en puerta:</strong> Cada cilindro se entrega con precinto de seguridad Osinergmin intacto y verificación en balanza digital.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setVistaPrincipal("mapa")}
+                  className="text-orange-600 font-bold hover:underline whitespace-nowrap shrink-0 text-[11px]"
+                >
+                  🗺️ Ver mapa de plantas
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* VISTA 2: MAPA INTERACTIVO Y DISTRIBUIDORES */}
+          {vistaPrincipal === "mapa" && (
+            <div className="space-y-3 animate-in fade-in duration-150">
+                        {/* Tarjeta del Mapa y Localización */}
           <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-3 space-y-2.5">
             {/* Barra de Ubicación: Input + Buscar + GPS + Distritos */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5">
@@ -1242,174 +1528,12 @@ export default function TiendaClienteGasPage() {
               </div>
             )}
           </div>
-
-          {/* SECCIÓN DEL CATÁLOGO DE BALONES DE GAS */}
-          <div id="seccion-catalogo" className="space-y-2 pt-1">
-            <div className="flex items-center justify-between px-0.5">
-              <div className="flex items-center gap-1.5">
-                <Flame className="w-4 h-4 text-orange-600" />
-                <h2 className="text-xs sm:text-sm font-black text-slate-900">
-                  Balones de Gas Disponibles
-                </h2>
-                <span className="text-[10px] text-slate-500">
-                  ({empresaSeleccionada?.nombreComercial || "Ninguna distribuidora seleccionada"})
-                </span>
-              </div>
-              <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
-                {catalogo.length} tipos
-              </span>
             </div>
-
-            {!empresaSeleccionada ? (
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-1.5">
-                <ShoppingBag className="w-6 h-6 text-slate-400 mx-auto" />
-                <p className="text-xs font-bold text-slate-800">
-                  Ninguna distribuidora seleccionada
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  Haz clic en cualquier distribuidora en el mapa para cargar sus balones disponibles.
-                </p>
-              </div>
-            ) : catalogo.length === 0 ? (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center space-y-1.5">
-                <AlertCircle className="w-5 h-5 text-amber-600 mx-auto" />
-                <p className="text-xs font-bold text-amber-900">
-                  No hay balones en el catálogo de esta distribuidora
-                </p>
-                <p className="text-[11px] text-amber-700">
-                  Prueba seleccionando <strong>Solgas Los Olivos</strong> u otra distribuidora en el mapa.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {catalogo.map((prod) => {
-                  const cantidad = carrito[prod.publicId] || 0;
-                  const imgUrl = obtenerImagenProducto(prod);
-                  return (
-                    <div
-                      key={prod.publicId}
-                      className={`bg-white rounded-xl border p-2.5 shadow-2xs transition flex flex-col justify-between group ${
-                        cantidad > 0
-                          ? "border-orange-500 ring-1 ring-orange-300 bg-orange-50/10"
-                          : "border-slate-200 hover:border-orange-300"
-                      }`}
-                    >
-                      <div className="flex items-start gap-2.5">
-                        {/* Contenedor de Imagen con Efecto Hover Zoom Flotante */}
-                        <div className="relative group/zoom shrink-0">
-                          {/* Miniatura */}
-                          <div className="w-12 h-14 rounded-xl bg-gradient-to-b from-slate-50 to-orange-50/40 border border-slate-200/90 p-1 flex items-center justify-center shadow-2xs transition-all duration-200 cursor-zoom-in hover:border-orange-400 hover:shadow-md">
-                            <img
-                              src={imgUrl}
-                              alt={prod.nombre}
-                              className="h-12 w-auto max-w-full object-contain drop-shadow-xs transition-transform duration-200 group-hover/zoom:scale-110"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).src =
-                                  "/products/balon-10kg-premium.svg";
-                              }}
-                            />
-                          </div>
-
-                          {/* Vista Ampliada Flotante al pasar el cursor */}
-                          <div className="absolute left-14 -top-3 z-[60] pointer-events-none opacity-0 invisible group-hover/zoom:opacity-100 group-hover/zoom:visible transition-all duration-200 transform scale-95 group-hover/zoom:scale-100">
-                            <div className="w-52 bg-white rounded-2xl border-2 border-orange-400 p-2.5 shadow-2xl space-y-1.5 backdrop-blur-md">
-                              <div className="w-full h-44 bg-gradient-to-b from-slate-50 via-white to-orange-50/30 rounded-xl p-2 flex items-center justify-center border border-slate-100">
-                                <img
-                                  src={imgUrl}
-                                  alt={prod.nombre}
-                                  className="h-40 w-auto max-w-full object-contain drop-shadow-md"
-                                  onError={(e) => {
-                                    (e.currentTarget as HTMLImageElement).src =
-                                      "/products/balon-10kg-premium.svg";
-                                  }}
-                                />
-                              </div>
-                              <div className="text-center px-1">
-                                <p className="font-black text-slate-900 text-xs leading-snug line-clamp-1">
-                                  {prod.nombre}
-                                </p>
-                                <div className="mt-1 flex items-center justify-center gap-1.5 text-[10px]">
-                                  <span className="font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
-                                    S/ {Number(prod.precio).toFixed(2)}
-                                  </span>
-                                  <span className="font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded-md">
-                                    {prod.tipoValvula}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-1">
-                            <h3 className="font-bold text-slate-900 text-xs truncate">
-                              {prod.nombre}
-                            </h3>
-                            <span className="text-xs sm:text-sm font-black text-slate-900 shrink-0">
-                              S/ {Number(prod.precio).toFixed(2)}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">
-                            {prod.descripcion}
-                          </p>
-                          <div className="mt-1 flex items-center gap-1">
-                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
-                              {prod.tipoValvula}
-                            </span>
-                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-orange-50 text-orange-700 border border-orange-100">
-                              {prod.tipoGas}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between">
-                        <span className="text-[9px] text-emerald-700 font-semibold">
-                          ✓ Garantía Oficial
-                        </span>
-                        <div className="flex items-center gap-1">
-                          {cantidad > 0 ? (
-                            <div className="flex items-center gap-1.5 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200">
-                              <button
-                                type="button"
-                                onClick={() => modificarCantidad(prod.publicId, -1)}
-                                className="w-5 h-5 rounded bg-white shadow-2xs flex items-center justify-center text-slate-700 hover:bg-slate-200 font-bold cursor-pointer"
-                              >
-                                <Minus className="w-3 h-3" />
-                              </button>
-                              <span className="font-bold text-xs w-4 text-center text-slate-900">
-                                {cantidad}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => modificarCantidad(prod.publicId, 1)}
-                                className="w-5 h-5 rounded bg-orange-600 text-white shadow-2xs flex items-center justify-center hover:bg-orange-700 font-bold cursor-pointer"
-                              >
-                                <Plus className="w-3 h-3" />
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => modificarCantidad(prod.publicId, 1)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white text-[11px] font-bold rounded-lg shadow-2xs transition cursor-pointer"
-                            >
-                              <Plus className="w-3 h-3" />
-                              Agregar
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
-        {/* Columna Derecha: Checkout y Resumen Ultra Compacto */}
+
+                {/* Columna Derecha: Checkout y Resumen Ultra Compacto */}
         <div className="space-y-3">
           <div className="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-xs space-y-2.5 sticky top-14">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">

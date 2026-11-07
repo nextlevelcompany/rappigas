@@ -244,25 +244,29 @@ export function obtenerImagenProductoGas(prod: {
   tipoValvula?: string;
 }): string {
   if (prod.imagenUrl && prod.imagenUrl.trim() !== "") {
-    const url = prod.imagenUrl.trim();
+    let url = prod.imagenUrl.trim();
     if (url.startsWith("/api/v1/archivos/ver/")) {
       return `http://localhost:8080${url}`;
+    }
+    // Si la URL apunta a un SVG anterior de balón, priorizar la foto PNG de alta calidad
+    if (url.endsWith(".svg") && url.includes("/products/balon-")) {
+      url = url.replace(".svg", ".png");
     }
     return url;
   }
   if (prod.tipoGas === "GLP_10KG") {
     return prod.tipoValvula === "ROSCA"
-      ? "/products/balon-10kg-rosca.svg"
-      : "/products/balon-10kg-premium.svg";
+      ? "/products/balon-10kg-rosca.png"
+      : "/products/balon-10kg-premium.png";
   }
   if (prod.tipoGas === "GLP_15KG") {
-    return "/products/balon-15kg-premium.svg";
+    return "/products/balon-15kg-premium.png";
   }
   if (prod.tipoGas === "GLP_45KG") {
-    return "/products/balon-45kg-industrial.svg";
+    return "/products/balon-45kg-industrial.png";
   }
   if (prod.tipoGas === "VALVULA_ACCESORIO") {
     return "/products/regulador-manometro.svg";
   }
-  return "/products/balon-10kg-premium.svg";
+  return "/products/balon-10kg-premium.png";
 }

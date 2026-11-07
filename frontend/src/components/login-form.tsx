@@ -73,8 +73,11 @@ const DEMO_ACCOUNTS = [
 
 export function LoginForm({
   className,
+  onSwitchToRegister,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: React.ComponentPropsWithoutRef<"div"> & {
+  onSwitchToRegister?: () => void;
+}) {
   const router = useRouter();
   const establecerSesion = useAuthStore((state) => state.establecerSesion);
 
@@ -284,14 +287,35 @@ export function LoginForm({
         </div>
       </div>
 
-      <div className="text-center text-xs text-muted-foreground pt-1">
-        ¿Deseas afiliar tu empresa a la red?{" "}
-        <a
-          href="/auth/registro-empresa"
-          className="font-semibold text-primary hover:underline transition-colors"
-        >
-          Afiliar Distribuidora
-        </a>
+      <div className="space-y-2 pt-2 border-t border-border/60 text-center text-xs text-muted-foreground">
+        <div>
+          ¿No tienes una cuenta de cliente?{" "}
+          {onSwitchToRegister ? (
+            <button
+              type="button"
+              onClick={onSwitchToRegister}
+              className="font-bold text-orange-600 dark:text-orange-400 hover:underline cursor-pointer"
+            >
+              Crear cuenta y acumular puntos
+            </button>
+          ) : (
+            <a
+              href="/auth/registro-cliente"
+              className="font-bold text-orange-600 dark:text-orange-400 hover:underline"
+            >
+              Crear cuenta y acumular puntos
+            </a>
+          )}
+        </div>
+        <div>
+          ¿Tienes una distribuidora de balones?{" "}
+          <a
+            href="/auth/registro-empresa"
+            className="font-semibold text-primary hover:underline transition-colors"
+          >
+            Afiliar Distribuidora
+          </a>
+        </div>
       </div>
     </div>
   );

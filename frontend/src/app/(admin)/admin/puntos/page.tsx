@@ -28,6 +28,8 @@ import {
   ArrowDownRight,
   Truck,
   Coins,
+  UserPlus,
+  User,
 } from "lucide-react";
 
 interface ClientePuntosAdmin {
@@ -293,6 +295,57 @@ export default function AdminPuntosClientesPage() {
 
   const [clienteHistorial, setClienteHistorial] = useState<ClientePuntosAdmin | null>(null);
 
+  // Modal de Crear Nuevo Cliente
+  const [mostrarModalNuevoCliente, setMostrarModalNuevoCliente] = useState(false);
+  const [nuevoNombre, setNuevoNombre] = useState("");
+  const [nuevoDocumento, setNuevoDocumento] = useState("");
+  const [nuevoEmail, setNuevoEmail] = useState("");
+  const [nuevoTelefono, setNuevoTelefono] = useState("");
+  const [nuevoDistrito, setNuevoDistrito] = useState("Los Olivos");
+  const [nuevosPuntosIniciales, setNuevosPuntosIniciales] = useState<number>(100);
+
+  const handleCrearNuevoCliente = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nuevoNombre.trim() || !nuevoDocumento.trim()) return;
+
+    const puntos = Number(nuevosPuntosIniciales) || 0;
+    const nivel: "Oro" | "Plata" | "Bronce" =
+      puntos >= 2000 ? "Oro" : puntos >= 500 ? "Plata" : "Bronce";
+
+    const hoy = new Date().toISOString().replace("T", " ").substring(0, 16);
+    const nuevo: ClientePuntosAdmin = {
+      id: `cli-${Date.now().toString().slice(-4)}`,
+      nombre: nuevoNombre.trim(),
+      documento: nuevoDocumento.trim(),
+      email: nuevoEmail.trim().toLowerCase() || `${nuevoDocumento.trim()}@cliente.pe`,
+      telefono: nuevoTelefono.trim() || "999999999",
+      distrito: nuevoDistrito.trim(),
+      nivel,
+      saldoPuntos: puntos,
+      puntosGanados: puntos,
+      puntosCanjeados: 0,
+      ultimoMovimiento: "Bono apertura de cuenta cliente",
+      fechaUltimoMovimiento: hoy,
+      movimientos: [
+        {
+          id: `m-${Date.now()}`,
+          tipo: "BONIFICACION",
+          puntos,
+          motivo: "Bono de bienvenida por apertura de cuenta",
+          fecha: hoy,
+        },
+      ],
+    };
+
+    guardarClientes([nuevo, ...clientes]);
+    setMostrarModalNuevoCliente(false);
+    setNuevoNombre("");
+    setNuevoDocumento("");
+    setNuevoEmail("");
+    setNuevoTelefono("");
+    setNuevosPuntosIniciales(100);
+  };
+
   // Guardar cambios
   const guardarClientes = (nuevos: ClientePuntosAdmin[]) => {
     setClientes(nuevos);
@@ -410,6 +463,15 @@ export default function AdminPuntosClientesPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setMostrarModalNuevoCliente(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-xs transition cursor-pointer"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>+ Nuevo Cliente</span>
+          </button>
+
           <Link
             href="/admin/puntos/configuracion"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-lg text-xs shadow-xs transition"
@@ -962,6 +1024,143 @@ export default function AdminPuntosClientesPage() {
                 Cerrar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL: REGISTRAR NUEVO CLIENTE (ADMIN)
+      ========================================================================= */}
+      {mostrarModalNuevoCliente && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-4 sm:p-5 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
+                  <UserPlus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900">Registrar Nuevo Cliente</h3>
+                  <p className="text-[10px] text-slate-500">Alta de cliente y apertura en el Club RappiPuntos</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMostrarModalNuevoCliente(false)}
+                className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCrearNuevoCliente} className="space-y-3">
+              <div>
+                <label className="text-[10.5px] font-bold text-slate-700 block mb-1">
+                  Nombre Completo *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. Rosa Quispe Flores"
+                  value={nuevoNombre}
+                  onChange={(e) => setNuevoNombre(e.target.value)}
+                  className="w-full text-xs font-semibold px-3 py-2 border border-slate-200 rounded-lg focus:outline-hidden focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10.5px] font-bold text-slate-700 block mb-1">
+                    DNI / Documento *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="8 dígitos"
+                    maxLength={12}
+                    value={nuevoDocumento}
+                    onChange={(e) => setNuevoDocumento(e.target.value)}
+                    className="w-full text-xs font-semibold px-3 py-2 border border-slate-200 rounded-lg focus:outline-hidden focus:border-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10.5px] font-bold text-slate-700 block mb-1">
+                    Celular
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="987 654 321"
+                    maxLength={12}
+                    value={nuevoTelefono}
+                    onChange={(e) => setNuevoTelefono(e.target.value)}
+                    className="w-full text-xs font-semibold px-3 py-2 border border-slate-200 rounded-lg focus:outline-hidden focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10.5px] font-bold text-slate-700 block mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="cliente@correo.com"
+                    value={nuevoEmail}
+                    onChange={(e) => setNuevoEmail(e.target.value)}
+                    className="w-full text-xs font-semibold px-3 py-2 border border-slate-200 rounded-lg focus:outline-hidden focus:border-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10.5px] font-bold text-slate-700 block mb-1">
+                    Distrito
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej. Los Olivos"
+                    value={nuevoDistrito}
+                    onChange={(e) => setNuevoDistrito(e.target.value)}
+                    className="w-full text-xs font-semibold px-3 py-2 border border-slate-200 rounded-lg focus:outline-hidden focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10.5px] font-bold text-slate-700 block mb-1">
+                  Saldo Inicial de RappiPuntos (Bono de Apertura)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    step={10}
+                    value={nuevosPuntosIniciales}
+                    onChange={(e) => setNuevosPuntosIniciales(Number(e.target.value))}
+                    className="w-full text-xs font-black font-mono px-3 py-2 border border-slate-200 rounded-lg focus:outline-hidden focus:border-emerald-500"
+                  />
+                  <span className="text-xs font-extrabold text-orange-600 bg-orange-50 px-2 py-1.5 rounded-lg shrink-0">
+                    PTS
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setMostrarModalNuevoCliente(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Crear Cliente</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

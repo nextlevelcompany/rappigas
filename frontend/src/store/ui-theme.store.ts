@@ -76,7 +76,7 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
   customLogoSidebarOffset: 8, // 8px default padding from left
   customFaviconUrl: "",
   customWebLogoUrl: "",
-  customWebLogoHeight: 44, // 44px default
+  customWebLogoHeight: 52, // 52px default (proporcional para cabecera web)
   whatsappNumber: "51999999999",
   whatsappDefaultMessage: "Hola RappiGas, deseo pedir un balón de gas",
   whatsappEnabled: true,
@@ -254,7 +254,7 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
     }
     set({
       customWebLogoUrl: "",
-      customWebLogoHeight: 44,
+      customWebLogoHeight: 52,
     })
   },
 
@@ -385,7 +385,7 @@ export const useUIThemeStore = create<UIThemeState>((set) => ({
         customLogoUrl: savedLogo,
         customLogoHeight: savedLogoHeight ? parseInt(savedLogoHeight, 10) : 44,
         customWebLogoUrl: savedWebLogo,
-        customWebLogoHeight: savedWebLogoHeight ? parseInt(savedWebLogoHeight, 10) : 44,
+        customWebLogoHeight: savedWebLogoHeight ? parseInt(savedWebLogoHeight, 10) : 52,
         customLogoSidebarAlign: savedLogoAlign || "left",
         customLogoSidebarOffset: savedLogoOffset ? parseInt(savedLogoOffset, 10) : 8,
         customFaviconUrl: savedFavicon,

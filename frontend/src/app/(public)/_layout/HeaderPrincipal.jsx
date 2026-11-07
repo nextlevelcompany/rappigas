@@ -27,7 +27,7 @@ export default function HeaderPrincipal({ variant }) {
   }, [cargarSesionDesdeStorage, loadTheme]);
 
   const webLogo = customWebLogoUrl || customLogoUrl || '/assets/img/logo/Logo_rappi_gas.png';
-  const logoHeight = customWebLogoHeight || customLogoHeight || 44;
+  const logoHeight = customWebLogoHeight || customLogoHeight || 54;
 
   const dashboardUrl = usuario?.rol === 'ADMIN'
     ? '/admin/dashboard'
@@ -105,13 +105,15 @@ export default function HeaderPrincipal({ variant }) {
           <div className="container">
             <div className="cs_main_header_in" style={{ minHeight: '80px', height: 'auto', paddingTop: '6px', paddingBottom: '6px' }}>
               {/* Logo */}
-              <div className="cs_main_header_left d-flex align-items-center">
-                <Link className="cs_site_branding d-flex align-items-center" href="/">
+              <div className="cs_main_header_left d-flex align-items-center flex-shrink-0">
+                <Link className="cs_site_branding d-flex align-items-center flex-shrink-0" href="/">
                   <img
                     src={webLogo}
                     alt="Logo RappiGas Perú"
                     style={{
-                      maxHeight: `${logoHeight}px`,
+                      height: `${logoHeight}px`,
+                      maxHeight: `${Math.max(logoHeight, 54)}px`,
+                      minHeight: "50px",
                       width: 'auto',
                       objectFit: 'contain',
                     }}

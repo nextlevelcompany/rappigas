@@ -33,6 +33,7 @@ import {
   vaciarCarritoGas,
   obtenerImagenProductoGas,
   obtenerEmpresaSeleccionada,
+  guardarEmpresaSeleccionada,
   obtenerCuponGas,
   obtenerDireccionGas,
   guardarDireccionGas,
@@ -44,6 +45,7 @@ import {
   MetodoPago,
 } from "@/librerias/api/pedidos.api";
 import { empresasApi, EmpresaDetalle } from "@/librerias/api/empresas.api";
+import { catalogoApi, ProductoDetalle } from "@/librerias/api/catalogo.api";
 import { finanzasApi } from "@/librerias/api/finanzas.api";
 import { UBIGEO_COORDENADAS_PERU } from "@/librerias/geo-utils";
 import { useAuthStore } from "@/store/auth-store";
