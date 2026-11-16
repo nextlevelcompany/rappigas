@@ -42,8 +42,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     volumes:
       - uploads_data:/var/pidegas/uploads
     healthcheck:
@@ -71,8 +71,8 @@ services:
       NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-mock-google-maps-browser-key}
     depends_on:
       - backend
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     networks:
       - rappigas-network
 
@@ -80,8 +80,10 @@ services:
     image: nginx:alpine
     container_name: rappigas-nginx
     restart: always
+    expose:
+      - "80"
     ports:
-      - "80:80"
+      - "${NGINX_HOST_PORT:-8085}:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
