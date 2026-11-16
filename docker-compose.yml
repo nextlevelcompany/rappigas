@@ -88,8 +88,6 @@ services:
 
 volumes:
   postgres_data:
-    name: pidegas_postgres_data
-    external: true
   uploads_data:
 
 networks:
