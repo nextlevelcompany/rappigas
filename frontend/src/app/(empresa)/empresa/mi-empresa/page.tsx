@@ -47,7 +47,15 @@ import {
   CheckCircle2,
   Sliders,
   Receipt,
+  QrCode,
+  Banknote,
 } from "lucide-react";
+import { MetodoPago } from "@/librerias/api/finanzas.api";
+import {
+  obtenerMetodosPagoDistribuidor,
+  guardarMetodosPagoDistribuidor,
+} from "@/librerias/carrito-gas";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -82,6 +90,7 @@ export default function MiEmpresaPage() {
   const [solicitudEnviada, setSolicitudEnviada] = useState(false);
   const [tipoDeseado, setTipoDeseado] = useState<"FIJA" | "PORCENTUAL">("PORCENTUAL");
   const [motivoCambio, setMotivoCambio] = useState("");
+  const [metodosPagoEmpresa, setMetodosPagoEmpresa] = useState<MetodoPago[]>(["EFECTIVO", "YAPE"]);
 
   const [formData, setFormData] = useState<ActualizarEmpresaPayload>({
     nombreComercial: "",
@@ -106,6 +115,7 @@ export default function MiEmpresaPage() {
           telefono: empRes.value.telefono || "",
           direccionFiscal: empRes.value.direccionFiscal || "",
         });
+        setMetodosPagoEmpresa(obtenerMetodosPagoDistribuidor(empRes.value));
 
         if (typeof window !== "undefined") {
           let configEncontrada = null;
@@ -149,6 +159,27 @@ export default function MiEmpresaPage() {
   useEffect(() => {
     cargarDatos();
   }, []);
+
+  const handleToggleMetodoPago = (metodo: MetodoPago) => {
+    setMetodosPagoEmpresa((prev) => {
+      let nuevo: MetodoPago[];
+      if (prev.includes(metodo)) {
+        if (prev.length === 1) {
+          toast.error("Debes mantener habilitado al menos un método de pago.");
+          return prev;
+        }
+        nuevo = prev.filter((m) => m !== metodo);
+      } else {
+        nuevo = [...prev, metodo];
+      }
+      const clave = empresa?.publicId || empresa?.ruc || empresa?.nombreComercial;
+      if (clave) {
+        guardarMetodosPagoDistribuidor(clave, nuevo);
+      }
+      toast.success("Métodos de pago del distribuidor actualizados.");
+      return nuevo;
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -747,6 +778,117 @@ export default function MiEmpresaPage() {
               placeholder="Av. Principal 123, Distrito, Lima"
               className="w-full px-3 py-2 text-sm rounded-lg border bg-background dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary"
             />
+          </div>
+
+          {/* Configuración de Métodos de Pago Aceptados por el Distribuidor */}
+          <div className="pt-4 border-t dark:border-neutral-800 space-y-3">
+            <div>
+              <h3 className="text-sm font-bold flex items-center gap-2 text-neutral-900 dark:text-white">
+                <CreditCard className="w-4 h-4 text-orange-500" />
+                Métodos de Pago Habilitados para tus Clientes
+              </h3>
+              <p className="text-xs text-neutral-500">
+                Solo los métodos que actives aquí aparecerán en la tienda y checkout cuando un cliente seleccione tu distribuidora.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              {/* YAPE */}
+              <button
+                type="button"
+                onClick={() => handleToggleMetodoPago("YAPE")}
+                className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-center justify-between gap-2 ${
+                  metodosPagoEmpresa.includes("YAPE")
+                    ? "border-purple-500 bg-purple-50/60 dark:bg-purple-950/40 ring-1 ring-purple-400"
+                    : "border-slate-200 dark:border-neutral-700 bg-card opacity-60"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center font-black text-xs shrink-0">
+                    <QrCode className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold block text-neutral-900 dark:text-white">Yape</span>
+                    <span className="text-[10px] text-neutral-500 block">Billetera BCP</span>
+                  </div>
+                </div>
+                <Badge variant={metodosPagoEmpresa.includes("YAPE") ? "default" : "outline"} className={metodosPagoEmpresa.includes("YAPE") ? "bg-purple-600 text-white" : ""}>
+                  {metodosPagoEmpresa.includes("YAPE") ? "Activo" : "Inactivo"}
+                </Badge>
+              </button>
+
+              {/* EFECTIVO */}
+              <button
+                type="button"
+                onClick={() => handleToggleMetodoPago("EFECTIVO")}
+                className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-center justify-between gap-2 ${
+                  metodosPagoEmpresa.includes("EFECTIVO")
+                    ? "border-amber-500 bg-amber-50/60 dark:bg-amber-950/40 ring-1 ring-amber-400"
+                    : "border-slate-200 dark:border-neutral-700 bg-card opacity-60"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-600 text-white flex items-center justify-center shrink-0">
+                    <Banknote className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold block text-neutral-900 dark:text-white">Efectivo</span>
+                    <span className="text-[10px] text-neutral-500 block">Contra entrega</span>
+                  </div>
+                </div>
+                <Badge variant={metodosPagoEmpresa.includes("EFECTIVO") ? "default" : "outline"} className={metodosPagoEmpresa.includes("EFECTIVO") ? "bg-amber-600 text-white" : ""}>
+                  {metodosPagoEmpresa.includes("EFECTIVO") ? "Activo" : "Inactivo"}
+                </Badge>
+              </button>
+
+              {/* PLIN */}
+              <button
+                type="button"
+                onClick={() => handleToggleMetodoPago("PLIN")}
+                className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-center justify-between gap-2 ${
+                  metodosPagoEmpresa.includes("PLIN")
+                    ? "border-cyan-500 bg-cyan-50/60 dark:bg-cyan-950/40 ring-1 ring-cyan-400"
+                    : "border-slate-200 dark:border-neutral-700 bg-card opacity-60"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-600 text-white flex items-center justify-center shrink-0 font-black text-xs">
+                    <Phone className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold block text-neutral-900 dark:text-white">Plin</span>
+                    <span className="text-[10px] text-neutral-500 block">Pago celular</span>
+                  </div>
+                </div>
+                <Badge variant={metodosPagoEmpresa.includes("PLIN") ? "default" : "outline"} className={metodosPagoEmpresa.includes("PLIN") ? "bg-cyan-600 text-white" : ""}>
+                  {metodosPagoEmpresa.includes("PLIN") ? "Activo" : "Inactivo"}
+                </Badge>
+              </button>
+
+              {/* TARJETA POS */}
+              <button
+                type="button"
+                onClick={() => handleToggleMetodoPago("TARJETA")}
+                className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-center justify-between gap-2 ${
+                  metodosPagoEmpresa.includes("TARJETA")
+                    ? "border-blue-500 bg-blue-50/60 dark:bg-blue-950/40 ring-1 ring-blue-400"
+                    : "border-slate-200 dark:border-neutral-700 bg-card opacity-60"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+                    <CreditCard className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold block text-neutral-900 dark:text-white">Tarjeta POS</span>
+                    <span className="text-[10px] text-neutral-500 block">POS inalámbrico</span>
+                  </div>
+                </div>
+                <Badge variant={metodosPagoEmpresa.includes("TARJETA") ? "default" : "outline"} className={metodosPagoEmpresa.includes("TARJETA") ? "bg-blue-600 text-white" : ""}>
+                  {metodosPagoEmpresa.includes("TARJETA") ? "Activo" : "Inactivo"}
+                </Badge>
+              </button>
+            </div>
           </div>
 
           <div className="pt-4 border-t dark:border-neutral-800 flex justify-end">

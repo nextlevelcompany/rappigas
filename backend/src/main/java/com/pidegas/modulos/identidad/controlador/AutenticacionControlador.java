@@ -48,4 +48,13 @@ public class AutenticacionControlador {
         UsuarioDetalleDto usuario = autenticacionServicio.obtenerUsuarioActual(email);
         return ResponseEntity.ok(usuario);
     }
+
+    @PutMapping("/yo")
+    @Operation(summary = "Actualizar perfil del usuario autenticado", description = "Permite al cliente actualizar sus nombres, apellidos, teléfono o contraseña")
+    public ResponseEntity<UsuarioDetalleDto> actualizarPerfilActual(
+            @AuthenticationPrincipal String email,
+            @RequestBody ActualizarPerfilDto dto) {
+        UsuarioDetalleDto usuario = autenticacionServicio.actualizarPerfil(email, dto);
+        return ResponseEntity.ok(usuario);
+    }
 }

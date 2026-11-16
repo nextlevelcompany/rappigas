@@ -15,6 +15,9 @@ export interface PremioCanje {
   descripcion: string;
   codigoCupon: string;
   destacado?: boolean;
+  mostrarEnInicio?: boolean;
+  badgeInicio?: string;
+  ordenInicio?: number;
   especificaciones?: EspecificacionPremio[];
 }
 
@@ -53,6 +56,9 @@ export const PREMIOS_ZETA_PREMIA: PremioCanje[] = [
     descripcion: "Vale aplicable en cualquier pedido de gas con balanza digital contrastada.",
     codigoCupon: "VALE10GAS",
     destacado: true,
+    mostrarEnInicio: true,
+    badgeInicio: "CANJE RÁPIDO",
+    ordenInicio: 1,
   },
   {
     id: "zp-02",
@@ -78,6 +84,9 @@ export const PREMIOS_ZETA_PREMIA: PremioCanje[] = [
     descripcion: "Canjea S/ 20 de saldo para pagar menos en tu próxima compra de gas.",
     codigoCupon: "VALE20GAS",
     destacado: true,
+    mostrarEnInicio: true,
+    badgeInicio: "CANJE RÁPIDO",
+    ordenInicio: 2,
   },
   {
     id: "zp-04",
@@ -99,10 +108,13 @@ export const PREMIOS_ZETA_PREMIA: PremioCanje[] = [
     puntos: 480,
     valorSoles: 55.0,
     stock: 30,
-    imagen: "/products/balon-10kg-premium.svg",
+    imagen: "/products/balon-10kg-premium.png",
     descripcion: "Recibe tu balón Solgas de 10kg totalmente gratis sin pagar ni un sol.",
     codigoCupon: "SOLGAS10GRATIS",
     destacado: true,
+    mostrarEnInicio: true,
+    badgeInicio: "MÁS PEDIDO",
+    ordenInicio: 3,
   },
   {
     id: "zp-06",
@@ -165,6 +177,9 @@ export const PREMIOS_ZETA_PREMIA: PremioCanje[] = [
     descripcion: "Válvula con medidor de presión en tiempo real para saber cuánto gas te queda.",
     codigoCupon: "REGULADOR220",
     destacado: true,
+    mostrarEnInicio: true,
+    badgeInicio: "SEGURIDAD GLP",
+    ordenInicio: 4,
   },
   {
     id: "zp-11",
@@ -240,6 +255,9 @@ export const PREMIOS_ZETA_PREMIA: PremioCanje[] = [
     descripcion: "Sartén de aluminio con revestimiento Starflon antiadherente libre de PFOA.",
     codigoCupon: "SARTENTRAM24",
     destacado: true,
+    mostrarEnInicio: true,
+    badgeInicio: "CANJE RÁPIDO",
+    ordenInicio: 5,
   },
   {
     id: "zp-17",
@@ -265,6 +283,9 @@ export const PREMIOS_ZETA_PREMIA: PremioCanje[] = [
     descripcion: "Cocina menestras y carnes en la mitad de tiempo ahorrando gas doméstico.",
     codigoCupon: "OLLAPRESIONREC",
     destacado: true,
+    mostrarEnInicio: true,
+    badgeInicio: "TOP MENAJE",
+    ordenInicio: 6,
   },
   {
     id: "zp-19",
@@ -485,6 +506,9 @@ export const PREMIOS_ZETA_PREMIA: PremioCanje[] = [
     descripcion: "Cuchilla trituradora de hielo All-Metal Drive con vaso resistente a choques térmicos.",
     codigoCupon: "LICUADORAOSTER",
     destacado: true,
+    mostrarEnInicio: true,
+    badgeInicio: "CALIDAD OSTER",
+    ordenInicio: 7,
   },
   {
     id: "zp-37",
@@ -498,6 +522,9 @@ export const PREMIOS_ZETA_PREMIA: PremioCanje[] = [
     descripcion: "Cocina arroz graneado y verduras al vapor al mismo tiempo.",
     codigoCupon: "ARROCERAIMACO",
     destacado: true,
+    mostrarEnInicio: true,
+    badgeInicio: "CANJE FAVORITO",
+    ordenInicio: 8,
   },
   {
     id: "zp-38",
@@ -511,6 +538,9 @@ export const PREMIOS_ZETA_PREMIA: PremioCanje[] = [
     descripcion: "Frituras crujientes con hasta 99.5% menos aceite gracias al aire circulante.",
     codigoCupon: "AIRFRYEROSTER",
     destacado: true,
+    mostrarEnInicio: true,
+    badgeInicio: "PREMIO ESTRELLA",
+    ordenInicio: 9,
   },
   {
     id: "zp-39",
@@ -1351,6 +1381,26 @@ export function eliminarPremio(id: string): boolean {
 
 export function actualizarStockPremio(id: string, nuevoStock: number): boolean {
   return !!actualizarPremio(id, { stock: Math.max(0, nuevoStock) });
+}
+
+export function alternarMostrarEnInicio(id: string): boolean {
+  const catalogo = obtenerCatalogoPremios();
+  const premio = catalogo.find((p) => p.id === id);
+  if (!premio) return false;
+  const nuevoEstado = !premio.mostrarEnInicio;
+  actualizarPremio(id, { mostrarEnInicio: nuevoEstado });
+  return nuevoEstado;
+}
+
+export function obtenerPremiosInicio(): PremioCanje[] {
+  const catalogo = obtenerCatalogoPremios();
+  const enInicio = catalogo.filter((p) => p.mostrarEnInicio === true);
+  if (enInicio.length > 0) {
+    return [...enInicio].sort((a, b) => (a.ordenInicio ?? 99) - (b.ordenInicio ?? 99));
+  }
+  // Si no hay premios explícitos para inicio, retornar destacados o los primeros
+  const destacados = catalogo.filter((p) => p.destacado);
+  return destacados.length > 0 ? destacados.slice(0, 10) : catalogo.slice(0, 8);
 }
 
 // =============================================================================

@@ -20,6 +20,11 @@ import {
   LogOut,
   LogIn,
   Palette,
+  User,
+  MapPin,
+  ShoppingBag,
+  Truck,
+  Gift,
 } from "lucide-react";
 
 export function UserDropdown() {
@@ -53,7 +58,7 @@ export function UserDropdown() {
     ? "/empresa/dashboard"
     : usuarioActivo?.rol === "REPARTIDOR"
     ? "/repartidor/pedidos"
-    : "/cliente/pedidos";
+    : "/cliente/tienda";
 
   return (
     <DropdownMenu>
@@ -100,6 +105,41 @@ export function UserDropdown() {
                 <span>Panel Principal</span>
               </Link>
             </DropdownMenuItem>
+
+            {usuarioActivo?.rol === "CLIENTE" && (
+              <>
+                <DropdownMenuItem asChild className="gap-2 h-9 cursor-pointer">
+                  <Link href="/cliente/tienda">
+                    <ShoppingBag className="size-4 text-orange-600" />
+                    <span>Pedir Gas (Tienda)</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-2 h-9 cursor-pointer">
+                  <Link href="/cliente/pedidos">
+                    <Truck className="size-4 text-orange-600" />
+                    <span>Mis Pedidos</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-2 h-9 cursor-pointer">
+                  <Link href="/cliente/perfil">
+                    <User className="size-4 text-orange-600" />
+                    <span>Mis Datos / Perfil</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-2 h-9 cursor-pointer">
+                  <Link href="/cliente/direcciones">
+                    <MapPin className="size-4 text-orange-600" />
+                    <span>Mis Direcciones</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-2 h-9 cursor-pointer">
+                  <Link href="/cliente/puntos">
+                    <Gift className="size-4 text-amber-500" />
+                    <span>Mis Rappipuntos</span>
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            )}
 
             {usuarioActivo?.rol === "ADMIN" && (
               <DropdownMenuItem asChild className="gap-2 h-9 cursor-pointer">

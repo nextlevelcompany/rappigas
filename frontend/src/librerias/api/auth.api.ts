@@ -36,6 +36,13 @@ export interface UsuarioPerfil {
   createdAt: string;
 }
 
+export interface ActualizarPerfilDto {
+  nombres?: string;
+  apellidos?: string;
+  telefono?: string;
+  nuevaPassword?: string;
+}
+
 export const authApi = {
   login: async (datos: SolicitudLogin): Promise<RespuestaAutenticacion> => {
     return peticionHttp<RespuestaAutenticacion>("/auth/login", {
@@ -61,6 +68,13 @@ export const authApi = {
   obtenerPerfil: async (): Promise<UsuarioPerfil> => {
     return peticionHttp<UsuarioPerfil>("/auth/yo", {
       method: "GET",
+    });
+  },
+
+  actualizarPerfil: async (datos: ActualizarPerfilDto): Promise<UsuarioPerfil> => {
+    return peticionHttp<UsuarioPerfil>("/auth/yo", {
+      method: "PUT",
+      datos,
     });
   },
 };

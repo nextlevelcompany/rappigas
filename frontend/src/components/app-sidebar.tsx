@@ -18,7 +18,7 @@ import {
   HomeAlt,
   MessageCircleQuestionMark,
 } from "@boxicons/react";
-import { Truck, ShoppingBag, Navigation, ChartBar, Building, CreditCard, ClipboardList, HelpCircle, Palette, Settings, ShieldCheck, Tag, Package, PackageCheck, Boxes, LayoutDashboard, Gift, LifeBuoy } from "lucide-react";
+import { Truck, ShoppingBag, Navigation, ChartBar, Building, CreditCard, ClipboardList, HelpCircle, Palette, Settings, ShieldCheck, Tag, Package, PackageCheck, Boxes, LayoutDashboard, Gift, LifeBuoy, User, MapPin } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { useUIThemeStore } from "@/store/ui-theme.store";
 import { BrandLogo } from "@/components/brand-logo";
@@ -61,7 +61,6 @@ const seccionCRM = {
   items: [
     { title: "Empresas", url: "/admin/empresas" },
     { title: "Contactos", url: "/admin/contactos" },
-    { title: "Contratos y Adendas", url: "/admin/contratos" },
   ],
 };
 
@@ -86,15 +85,13 @@ const seccionFinanzas = {
   icon: <CreditCard className="w-5 h-5" />, // lucide CreditCard
   isActive: false,
   items: [
-    { title: "Comisiones", url: "/admin/suscripciones" },
-    { title: "Facturación", url: "/admin/facturacion" },
-    { title: "Transacciones", url: "/admin/transacciones" },
+    { title: "Comisiones y Billeteras", url: "/admin/suscripciones" },
   ],
 };
 
 //--- Monitoreo Operativo Section
 const seccionMonitoreo = {
-  title: "MONITOREO ",
+  title: "MONITOREO",
   url: "#",
   icon: <ClipboardList className="w-5 h-5" />, // lucide ClipboardList
   isActive: false,
@@ -105,17 +102,16 @@ const seccionMonitoreo = {
   ],
 };
 
-//--- Soporte y Atención Section
+//--- Estadísticas Section
 const seccionEstadisticas = {
-  title: "ESTADISTICAS",
+  title: "ESTADÍSTICAS",
   url: "#",
   icon: <ChartBar className="w-5 h-5" />, // lucide ChartBar
   isActive: false,
   items: [
-    { title: "Resumen global", url: "/admin/estadisticas/resumen" },
-    { title: "Ingresos por plan", url: "/admin/estadisticas/ingresos" },
-    { title: "Uso de la plataforma", url: "/admin/estadisticas/uso" },
-    { title: "Auditoría", url: "/admin/estadisticas/auditoria" },
+    { title: "Inteligencia de Plataforma", url: "/admin/dashboard" },
+    { title: "Ventas y Stock de Red", url: "/admin/productos/estadisticas" },
+    { title: "Auditoría Forense", url: "/admin/auditoria" },
   ],
 };
 
@@ -126,9 +122,7 @@ const seccionSoporteMenu = {
   icon: <HelpCircle className="w-5 h-5" />, // lucide HelpCircle
   isActive: false,
   items: [
-    { title: "Soporte", url: "/admin/soporte" },
-    { title: "Comunicaciones", url: "/admin/comunicaciones" },
-    { title: "Base de Conocimientos", url: "/admin/knowledge-base" },
+    { title: "Tickets de Soporte", url: "/admin/soporte" },
   ],
 };
 
@@ -136,9 +130,10 @@ const seccionSoporteMenu = {
 const seccionConfiguracion = {
   title: "CONFIGURACIÓN",
   url: "#",
-  icon: <Palette className="w-5 h-5" />,
+  icon: <Settings className="w-5 h-5" />,
   isActive: false,
   items: [
+    { title: "Editar Datos de Plataforma", url: "/admin/datos" },
     { title: "Temas y Colores", url: "/admin/configuracion" },
     { title: "Auditoría Forense", url: "/admin/auditoria" },
   ],
@@ -296,29 +291,46 @@ const seccionClienteCompras = {
       url: "/cliente/carrito",
     },
     {
-      title: "Pedidos",
+      title: "Mis Pedidos",
       url: "/cliente/pedidos",
     },
   ],
 };
 
+const seccionClienteCuenta = {
+  title: "MI CUENTA",
+  url: "#",
+  icon: <User className="w-5 h-5 text-emerald-500" />,
+  isActive: true,
+  items: [
+    {
+      title: "Mis Datos",
+      url: "/cliente/perfil",
+    },
+    {
+      title: "Mis Direcciones",
+      url: "/cliente/direcciones",
+    },
+  ],
+};
+
 const seccionClienteFidelidad = {
-  title: "FIDELIDAD",
+  title: "RAPPIPUNTOS",
   url: "#",
   icon: <Gift className="w-5 h-5 text-amber-500" />,
   isActive: true,
   items: [
     {
-      title: "Canjes",
+      title: "Premios y Canjes",
       url: "/cliente/canjes",
     },
     {
-      title: "Historial",
-      url: "/cliente/canjes/historial",
+      title: "Mis Puntos",
+      url: "/cliente/puntos",
     },
     {
-      title: "Puntos",
-      url: "/cliente/puntos",
+      title: "Historial de Canjes",
+      url: "/cliente/canjes/historial",
     },
   ],
 };
@@ -330,7 +342,7 @@ const seccionClienteSoporte = {
   isActive: false,
   items: [
     {
-      title: "Soporte",
+      title: "Soporte y Ayuda",
       url: "/cliente/soporte",
     },
   ],
@@ -408,7 +420,12 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
     itemsNavegacion = [seccionRepartidor];
   } else {
     // Cliente o visitante en /cliente/tienda: Menú estructurado por áreas
-    itemsNavegacion = [seccionClienteCompras, seccionClienteFidelidad, seccionClienteSoporte];
+    itemsNavegacion = [
+      seccionClienteCompras,
+      seccionClienteCuenta,
+      seccionClienteFidelidad,
+      seccionClienteSoporte,
+    ];
   }
 
   const navSecondaryFiltrado = navSecondary.filter((item) => {

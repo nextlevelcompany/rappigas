@@ -149,6 +149,9 @@ class PedidoServicioTest {
         when(usuarioRepositorio.findByEmail(emailCliente)).thenReturn(Optional.of(cliente));
         when(empresaRepositorio.findByPublicId(empresaPublicId)).thenReturn(Optional.of(empresa));
 
+        ZonaCobertura zona = new ZonaCobertura(empresa.getId(), "Zona Norte", null);
+        when(zonaCoberturaRepositorio.findByTenantIdAndActivaTrue(empresa.getId())).thenReturn(List.of(zona));
+
         // Sin cobertura en el punto
         when(zonaCoberturaRepositorio.buscarZonasTenantQueCubrenPunto(eq(empresa.getId()), eq(-77.07), eq(-11.99)))
                 .thenReturn(List.of());

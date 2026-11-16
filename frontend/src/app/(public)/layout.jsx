@@ -16,9 +16,9 @@ export const metadata = {
 
 export default function PublicLayout({ children }) {
   return (
-    <div className="main-page-area">
+    <div className="main-page-area w-full max-w-full">
       <HeaderPrincipal />
-      <main>{children}</main>
+      <main className="w-full max-w-full">{children}</main>
       <FooterPrincipal />
     </div>
   );

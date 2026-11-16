@@ -16,7 +16,17 @@ import {
   vaciarCarritoGas,
   guardarEmpresaSeleccionada,
   guardarDireccionGas,
+  obtenerDireccionGas,
+  obtenerMisDirecciones,
+  guardarMisDirecciones,
+  agregarDireccionCliente,
+  actualizarDireccionCliente,
+  eliminarDireccionCliente,
+  establecerDireccionPredeterminada,
+  DireccionClienteGuardada,
+  obtenerMetodosPagoDistribuidor,
 } from "@/librerias/carrito-gas";
+import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth-store";
 import { authApi } from "@/librerias/api/auth.api";
 import {
@@ -53,6 +63,14 @@ import {
   Loader2,
   Trash2,
   Sparkles,
+  Bookmark,
+  Home,
+  Briefcase,
+  Building,
+  Star,
+  Check,
+  Edit3,
+  X,
 } from "lucide-react";
 
 // Import dinámico de Leaflet con SSR desactivado para evitar errores de window en Next.js
@@ -98,6 +116,23 @@ export default function TiendaClienteGasPage() {
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("YAPE");
   const [telefonoYape, setTelefonoYape] = useState("977665554");
   const [notas, setNotas] = useState("Balón para cocina doméstica con precinto intacto.");
+
+  // Mis Direcciones Guardadas
+  const [misDirecciones, setMisDirecciones] = useState<DireccionClienteGuardada[]>([]);
+  const [direccionSeleccionadaId, setDireccionSeleccionadaId] = useState<string | null>(null);
+  const [modalMisDireccionesAbierto, setModalMisDireccionesAbierto] = useState(false);
+  const [modalGuardarDireccionAbierto, setModalGuardarDireccionAbierto] = useState(false);
+  const [direccionEnEdicion, setDireccionEnEdicion] = useState<DireccionClienteGuardada | null>(null);
+
+  // Formulario para guardar/editar dirección
+  const [formEtiqueta, setFormEtiqueta] = useState("Casa");
+  const [formTipoIcono, setFormTipoIcono] = useState<"casa" | "trabajo" | "departamento" | "familiar" | "otro">("casa");
+  const [formDireccionExacta, setFormDireccionExacta] = useState("");
+  const [formDistrito, setFormDistrito] = useState("");
+  const [formCiudad, setFormCiudad] = useState("");
+  const [formDepartamento, setFormDepartamento] = useState("");
+  const [formReferencia, setFormReferencia] = useState("");
+  const [formEsPredeterminada, setFormEsPredeterminada] = useState(false);
 
   // Buscador por Distritos (Ubigeo Perú)
   const [mostrarBuscadorUbigeo, setMostrarBuscadorUbigeo] = useState(false);
@@ -450,6 +485,32 @@ export default function TiendaClienteGasPage() {
     });
   }, [distribuidoresConDistancia, busquedaDistribuidor, filtroMarca]);
 
+  // Métodos de pago configurados específicamente por la distribuidora activa
+  const metodosPagoDistribuidor = useMemo(() => {
+    return obtenerMetodosPagoDistribuidor(empresaSeleccionada);
+  }, [empresaSeleccionada]);
+
+  // Si el método actual no está permitido por la distribuidora, auto-seleccionar el primero admitido
+  useEffect(() => {
+    if (metodosPagoDistribuidor.length > 0 && !metodosPagoDistribuidor.includes(metodoPago)) {
+      setMetodoPago(metodosPagoDistribuidor[0]);
+    }
+  }, [metodosPagoDistribuidor, metodoPago]);
+
+  // Escuchar si la distribuidora actualiza sus métodos de pago en tiempo real
+  useEffect(() => {
+    const handleSyncMetodos = () => {
+      if (empresaSeleccionada) {
+        const actualizados = obtenerMetodosPagoDistribuidor(empresaSeleccionada);
+        if (actualizados.length > 0 && !actualizados.includes(metodoPago)) {
+          setMetodoPago(actualizados[0]);
+        }
+      }
+    };
+    window.addEventListener("metodos_pago_distribuidor_actualizados", handleSyncMetodos);
+    return () => window.removeEventListener("metodos_pago_distribuidor_actualizados", handleSyncMetodos);
+  }, [empresaSeleccionada, metodoPago]);
+
   const handleUsarGps = () => {
     if (!navigator.geolocation) {
       setMensajeGps("GPS no disponible.");
@@ -577,6 +638,181 @@ export default function TiendaClienteGasPage() {
     return () => window.removeEventListener("carrito_gas_actualizado", handleSyncDesdeHeader);
   }, []);
 
+  // Cargar mis direcciones guardadas y sincronizar
+  useEffect(() => {
+    const dirs = obtenerMisDirecciones(usuario?.publicId);
+    setMisDirecciones(dirs);
+    const predeterminada = dirs.find((d) => d.esPredeterminada) || dirs[0];
+    if (predeterminada) {
+      setDireccionSeleccionadaId(predeterminada.id);
+      setDireccionExacta(predeterminada.direccionExacta);
+      setDistritoDireccion(predeterminada.distrito);
+      setCiudadDireccion(predeterminada.ciudad);
+      setDepartamentoDireccion(predeterminada.departamento);
+      setReferencia(predeterminada.referencia || "");
+      setLatitud(predeterminada.latitud);
+      setLongitud(predeterminada.longitud);
+      setDireccion(
+        `${predeterminada.direccionExacta}, ${predeterminada.distrito}, ${predeterminada.ciudad}`
+      );
+      if (predeterminada.telefono) {
+        setTelefonoYape(predeterminada.telefono);
+      }
+    }
+
+    const handleSyncMisDirecciones = (e: any) => {
+      const actualizadas = e.detail || obtenerMisDirecciones(usuario?.publicId);
+      setMisDirecciones(actualizadas);
+    };
+
+    window.addEventListener("mis_direcciones_actualizadas", handleSyncMisDirecciones);
+    return () => {
+      window.removeEventListener("mis_direcciones_actualizadas", handleSyncMisDirecciones);
+    };
+  }, [usuario?.publicId]);
+
+  const renderIconoTipo = (tipo: string, className = "w-4 h-4") => {
+    switch (tipo) {
+      case "casa":
+        return <Home className={className} />;
+      case "trabajo":
+        return <Briefcase className={className} />;
+      case "departamento":
+        return <Building className={className} />;
+      case "familiar":
+        return <Star className={className} />;
+      default:
+        return <Bookmark className={className} />;
+    }
+  };
+
+  const handleSeleccionarDireccionGuardada = (dir: DireccionClienteGuardada) => {
+    setDireccionSeleccionadaId(dir.id);
+    setDireccionExacta(dir.direccionExacta);
+    setDistritoDireccion(dir.distrito);
+    setCiudadDireccion(dir.ciudad);
+    setDepartamentoDireccion(dir.departamento);
+    setReferencia(dir.referencia || "");
+    setLatitud(dir.latitud);
+    setLongitud(dir.longitud);
+    setDireccion(`${dir.direccionExacta}, ${dir.distrito}, ${dir.ciudad}`);
+    if (dir.telefono) {
+      setTelefonoYape(dir.telefono);
+    }
+    toast.success(`Dirección fijada: "${dir.etiqueta}"`);
+    setModalMisDireccionesAbierto(false);
+  };
+
+  const handleAbrirGuardarActual = () => {
+    setDireccionEnEdicion(null);
+    setFormEtiqueta(
+      distritoDireccion ? `Casa ${distritoDireccion}` : "Mi Casa"
+    );
+    setFormTipoIcono("casa");
+    setFormDireccionExacta(direccionExacta);
+    setFormDistrito(distritoDireccion);
+    setFormCiudad(ciudadDireccion || "Lima");
+    setFormDepartamento(departamentoDireccion || "Lima");
+    setFormReferencia(referencia);
+    setFormEsPredeterminada(misDirecciones.length === 0);
+    setModalGuardarDireccionAbierto(true);
+  };
+
+  const handleAbrirEditarDireccion = (dir: DireccionClienteGuardada) => {
+    setDireccionEnEdicion(dir);
+    setFormEtiqueta(dir.etiqueta);
+    setFormTipoIcono(dir.tipoIcono);
+    setFormDireccionExacta(dir.direccionExacta);
+    setFormDistrito(dir.distrito);
+    setFormCiudad(dir.ciudad);
+    setFormDepartamento(dir.departamento);
+    setFormReferencia(dir.referencia || "");
+    setFormEsPredeterminada(dir.esPredeterminada);
+    setModalGuardarDireccionAbierto(true);
+  };
+
+  const handleGuardarDireccionModal = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!formEtiqueta.trim()) {
+      toast.error("Ingresa un nombre o etiqueta (ej. Casa, Trabajo, Mamá)");
+      return;
+    }
+    if (!formDireccionExacta.trim()) {
+      toast.error("Ingresa la dirección exacta (calle, número o manzana/lote)");
+      return;
+    }
+    if (!formDistrito.trim()) {
+      toast.error("Ingresa el distrito");
+      return;
+    }
+
+    if (direccionEnEdicion) {
+      actualizarDireccionCliente(
+        direccionEnEdicion.id,
+        {
+          etiqueta: formEtiqueta.trim(),
+          tipoIcono: formTipoIcono,
+          direccionExacta: formDireccionExacta.trim(),
+          distrito: formDistrito.trim(),
+          ciudad: formCiudad.trim() || "Lima",
+          departamento: formDepartamento.trim() || "Lima",
+          referencia: formReferencia.trim(),
+          esPredeterminada: formEsPredeterminada,
+          latitud: direccionEnEdicion.latitud || latitud,
+          longitud: direccionEnEdicion.longitud || longitud,
+          telefono: telefonoYape,
+        },
+        usuario?.publicId
+      );
+      toast.success(`Dirección "${formEtiqueta}" actualizada`);
+    } else {
+      const creada = agregarDireccionCliente(
+        {
+          etiqueta: formEtiqueta.trim(),
+          tipoIcono: formTipoIcono,
+          direccionExacta: formDireccionExacta.trim(),
+          distrito: formDistrito.trim(),
+          ciudad: formCiudad.trim() || "Lima",
+          departamento: formDepartamento.trim() || "Lima",
+          referencia: formReferencia.trim(),
+          esPredeterminada: formEsPredeterminada,
+          latitud: latitud,
+          longitud: longitud,
+          telefono: telefonoYape,
+        },
+        usuario?.publicId
+      );
+      setDireccionSeleccionadaId(creada.id);
+      toast.success(`¡Dirección "${formEtiqueta}" guardada exitosamente!`);
+    }
+
+    const actualizadas = obtenerMisDirecciones(usuario?.publicId);
+    setMisDirecciones(actualizadas);
+    setModalGuardarDireccionAbierto(false);
+    setDireccionEnEdicion(null);
+  };
+
+  const handleEliminarDireccion = (id: string, etiqueta: string) => {
+    eliminarDireccionCliente(id, usuario?.publicId);
+    const actualizadas = obtenerMisDirecciones(usuario?.publicId);
+    setMisDirecciones(actualizadas);
+    if (direccionSeleccionadaId === id) {
+      if (actualizadas.length > 0) {
+        handleSeleccionarDireccionGuardada(actualizadas[0]);
+      } else {
+        setDireccionSeleccionadaId(null);
+      }
+    }
+    toast.success(`Dirección "${etiqueta}" eliminada`);
+  };
+
+  const handleEstablecerPredeterminada = (id: string, etiqueta: string) => {
+    establecerDireccionPredeterminada(id, usuario?.publicId);
+    const actualizadas = obtenerMisDirecciones(usuario?.publicId);
+    setMisDirecciones(actualizadas);
+    toast.success(`"${etiqueta}" fijada como predeterminada`);
+  };
+
   const calcularSubtotal = () => {
     return Object.entries(carrito).reduce((total, [publicId, cant]) => {
       const prod = catalogo.find((p) => p.publicId === publicId);
@@ -694,96 +930,82 @@ export default function TiendaClienteGasPage() {
 
   return (
     <div className="w-full py-2.5 px-3 sm:px-4 space-y-3 text-xs text-slate-800">
-      {/* Barra Superior Compacta */}
-      <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 rounded-xl px-3.5 py-2 text-white shadow-xs flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0">
-            <Flame className="w-4 h-4 text-amber-200" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xs sm:text-sm font-black tracking-tight leading-none">
-                RappiGas • Tienda Oficial
+      {/* Barra Superior Unificada y Limpia */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 px-3.5 py-2.5 shadow-xs flex flex-wrap items-center justify-between gap-2.5">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center shadow-xs">
+              <Flame className="w-4 h-4 text-amber-200" />
+            </div>
+            <div className="leading-tight">
+              <h1 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                RappiGas
+                <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.2 rounded border border-orange-200">
+                  Tienda
+                </span>
               </h1>
-              <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/20">
-                <ShieldCheck className="w-3 h-3 text-emerald-300" />
-                Osinergmin Garantizado
-              </span>
             </div>
-            <p className="text-[10px] text-orange-100 hidden sm:block mt-0.5">
-              Balones certificados con entrega express a tu puerta
-            </p>
           </div>
+
+          <div className="h-6 w-px bg-slate-200 hidden sm:block" />
+
+          {/* Selector de Dirección Activa Clickable */}
+          <button
+            type="button"
+            onClick={() => setModalMisDireccionesAbierto(true)}
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-orange-50/70 border border-slate-200/80 hover:border-orange-300 text-left transition cursor-pointer group min-w-0 max-w-full sm:max-w-md"
+            title="Haz clic para cambiar dirección de entrega"
+          >
+            <MapPin className="w-3.5 h-3.5 text-orange-600 shrink-0 group-hover:scale-110 transition-transform" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 leading-none flex-wrap">
+                <span className="text-[9px] font-extrabold uppercase text-slate-400">Entregar en:</span>
+                <span className="text-[10px] font-black text-slate-800">
+                  {misDirecciones.find((d) => d.id === direccionSeleccionadaId)?.etiqueta || "Dirección Activa"}
+                </span>
+                <span className="text-[10px] font-bold text-orange-700 bg-orange-100/90 px-1.5 py-0.2 rounded border border-orange-200">
+                  {distritoDireccion || "Los Olivos"}, {ciudadDireccion || departamentoDireccion || "Lima"}
+                </span>
+                <span className="text-[9px] text-orange-600 font-bold ml-0.5 group-hover:underline">
+                  [Cambiar]
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-slate-600 truncate mt-0.5">
+                {direccionExacta || direccion || "Av. Antúnez de Mayolo 1234"}
+              </p>
+            </div>
+          </button>
         </div>
 
-        <div className="flex items-center gap-2 text-[11px] font-semibold">
-          {/* Ubicación Actual Compacta */}
-          <div className="flex items-center gap-1.5 bg-black/20 border border-white/20 px-2.5 py-1 rounded-xl text-[10px] text-white font-bold">
-            <MapPin className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-            <span className="truncate max-w-[130px] sm:max-w-[200px]">
-              {distritoDireccion ? `${distritoDireccion}, ${departamentoDireccion}` : "Los Olivos, Lima"}
-            </span>
-          </div>
-
-          {/* Badge Destacado de Puntos RappiGas */}
-          <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-300 text-amber-950 px-3 py-1 rounded-xl shadow-md border-2 border-white/70 font-black shrink-0 hover:scale-105 transition cursor-default">
-            <Sparkles className="w-4 h-4 text-amber-900 fill-amber-900 animate-pulse shrink-0" />
-            <div className="flex items-center gap-1 leading-none">
-              <span className="text-[10px] uppercase tracking-wider font-extrabold text-amber-900">Puntos:</span>
-              <span className="text-xs font-black text-amber-950 bg-white/80 px-1.5 py-0.5 rounded shadow-2xs font-mono">
-                {billetera ? Number(billetera.saldoPuntos).toLocaleString() : "0"} PTS
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tarjeta Informativa Destacada: Mi Ubicación o Dirección Actual */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-3 sm:p-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-start gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 shadow-2xs mt-0.5 border border-orange-200">
-            <MapPin className="w-5 h-5 text-orange-600" />
-          </div>
-          <div className="min-w-0 space-y-0.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-orange-700 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse" />
-                Mi Ubicación Actual de Entrega
-              </span>
-              <span className="text-[10px] font-mono text-slate-400">
-                GPS: {latitud.toFixed(4)}, {longitud.toFixed(4)}
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm font-black text-slate-900 truncate">
-              {direccion || `${direccionExacta}, ${distritoDireccion}, ${ciudadDireccion}`}
-            </p>
-            <div className="flex items-center gap-2 text-[10px] text-slate-500 flex-wrap">
-              <span><strong>Distrito:</strong> {distritoDireccion}</span>
-              <span>•</span>
-              <span><strong>Provincia/Ciudad:</strong> {ciudadDireccion}</span>
-              <span>•</span>
-              <span><strong>Departamento:</strong> {departamentoDireccion}</span>
-              {referencia && (
-                <>
-                  <span>•</span>
-                  <span className="italic text-slate-400 truncate max-w-xs">Ref: {referencia}</span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Acciones Rápidas sobre la Ubicación */}
-        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+        {/* Acciones Rápidas y Puntos */}
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
             onClick={handleUsarGps}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-bold text-xs transition cursor-pointer shadow-2xs"
-            title="Detectar por GPS actual"
+            className="p-1.5 rounded-xl bg-slate-50 text-slate-600 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 transition cursor-pointer"
+            title="Detectar ubicación GPS"
           >
-            <Navigation className="w-3.5 h-3.5 text-blue-600" />
-            <span>Actualizar GPS</span>
+            <Navigation className="w-3.5 h-3.5" />
           </button>
+
+          <Link
+            href="/cliente/direcciones"
+            className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs transition"
+            title="Administrar Mis Direcciones"
+          >
+            <Bookmark className="w-3 h-3 text-slate-500" />
+            <span>Direcciones</span>
+          </Link>
+
+          {/* Badge Puntos RappiGas */}
+          <Link
+            href="/cliente/puntos"
+            className="flex items-center gap-1.5 bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-300 text-amber-950 px-2.5 py-1 rounded-xl shadow-2xs border border-amber-300 font-black text-[11px] hover:scale-105 transition"
+            title="Ver mis RappiPuntos"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-900 fill-amber-900 animate-pulse shrink-0" />
+            <span className="font-mono">{billetera ? Number(billetera.saldoPuntos).toLocaleString() : "0"} PTS</span>
+          </Link>
         </div>
       </div>
 
@@ -1533,51 +1755,60 @@ export default function TiendaClienteGasPage() {
         </div>
 
 
-                {/* Columna Derecha: Checkout y Resumen Ultra Compacto */}
+                {/* Columna Derecha: Checkout y Resumen con Color Distintivo */}
         <div className="space-y-3">
-          <div className="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-xs space-y-2.5 sticky top-14">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h2 className="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-1.5">
-                <ShoppingBag className="w-4 h-4 text-orange-600" />
-                Resumen del Pedido
-              </h2>
-              <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
+          <div className="bg-gradient-to-b from-orange-50/70 via-amber-50/30 to-white rounded-2xl border-2 border-orange-300/80 shadow-md p-3.5 space-y-2.5 sticky top-[72px] max-h-[calc(100vh-85px)] overflow-y-auto">
+            {/* Header Distintivo de Resumen con Color Propio */}
+            <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 -mx-3.5 -mt-3.5 p-3 rounded-t-2xl text-white flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0">
+                  <ShoppingBag className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h2 className="font-black text-white text-xs sm:text-sm leading-tight flex items-center gap-1.5">
+                    Resumen del Pedido
+                  </h2>
+                  <p className="text-[10px] text-orange-100 leading-none mt-0.5">
+                    Despacho Exprés RappiGas
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-black text-amber-950 bg-amber-300 px-2 py-0.5 rounded-lg shadow-xs font-mono">
                 {Object.values(carrito).reduce((a, b) => a + b, 0)} balones
               </span>
             </div>
 
-            {/* Distribuidora en Checkout: Con opción de limpiar y alerta de sin cobertura */}
+            {/* Distribuidora en Checkout Compacta */}
             {empresaSeleccionada ? (
               <div
-                className={`p-2 rounded-xl text-[11px] border transition ${
+                className={`p-2 rounded-xl text-[11px] border transition shadow-2xs ${
                   distribuidoraSinCobertura
                     ? "bg-red-50/70 border-red-300"
-                    : "bg-slate-50 border-slate-200"
+                    : "bg-white border-orange-200/90"
                 }`}
               >
-                <div className="flex items-start justify-between gap-1">
-                  <div className="min-w-0">
-                    <span className="text-[9px] font-bold uppercase text-slate-400 block">
-                      Distribuidora Despachadora:
-                    </span>
-                    <p className="font-bold text-slate-900 truncate">
+                <div className="flex items-center justify-between gap-1">
+                  <div className="min-w-0 flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                    <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">Planta:</span>
+                    <span className="font-bold text-slate-900 truncate">
                       {empresaSeleccionada.nombreComercial}
-                    </p>
+                    </span>
                   </div>
                   <button
                     type="button"
                     onClick={handleLimpiarDistribuidora}
-                    className="text-[10px] font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-1.5 py-0.5 rounded transition cursor-pointer shrink-0"
+                    className="text-[10px] font-bold text-slate-400 hover:text-red-600 transition cursor-pointer shrink-0"
                     title="Quitar esta distribuidora"
                   >
-                    ✕ Quitar
+                    ✕
                   </button>
                 </div>
 
                 {distribuidoraActiva && (
                   <div className="mt-1">
                     {distribuidoraSinCobertura ? (
-                      <div className="flex items-center gap-1 text-[10px] text-red-700 font-bold bg-red-100/70 px-1.5 py-0.5 rounded mt-0.5">
+                      <div className="flex items-center gap-1 text-[10px] text-red-700 font-bold bg-red-100/70 px-1.5 py-0.5 rounded">
                         <AlertCircle className="w-3 h-3 text-red-600 shrink-0" />
                         <span>Sin cobertura en tu zona (A {distribuidoraActiva.distanciaKm} km)</span>
                       </div>
@@ -1590,23 +1821,44 @@ export default function TiendaClienteGasPage() {
                 )}
               </div>
             ) : (
-              <div className="p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-[11px]">
-                <span className="text-[9px] font-bold uppercase text-amber-700 block">
-                  Distribuidora Despachadora:
-                </span>
-                <p className="font-bold text-amber-950 mt-0.5">⚠️ Ninguna seleccionada</p>
-                <p className="text-[10px] text-amber-700 mt-0.5">
-                  Haz clic en una distribuidora en el mapa para ver sus balones y despachar tu pedido.
-                </p>
+              <div className="p-2 bg-amber-50/80 border border-amber-200 rounded-xl text-[11px] flex items-center justify-between gap-2 shadow-2xs">
+                <div className="min-w-0">
+                  <span className="text-[9px] font-bold uppercase text-amber-700 block">
+                    Distribuidora:
+                  </span>
+                  <p className="font-bold text-amber-950 truncate">⚠️ Selecciona una en el mapa</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setVistaPrincipal("mapa")}
+                  className="text-[10px] font-bold text-orange-600 hover:underline shrink-0"
+                >
+                  Ver Mapa
+                </button>
               </div>
             )}
 
-            {/* Items seleccionados en el carrito con imagen miniatura */}
+            {/* Items seleccionados en el carrito con imagen miniatura, control de cantidad y opción de eliminar */}
             {Object.keys(carrito).length > 0 && (
-              <div className="space-y-1.5 py-1.5 border-t border-slate-100 max-h-[140px] overflow-y-auto pr-1">
-                <span className="text-[9px] font-bold text-slate-500 uppercase block">
-                  Balones en tu pedido:
-                </span>
+              <div className="space-y-1.5 py-1.5 border-t border-orange-200/70 max-h-[190px] overflow-y-auto pr-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-bold text-orange-900 uppercase">
+                    Balones en tu pedido ({Object.values(carrito).reduce((a, b) => a + b, 0)}):
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCarrito({});
+                      vaciarCarritoGas();
+                      setCuponAplicado(null);
+                    }}
+                    className="text-[10px] text-red-600 hover:text-red-800 hover:underline font-bold transition cursor-pointer"
+                    title="Vaciar todos los balones del pedido"
+                  >
+                    Vaciar todo
+                  </button>
+                </div>
+
                 {Object.entries(carrito).map(([prodId, cant]) => {
                   const prod = catalogo.find((p) => p.publicId === prodId);
                   if (!prod) return null;
@@ -1614,120 +1866,135 @@ export default function TiendaClienteGasPage() {
                   return (
                     <div
                       key={prodId}
-                      className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-slate-50/80 border border-slate-100 text-[11px]"
+                      className="p-1.5 rounded-xl bg-white border border-orange-200/80 shadow-2xs space-y-1 text-[11px]"
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-8 h-8 rounded-md bg-white border border-slate-200 p-0.5 flex items-center justify-center shrink-0">
-                          <img
-                            src={imgItem}
-                            alt={prod.nombre}
-                            className="h-7 w-auto object-contain"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src =
-                                "/products/balon-10kg-premium.svg";
-                            }}
-                          />
+                      <div className="flex items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-orange-50/50 border border-orange-200/60 p-0.5 flex items-center justify-center shrink-0">
+                            <img
+                              src={imgItem}
+                              alt={prod.nombre}
+                              className="h-7 w-auto object-contain"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src =
+                                  "/products/balon-10kg-premium.svg";
+                              }}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-900 truncate text-[11px] leading-tight">
+                              {prod.nombre}
+                            </p>
+                            <p className="text-[10px] text-slate-500 font-mono">
+                              S/ {prod.precio.toFixed(2)} c/u
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-bold text-slate-900 truncate text-[11px]">
-                            {prod.nombre}
-                          </p>
-                          <p className="text-[10px] text-slate-500">
-                            {cant} x S/ {prod.precio.toFixed(2)}
-                          </p>
-                        </div>
+
+                        {/* Botón Eliminar Balón */}
+                        <button
+                          type="button"
+                          onClick={() => modificarCantidad(prodId, -cant)}
+                          className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition cursor-pointer shrink-0"
+                          title="Eliminar este balón del pedido"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                      <span className="font-bold text-slate-900 text-[11px] shrink-0">
-                        S/ {(prod.precio * cant).toFixed(2)}
-                      </span>
+
+                      {/* Fila de Cantidad (- / cant / +) y Subtotal */}
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                        <div className="flex items-center gap-1.5 bg-slate-50 px-1.5 py-0.5 rounded-lg border border-slate-200">
+                          <button
+                            type="button"
+                            onClick={() => modificarCantidad(prodId, -1)}
+                            className="w-4 h-4 rounded bg-white shadow-2xs flex items-center justify-center text-slate-700 hover:bg-slate-200 font-bold cursor-pointer"
+                            title="Disminuir cantidad"
+                          >
+                            <Minus className="w-2.5 h-2.5" />
+                          </button>
+                          <span className="font-bold text-xs w-4 text-center text-slate-900 font-mono">
+                            {cant}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => modificarCantidad(prodId, 1)}
+                            className="w-4 h-4 rounded bg-orange-600 text-white shadow-2xs flex items-center justify-center hover:bg-orange-700 font-bold cursor-pointer"
+                            title="Aumentar cantidad"
+                          >
+                            <Plus className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+
+                        <span className="font-bold text-slate-900 text-xs font-mono">
+                          S/ {(prod.precio * cant).toFixed(2)}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             )}
 
-            {/* Dirección de Entrega Detallada (Calle, Distrito, Ciudad, Departamento) */}
-            <div className="space-y-1.5 pt-1 border-t border-slate-100">
-              <label className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3 text-orange-500" />
-                  Dirección de Entrega
-                </span>
-                <span className="text-[9px] text-slate-400 font-normal">Punto de destino</span>
-              </label>
-
-              {/* Calle / Avenida y Número */}
-              <input
-                type="text"
-                value={direccionExacta}
-                onChange={(e) => {
-                  setDireccionExacta(e.target.value);
-                  setDireccion(`${e.target.value}, ${distritoDireccion}`);
-                }}
-                placeholder="Calle / Avenida y N° (ej. Av. Antúnez de Mayolo 1234)..."
-                className="w-full text-xs px-2.5 py-1 bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-orange-500"
-              />
-
-              {/* Distrito, Ciudad y Departamento */}
-              <div className="grid grid-cols-3 gap-1">
-                <div>
-                  <label className="text-[9px] font-bold uppercase text-slate-400 block mb-0.5">
-                    Distrito
-                  </label>
-                  <input
-                    type="text"
-                    value={distritoDireccion}
-                    onChange={(e) => setDistritoDireccion(e.target.value)}
-                    placeholder="Distrito..."
-                    className="w-full text-[10px] font-semibold px-1.5 py-1 bg-slate-50 border border-slate-200 rounded-md focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-orange-500 text-slate-800"
-                  />
+            {/* Destino de Entrega Compacto */}
+            <div className="space-y-1 pt-1 border-t border-orange-200/70">
+              <div className="p-2 rounded-xl bg-white border border-orange-200/90 flex items-center justify-between gap-2 shadow-2xs">
+                <div className="min-w-0 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold text-slate-900 truncate">
+                      {misDirecciones.find((d) => d.id === direccionSeleccionadaId)?.etiqueta || "Entregar en"}:{" "}
+                      <span className="font-medium text-slate-700">{direccionExacta || "Av. Antúnez de Mayolo 1234"}</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">
+                      📍 {distritoDireccion || "Los Olivos"}, {ciudadDireccion || departamentoDireccion || "Lima"}
+                      {referencia ? ` • Ref: ${referencia}` : ""}
+                    </p>
+                  </div>
                 </div>
-
-                <div>
-                  <label className="text-[9px] font-bold uppercase text-slate-400 block mb-0.5">
-                    Ciudad
-                  </label>
-                  <input
-                    type="text"
-                    value={ciudadDireccion}
-                    onChange={(e) => setCiudadDireccion(e.target.value)}
-                    placeholder="Ciudad..."
-                    className="w-full text-[10px] font-semibold px-1.5 py-1 bg-slate-50 border border-slate-200 rounded-md focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-orange-500 text-slate-800"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[9px] font-bold uppercase text-slate-400 block mb-0.5">
-                    Departamento
-                  </label>
-                  <input
-                    type="text"
-                    value={departamentoDireccion}
-                    onChange={(e) => setDepartamentoDireccion(e.target.value)}
-                    placeholder="Departamento..."
-                    className="w-full text-[10px] font-semibold px-1.5 py-1 bg-slate-50 border border-slate-200 rounded-md focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-orange-500 text-slate-800"
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setModalMisDireccionesAbierto(true)}
+                  className="px-2 py-0.5 rounded-md bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 text-[10px] font-bold shrink-0 transition cursor-pointer"
+                >
+                  Cambiar
+                </button>
               </div>
 
-              {/* Referencia */}
-              <input
-                type="text"
-                value={referencia}
-                onChange={(e) => setReferencia(e.target.value)}
-                placeholder="Referencia (piso, dpto, reja negra, etc.)..."
-                className="w-full text-[11px] px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-slate-600 focus:outline-hidden focus:ring-1 focus:ring-orange-500"
-              />
+              {/* Selector Rápido de 1-Clic de Direcciones */}
+              {misDirecciones.length > 1 && (
+                <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
+                  {misDirecciones.map((dir) => {
+                    const esActiva = direccionSeleccionadaId === dir.id;
+                    return (
+                      <button
+                        key={dir.id}
+                        type="button"
+                        onClick={() => handleSeleccionarDireccionGuardada(dir)}
+                        className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border transition cursor-pointer ${
+                          esActiva
+                            ? "bg-orange-500 text-white border-orange-600 shadow-2xs"
+                            : "bg-white hover:bg-orange-50 text-slate-700 border-orange-200/80"
+                        }`}
+                        title={dir.direccionExacta}
+                      >
+                        {renderIconoTipo(dir.tipoIcono, "w-2.5 h-2.5")}
+                        <span>{dir.etiqueta}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Cupón Promocional Compacto */}
-            <div className="space-y-1 pt-1 border-t border-slate-100">
+            <div className="space-y-1 pt-1 border-t border-orange-200/70">
               <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700">
                 <span className="flex items-center gap-1">
                   <Tag className="w-3 h-3 text-purple-600" />
                   Cupón
                 </span>
-                <span className="text-[9px] text-purple-600">Usa: GASPRIMERO</span>
+                <span className="text-[9px] text-purple-600 font-bold">Usa: GASPRIMERO</span>
               </div>
               <div className="flex gap-1">
                 <input
@@ -1735,13 +2002,13 @@ export default function TiendaClienteGasPage() {
                   value={codigoCupon}
                   onChange={(e) => setCodigoCupon(e.target.value)}
                   placeholder="Código..."
-                  className="flex-1 text-xs px-2 py-1 border border-slate-200 rounded-lg uppercase font-mono font-bold focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                  className="flex-1 text-xs px-2 py-1 bg-white border border-slate-200 rounded-lg uppercase font-mono font-bold focus:outline-hidden focus:ring-1 focus:ring-purple-500 shadow-2xs"
                 />
                 <button
                   type="button"
                   onClick={handleValidarCupon}
                   disabled={validandoCupon}
-                  className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-bold rounded-lg transition disabled:opacity-50 cursor-pointer"
+                  className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-bold rounded-lg transition disabled:opacity-50 cursor-pointer shadow-2xs"
                 >
                   {validandoCupon ? "..." : "Aplicar"}
                 </button>
@@ -1750,99 +2017,156 @@ export default function TiendaClienteGasPage() {
               {cuponAplicado && (
                 <div className="p-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-[10px] text-emerald-800 flex items-center justify-between">
                   <span>{cuponAplicado.codigo} aplicado</span>
-                  <span className="font-bold text-emerald-700">
+                  <span className="font-bold text-emerald-700 font-mono">
                     - S/ {cuponAplicado.descuento.toFixed(2)}
                   </span>
                 </div>
               )}
             </div>
 
-            {/* Método de Pago en Cuadrícula Compacta */}
-            <div className="space-y-1 pt-1 border-t border-slate-100">
-              <label className="text-[11px] font-bold text-slate-700 block">
-                Método de Pago
-              </label>
-              <div className="grid grid-cols-4 gap-1 text-[10px]">
-                <button
-                  type="button"
-                  onClick={() => setMetodoPago("YAPE")}
-                  className={`py-1.5 px-1 rounded-lg border flex flex-col items-center gap-0.5 font-bold transition cursor-pointer ${
-                    metodoPago === "YAPE"
-                      ? "border-purple-500 bg-purple-50 text-purple-900 ring-1 ring-purple-400"
-                      : "border-slate-200 hover:bg-slate-50 text-slate-700"
-                  }`}
-                >
-                  <QrCode className="w-3.5 h-3.5 text-purple-600" />
-                  Yape
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setMetodoPago("EFECTIVO")}
-                  className={`py-1.5 px-1 rounded-lg border flex flex-col items-center gap-0.5 font-bold transition cursor-pointer ${
-                    metodoPago === "EFECTIVO"
-                      ? "border-amber-500 bg-amber-50 text-amber-900 ring-1 ring-amber-400"
-                      : "border-slate-200 hover:bg-slate-50 text-slate-700"
-                  }`}
-                >
-                  <Banknote className="w-3.5 h-3.5 text-amber-600" />
-                  Efectivo
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setMetodoPago("PLIN")}
-                  className={`py-1.5 px-1 rounded-lg border flex flex-col items-center gap-0.5 font-bold transition cursor-pointer ${
-                    metodoPago === "PLIN"
-                      ? "border-cyan-500 bg-cyan-50 text-cyan-900 ring-1 ring-cyan-400"
-                      : "border-slate-200 hover:bg-slate-50 text-slate-700"
-                  }`}
-                >
-                  <Phone className="w-3.5 h-3.5 text-cyan-600" />
-                  Plin
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setMetodoPago("TARJETA")}
-                  className={`py-1.5 px-1 rounded-lg border flex flex-col items-center gap-0.5 font-bold transition cursor-pointer ${
-                    metodoPago === "TARJETA"
-                      ? "border-blue-500 bg-blue-50 text-blue-900 ring-1 ring-blue-400"
-                      : "border-slate-200 hover:bg-slate-50 text-slate-700"
-                  }`}
-                >
-                  <CreditCard className="w-3.5 h-3.5 text-blue-600" />
-                  Tarjeta
-                </button>
+            {/* Método de Pago Dinámico según Distribuidora */}
+            <div className="space-y-1 pt-1 border-t border-orange-200/70">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-bold text-slate-500 uppercase block">
+                  Método de Pago
+                </label>
+                {empresaSeleccionada && (
+                  <span className="text-[9px] font-bold text-orange-700 bg-orange-100/80 px-1.5 py-0.2 rounded border border-orange-200">
+                    {metodosPagoDistribuidor.length} aceptado{metodosPagoDistribuidor.length > 1 ? "s" : ""}
+                  </span>
+                )}
               </div>
 
-              {metodoPago === "YAPE" && (
-                <div className="p-1.5 bg-purple-50 border border-purple-200 rounded-lg text-[10px] flex items-center justify-between">
-                  <span className="font-bold text-purple-900">Yape: 988-777-666</span>
-                  <span className="text-purple-600 text-[9px]">Validación automática</span>
+              {metodosPagoDistribuidor.length === 0 ? (
+                <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-[10px] text-amber-800">
+                  Selecciona una distribuidora en el mapa para ver sus métodos de pago.
+                </div>
+              ) : (
+                <div
+                  className={`grid gap-1 text-[10px] ${
+                    metodosPagoDistribuidor.length === 1
+                      ? "grid-cols-1"
+                      : metodosPagoDistribuidor.length === 2
+                      ? "grid-cols-2"
+                      : metodosPagoDistribuidor.length === 3
+                      ? "grid-cols-3"
+                      : "grid-cols-4"
+                  }`}
+                >
+                  {metodosPagoDistribuidor.includes("YAPE") && (
+                    <button
+                      type="button"
+                      onClick={() => setMetodoPago("YAPE")}
+                      className={`py-1 px-1 rounded-lg border flex items-center justify-center gap-1 font-bold transition cursor-pointer shadow-2xs ${
+                        metodoPago === "YAPE"
+                          ? "border-purple-500 bg-purple-50 text-purple-900 ring-1 ring-purple-400"
+                          : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                      }`}
+                    >
+                      <QrCode className="w-3 h-3 text-purple-600" />
+                      <span>Yape</span>
+                    </button>
+                  )}
+
+                  {metodosPagoDistribuidor.includes("EFECTIVO") && (
+                    <button
+                      type="button"
+                      onClick={() => setMetodoPago("EFECTIVO")}
+                      className={`py-1 px-1 rounded-lg border flex items-center justify-center gap-1 font-bold transition cursor-pointer shadow-2xs ${
+                        metodoPago === "EFECTIVO"
+                          ? "border-amber-500 bg-amber-50 text-amber-900 ring-1 ring-amber-400"
+                          : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                      }`}
+                    >
+                      <Banknote className="w-3 h-3 text-amber-600" />
+                      <span>Efectivo</span>
+                    </button>
+                  )}
+
+                  {metodosPagoDistribuidor.includes("PLIN") && (
+                    <button
+                      type="button"
+                      onClick={() => setMetodoPago("PLIN")}
+                      className={`py-1 px-1 rounded-lg border flex items-center justify-center gap-1 font-bold transition cursor-pointer shadow-2xs ${
+                        metodoPago === "PLIN"
+                          ? "border-cyan-500 bg-cyan-50 text-cyan-900 ring-1 ring-cyan-400"
+                          : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                      }`}
+                    >
+                      <Phone className="w-3 h-3 text-cyan-600" />
+                      <span>Plin</span>
+                    </button>
+                  )}
+
+                  {metodosPagoDistribuidor.includes("TARJETA") && (
+                    <button
+                      type="button"
+                      onClick={() => setMetodoPago("TARJETA")}
+                      className={`py-1 px-1 rounded-lg border flex items-center justify-center gap-1 font-bold transition cursor-pointer shadow-2xs ${
+                        metodoPago === "TARJETA"
+                          ? "border-blue-500 bg-blue-50 text-blue-900 ring-1 ring-blue-400"
+                          : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                      }`}
+                    >
+                      <CreditCard className="w-3 h-3 text-blue-600" />
+                      <span>Tarjeta POS</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {metodoPago === "YAPE" && metodosPagoDistribuidor.includes("YAPE") && (
+                <div className="p-1 bg-purple-50 border border-purple-200 rounded-lg text-[10px] flex items-center justify-between">
+                  <span className="font-bold text-purple-900">
+                    Yape {empresaSeleccionada?.nombreComercial ? `(${empresaSeleccionada.nombreComercial.split(" ")[0]})` : ""}: {empresaSeleccionada?.telefono || "988-777-666"}
+                  </span>
+                  <span className="text-purple-600 text-[9px]">Validación directa</span>
+                </div>
+              )}
+
+              {metodoPago === "PLIN" && metodosPagoDistribuidor.includes("PLIN") && (
+                <div className="p-1 bg-cyan-50 border border-cyan-200 rounded-lg text-[10px] flex items-center justify-between">
+                  <span className="font-bold text-cyan-900">
+                    Plin: {empresaSeleccionada?.telefono || "988-777-666"}
+                  </span>
+                  <span className="text-cyan-600 text-[9px]">Pago móvil</span>
+                </div>
+              )}
+
+              {metodoPago === "TARJETA" && metodosPagoDistribuidor.includes("TARJETA") && (
+                <div className="p-1 bg-blue-50 border border-blue-200 rounded-lg text-[10px] flex items-center justify-between">
+                  <span className="font-bold text-blue-900">El chofer llevará POS para cobro</span>
+                  <span className="text-blue-600 text-[9px]">Visa/Master</span>
+                </div>
+              )}
+
+              {metodoPago === "EFECTIVO" && metodosPagoDistribuidor.includes("EFECTIVO") && (
+                <div className="p-1 bg-amber-50 border border-amber-200 rounded-lg text-[10px] flex items-center justify-between">
+                  <span className="font-bold text-amber-900">Efectivo contra entrega en puerta</span>
+                  <span className="text-amber-700 text-[9px]">Con sencillo/cambio</span>
                 </div>
               )}
             </div>
 
-            {/* Totales Compactos */}
-            <div className="space-y-1 pt-1.5 border-t border-slate-100 text-[11px]">
-              <div className="flex justify-between text-slate-500">
+            {/* Totales Compactos Destacados */}
+            <div className="space-y-1 pt-1.5 border-t border-orange-200/80 text-[11px] bg-white/95 p-2.5 rounded-xl border border-orange-200/90 shadow-2xs">
+              <div className="flex justify-between text-slate-600">
                 <span>Subtotal:</span>
-                <span>S/ {subtotal.toFixed(2)}</span>
+                <span className="font-medium text-slate-900">S/ {subtotal.toFixed(2)}</span>
               </div>
               {descuento > 0 && (
-                <div className="flex justify-between text-emerald-600 font-semibold">
+                <div className="flex justify-between text-emerald-700 font-bold">
                   <span>Descuento:</span>
                   <span>- S/ {descuento.toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-slate-500">
+              <div className="flex justify-between text-slate-600">
                 <span>Envío:</span>
-                <span className="font-bold text-emerald-600 uppercase text-[9px]">Gratis</span>
+                <span className="font-bold text-emerald-700 uppercase text-[9px] bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Gratis</span>
               </div>
-              <div className="flex justify-between text-xs sm:text-sm font-black text-slate-900 pt-1 border-t border-slate-100">
-                <span>Total:</span>
-                <span className="text-orange-600">S/ {totalPagar.toFixed(2)}</span>
+              <div className="flex justify-between text-xs sm:text-sm font-black text-slate-900 pt-1.5 border-t border-orange-200/60 items-baseline">
+                <span>Total a Pagar:</span>
+                <span className="text-orange-600 font-black text-base font-mono">S/ {totalPagar.toFixed(2)}</span>
               </div>
             </div>
 
@@ -1863,69 +2187,58 @@ export default function TiendaClienteGasPage() {
               </div>
             )}
 
-            {/* Botones de Navegación del Flujo de Compra */}
-            <div className="space-y-2 pt-1">
-              <Link href="/cliente/carrito" className="block w-full">
-                <button
-                  type="button"
-                  disabled={subtotal <= 0}
-                  className={`w-full py-2.5 px-3 font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 ${
-                    subtotal <= 0
-                      ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                      : "bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
-                  }`}
-                >
-                  <ShoppingBag className="w-3.5 h-3.5" />
-                  <span>
-                    Ver Carrito ({Object.values(carrito).reduce((a, b) => a + b, 0)}) • S/ {totalPagar.toFixed(2)}
-                  </span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </Link>
+            {/* Acción Principal Hero + Enlaces Secundarios */}
+            <div className="space-y-1.5 pt-1">
+              <button
+                type="button"
+                onClick={handleConfirmarPedido}
+                disabled={
+                  isPending ||
+                  subtotal <= 0 ||
+                  distribuidoraSinCobertura ||
+                  !empresaSeleccionada
+                }
+                className={`w-full py-2.5 px-3 font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 ${
+                  distribuidoraSinCobertura || !empresaSeleccionada || isPending || subtotal <= 0
+                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                    : "bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
+                }`}
+              >
+                <Flame className="w-4 h-4 text-amber-200" />
+                <span>
+                  {isPending
+                    ? "Procesando pedido..."
+                    : subtotal <= 0
+                    ? "Agrega balones al pedido"
+                    : `Pedir Exprés Ahora • S/ ${totalPagar.toFixed(2)}`}
+                </span>
+              </button>
 
-              <div className="grid grid-cols-2 gap-1.5">
-                <Link href="/cliente/checkout" className="block w-full">
-                  <button
-                    type="button"
-                    disabled={subtotal <= 0}
-                    className={`w-full py-2 px-2 font-bold text-[11px] rounded-xl border transition flex items-center justify-center gap-1 ${
-                      subtotal <= 0
-                        ? "border-slate-200 text-slate-400 cursor-not-allowed"
-                        : "border-orange-300 text-orange-700 hover:bg-orange-50 cursor-pointer"
-                    }`}
-                  >
-                    <span>Ir a Checkout</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
+              <div className="flex items-center justify-center gap-3 text-[11px] text-slate-500 pt-0.5">
+                <Link
+                  href="/cliente/carrito"
+                  className="font-bold text-slate-600 hover:text-orange-600 flex items-center gap-1"
+                >
+                  <ShoppingBag className="w-3 h-3" />
+                  Ver Carrito Completo
                 </Link>
-
-                <button
-                  type="button"
-                  onClick={handleConfirmarPedido}
-                  disabled={
-                    isPending ||
-                    subtotal <= 0 ||
-                    distribuidoraSinCobertura ||
-                    !empresaSeleccionada
-                  }
-                  className={`w-full py-2 px-2 font-bold text-[11px] rounded-xl transition flex items-center justify-center gap-1 ${
-                    distribuidoraSinCobertura || !empresaSeleccionada || isPending || subtotal <= 0
-                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                      : "bg-slate-900 hover:bg-slate-800 text-white cursor-pointer"
-                  }`}
+                <span>•</span>
+                <Link
+                  href="/cliente/checkout"
+                  className="font-bold text-slate-600 hover:text-orange-600 flex items-center gap-1"
                 >
-                  <Flame className="w-3 h-3 text-amber-300" />
-                  <span>{isPending ? "Pidiendo..." : "Pedir Exprés"}</span>
-                </button>
+                  Checkout Detallado
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Barra Flotante Inferior de Carrito (visible al navegar productos) */}
+      {/* Barra Flotante Inferior de Carrito (visible solo en móviles/tablets para no tapar el catálogo en escritorio) */}
       {Object.keys(carrito).length > 0 && subtotal > 0 && (
-        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 z-40 animate-in slide-in-from-bottom-5">
+        <div className="lg:hidden fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 z-40 animate-in slide-in-from-bottom-5">
           <div className="bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-2xl border border-slate-800 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center shrink-0 shadow-xs">
@@ -1952,6 +2265,371 @@ export default function TiendaClienteGasPage() {
                 </Button>
               </Link>
             </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL 1: Mis Direcciones Guardadas */}
+      {modalMisDireccionesAbierto && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-orange-50 via-amber-50 to-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-orange-500 text-white flex items-center justify-center shadow-md">
+                  <Bookmark className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 leading-tight">
+                    Mis Direcciones Guardadas
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Selecciona tu dirección de entrega o administra tus lugares habituales
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalMisDireccionesAbierto(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center cursor-pointer transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body: Lista de Direcciones */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1">
+              {/* Botón rápido para agregar nueva dirección */}
+              <button
+                type="button"
+                onClick={handleAbrirGuardarActual}
+                className="w-full py-2.5 px-3 rounded-2xl border-2 border-dashed border-orange-300 hover:border-orange-500 bg-orange-50/60 hover:bg-orange-50 text-orange-700 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-orange-600" />
+                <span>+ Agregar Nueva Dirección</span>
+              </button>
+
+              {misDirecciones.length === 0 ? (
+                <div className="text-center py-8 space-y-2">
+                  <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                    <MapPin className="w-6 h-6" />
+                  </div>
+                  <p className="text-sm font-bold text-slate-700">No tienes direcciones guardadas</p>
+                  <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                    Guarda tus direcciones frecuentes como tu casa u oficina para pedir balones con 1 solo clic.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {misDirecciones.map((dir) => {
+                    const esSeleccionada = direccionSeleccionadaId === dir.id;
+                    return (
+                      <div
+                        key={dir.id}
+                        className={`p-3.5 rounded-2xl border transition ${
+                          esSeleccionada
+                            ? "bg-orange-50/50 border-orange-400 ring-2 ring-orange-200"
+                            : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2.5 min-w-0">
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                              esSeleccionada ? "bg-orange-500 text-white" : "bg-slate-100 text-slate-700"
+                            }`}>
+                              {renderIconoTipo(dir.tipoIcono, "w-4 h-4")}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-extrabold text-xs text-slate-900">
+                                  {dir.etiqueta}
+                                </span>
+                                {dir.esPredeterminada && (
+                                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded-full border border-amber-200">
+                                    <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
+                                    Predeterminada
+                                  </span>
+                                )}
+                                {esSeleccionada && (
+                                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded-full border border-emerald-200">
+                                    <Check className="w-2.5 h-2.5 text-emerald-600" />
+                                    En uso
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs font-semibold text-slate-700 mt-0.5 break-words">
+                                {dir.direccionExacta}
+                              </p>
+                              <p className="text-[11px] text-slate-500">
+                                {dir.distrito}, {dir.ciudad}, {dir.departamento}
+                              </p>
+                              {dir.referencia && (
+                                <p className="text-[10px] italic text-slate-400 mt-0.5">
+                                  Ref: {dir.referencia}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Acciones de Edición/Eliminar */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleAbrirEditarDireccion(dir)}
+                              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                              title="Editar dirección"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleEliminarDireccion(dir.id, dir.etiqueta)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                              title="Eliminar dirección"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Barra de Selección y Favorito */}
+                        <div className="flex items-center justify-between gap-2 mt-2.5 pt-2 border-t border-slate-100 text-xs">
+                          <div>
+                            {!dir.esPredeterminada && (
+                              <button
+                                type="button"
+                                onClick={() => handleEstablecerPredeterminada(dir.id, dir.etiqueta)}
+                                className="text-[10px] font-bold text-amber-700 hover:text-amber-800 hover:underline cursor-pointer flex items-center gap-1"
+                              >
+                                <Star className="w-3 h-3 text-amber-500" />
+                                <span>Hacer Predeterminada</span>
+                              </button>
+                            )}
+                          </div>
+                          <div>
+                            {esSeleccionada ? (
+                              <span className="text-[10px] font-bold text-emerald-700 flex items-center gap-1">
+                                <Check className="w-3 h-3" />
+                                <span>Dirección activa para el pedido</span>
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleSeleccionarDireccionGuardada(dir)}
+                                className="px-3 py-1 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs transition cursor-pointer shadow-2xs"
+                              >
+                                Usar esta dirección
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] text-slate-500 font-medium">
+                {misDirecciones.length} dirección{misDirecciones.length === 1 ? "" : "es"} guardada{misDirecciones.length === 1 ? "" : "s"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setModalMisDireccionesAbierto(false)}
+                className="px-4 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Guardar o Editar Dirección */}
+      {modalGuardarDireccionAbierto && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-orange-50 via-amber-50 to-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-orange-500 text-white flex items-center justify-center shadow-md">
+                  <Bookmark className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 leading-tight">
+                    {direccionEnEdicion ? "Editar Dirección Guardada" : "Guardar Dirección"}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Guarda tus datos para pedir balones sin rellenar la dirección cada vez
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setModalGuardarDireccionAbierto(false);
+                  setDireccionEnEdicion(null);
+                }}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center cursor-pointer transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleGuardarDireccionModal} className="p-4 sm:p-5 overflow-y-auto space-y-3.5 flex-1 text-xs">
+              {/* Selector de Tipo de Lugar */}
+              <div className="space-y-1.5">
+                <label className="font-extrabold text-slate-700 block">Tipo de lugar:</label>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {(
+                    [
+                      { tipo: "casa", label: "Casa", icon: Home },
+                      { tipo: "trabajo", label: "Trabajo", icon: Briefcase },
+                      { tipo: "departamento", label: "Depto", icon: Building },
+                      { tipo: "familiar", label: "Familiar", icon: Star },
+                      { tipo: "otro", label: "Otro", icon: Bookmark },
+                    ] as const
+                  ).map((item) => {
+                    const IconComp = item.icon;
+                    const activo = formTipoIcono === item.tipo;
+                    return (
+                      <button
+                        key={item.tipo}
+                        type="button"
+                        onClick={() => {
+                          setFormTipoIcono(item.tipo);
+                          if (!direccionEnEdicion && (!formEtiqueta || formEtiqueta === "Casa" || formEtiqueta === "Trabajo")) {
+                            setFormEtiqueta(item.label);
+                          }
+                        }}
+                        className={`flex flex-col items-center justify-center p-2 rounded-xl border text-[11px] font-bold transition cursor-pointer ${
+                          activo
+                            ? "bg-orange-50 border-orange-500 text-orange-700 shadow-2xs"
+                            : "bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        <IconComp className="w-4 h-4 mb-0.5" />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Nombre / Etiqueta */}
+              <div className="space-y-1">
+                <label className="font-extrabold text-slate-700 block">
+                  Nombre de la dirección:
+                </label>
+                <input
+                  type="text"
+                  value={formEtiqueta}
+                  onChange={(e) => setFormEtiqueta(e.target.value)}
+                  placeholder="Ej: Casa Principal, Oficina Los Olivos, Departamento 302..."
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+                  required
+                />
+              </div>
+
+              {/* Dirección Exacta */}
+              <div className="space-y-1">
+                <label className="font-extrabold text-slate-700 block">
+                  Calle, Avenida o Jirón y N°:
+                </label>
+                <input
+                  type="text"
+                  value={formDireccionExacta}
+                  onChange={(e) => setFormDireccionExacta(e.target.value)}
+                  placeholder="Ej: Av. Antúnez de Mayolo 1234..."
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+                  required
+                />
+              </div>
+
+              {/* Distrito, Ciudad y Departamento */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <label className="font-bold text-[10px] uppercase text-slate-400 block">Distrito:</label>
+                  <input
+                    type="text"
+                    value={formDistrito}
+                    onChange={(e) => setFormDistrito(e.target.value)}
+                    placeholder="Distrito..."
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-orange-500"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-[10px] uppercase text-slate-400 block">Ciudad:</label>
+                  <input
+                    type="text"
+                    value={formCiudad}
+                    onChange={(e) => setFormCiudad(e.target.value)}
+                    placeholder="Ciudad..."
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-orange-500"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-[10px] uppercase text-slate-400 block">Dpto:</label>
+                  <input
+                    type="text"
+                    value={formDepartamento}
+                    onChange={(e) => setFormDepartamento(e.target.value)}
+                    placeholder="Departamento..."
+                    className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl font-semibold text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-orange-500"
+                  />
+                </div>
+              </div>
+
+              {/* Referencia */}
+              <div className="space-y-1">
+                <label className="font-extrabold text-slate-700 block">
+                  Referencia de entrega:
+                </label>
+                <input
+                  type="text"
+                  value={formReferencia}
+                  onChange={(e) => setFormReferencia(e.target.value)}
+                  placeholder="Ej: A 2 cuadras del parque, portón verde, piso 2..."
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+
+              {/* Checkbox Predeterminada */}
+              <label className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50/70 border border-amber-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formEsPredeterminada}
+                  onChange={(e) => setFormEsPredeterminada(e.target.checked)}
+                  className="w-4 h-4 text-orange-600 rounded border-amber-300 focus:ring-orange-500"
+                />
+                <span className="font-bold text-xs text-amber-950">
+                  Establecer como mi dirección predeterminada
+                </span>
+              </label>
+
+              {/* Botones de acción */}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModalGuardarDireccionAbierto(false);
+                    setDireccionEnEdicion(null);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-xs shadow-md transition cursor-pointer"
+                >
+                  {direccionEnEdicion ? "Actualizar Dirección" : "Guardar Dirección"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -54,6 +54,7 @@ import {
   actualizarPremio,
   eliminarPremio,
   actualizarStockPremio,
+  alternarMostrarEnInicio,
   PREMIOS_ZETA_PREMIA,
   obtenerRatioPorCategoria,
   calcularPuntosSugeridos,
@@ -97,12 +98,14 @@ export default function AdminPremiosCanjesPage() {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("TODOS");
   const [filtroStock, setFiltroStock] = useState<"TODOS" | "EN_STOCK" | "BAJO_STOCK" | "AGOTADO">("TODOS");
+  const [filtroInicio, setFiltroInicio] = useState<"TODOS" | "SOLO_INICIO">("TODOS");
   const [orden, setOrden] = useState<"STOCK_ASC" | "STOCK_DESC" | "PUNTOS_ASC" | "PUNTOS_DESC" | "NOMBRE_ASC">("STOCK_ASC");
 
   const handleLimpiarFiltros = () => {
     setBusqueda("");
     setCategoriaSeleccionada("TODOS");
     setFiltroStock("TODOS");
+    setFiltroInicio("TODOS");
     setOrden("STOCK_ASC");
   };
 
@@ -110,6 +113,7 @@ export default function AdminPremiosCanjesPage() {
     busqueda.trim() !== "" ||
     categoriaSeleccionada !== "TODOS" ||
     filtroStock !== "TODOS" ||
+    filtroInicio !== "TODOS" ||
     orden !== "STOCK_ASC";
 
   // Modales
@@ -145,6 +149,8 @@ export default function AdminPremiosCanjesPage() {
     descripcion: string;
     codigoCupon: string;
     destacado: boolean;
+    mostrarEnInicio: boolean;
+    badgeInicio: string;
     especificaciones: { clave: string; valor: string }[];
   }>({
     nombre: "",
@@ -157,6 +163,8 @@ export default function AdminPremiosCanjesPage() {
     descripcion: "",
     codigoCupon: "VALEGAS",
     destacado: false,
+    mostrarEnInicio: false,
+    badgeInicio: "",
     especificaciones: [],
   });
 
@@ -219,6 +227,7 @@ export default function AdminPremiosCanjesPage() {
       agotados,
       bajoStock,
       stockNormal,
+      totalEnInicio: premios.filter((p) => p.mostrarEnInicio).length,
       totalCategorias: categorias.filter((c) => c.id !== "TODOS").length,
     };
   }, [premios, categorias]);
@@ -234,6 +243,8 @@ export default function AdminPremiosCanjesPage() {
         if (filtroStock === "EN_STOCK" && p.stock <= 10) return false;
         if (filtroStock === "BAJO_STOCK" && (p.stock === 0 || p.stock > 10)) return false;
         if (filtroStock === "AGOTADO" && p.stock > 0) return false;
+
+        if (filtroInicio === "SOLO_INICIO" && !p.mostrarEnInicio) return false;
 
         if (busqueda.trim()) {
           const q = busqueda.toLowerCase().trim();
@@ -254,7 +265,7 @@ export default function AdminPremiosCanjesPage() {
         if (orden === "NOMBRE_ASC") return a.nombre.localeCompare(b.nombre);
         return 0;
       });
-  }, [premios, categoriaSeleccionada, filtroStock, busqueda, orden]);
+  }, [premios, categoriaSeleccionada, filtroStock, filtroInicio, busqueda, orden]);
 
   // =========================================================================
   // GESTIÓN DE PREMIOS (CREAR / EDITAR)
@@ -275,6 +286,8 @@ export default function AdminPremiosCanjesPage() {
       descripcion: "Nuevo premio oficial para canje de fidelidad RappiGas.",
       codigoCupon: "CANJEPREMIA",
       destacado: false,
+      mostrarEnInicio: false,
+      badgeInicio: "",
       especificaciones: [
         { clave: "Garantía", valor: "12 meses oficial" },
         { clave: "Material", valor: "Alta durabilidad" },
@@ -297,6 +310,8 @@ export default function AdminPremiosCanjesPage() {
       descripcion: premio.descripcion,
       codigoCupon: premio.codigoCupon,
       destacado: !!premio.destacado,
+      mostrarEnInicio: !!premio.mostrarEnInicio,
+      badgeInicio: premio.badgeInicio || "",
       especificaciones: premio.especificaciones || [
         { clave: "Garantía", valor: "12 meses oficial" },
       ],
@@ -335,6 +350,17 @@ export default function AdminPremiosCanjesPage() {
       return;
     }
     eliminarPremio(id);
+    cargarDatos();
+  };
+
+  const handleToggleMostrarEnInicio = (premio: PremioCanje) => {
+    const nuevoEstado = alternarMostrarEnInicio(premio.id);
+    toast.success(
+      nuevoEstado ? "Mostrando en Página de Inicio" : "Removido de Página de Inicio",
+      {
+        description: `"${premio.nombre}" ${nuevoEstado ? "ahora es visible" : "ya no aparece"} en el carrusel de recompensas de la portada.`,
+      }
+    );
     cargarDatos();
   };
 
@@ -772,7 +798,45 @@ export default function AdminPremiosCanjesPage() {
               </div>
             </div>
 
-            {/* 3. Ordenamiento */}
+            {/* 3. Filtro por Ubicación (Página de Inicio) */}
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold uppercase text-slate-500 block">
+                PORTADA / INICIO:
+              </label>
+              <div className="grid grid-cols-2 gap-1 text-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setFiltroInicio("TODOS")}
+                  className={`px-1.5 py-1 rounded text-[10px] font-bold transition cursor-pointer border text-left flex items-center justify-between ${
+                    filtroInicio === "TODOS"
+                      ? "bg-[#03246b] text-white border-[#03246b] shadow-2xs"
+                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                  }`}
+                >
+                  <span>Todos</span>
+                  <span className={`text-[8px] px-1 rounded font-mono ${filtroInicio === "TODOS" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"}`}>
+                    {premios.length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFiltroInicio(filtroInicio === "SOLO_INICIO" ? "TODOS" : "SOLO_INICIO")}
+                  className={`px-1.5 py-1 rounded text-[10px] font-bold transition cursor-pointer border text-left flex items-center justify-between ${
+                    filtroInicio === "SOLO_INICIO"
+                      ? "bg-amber-500 text-white border-amber-600 shadow-2xs"
+                      : "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100"
+                  }`}
+                  title="Ver solo productos configurados en la portada"
+                >
+                  <span className="truncate">⭐ En Inicio</span>
+                  <span className={`text-[8px] px-1 rounded font-mono ${filtroInicio === "SOLO_INICIO" ? "bg-white/25 text-white" : "bg-amber-200 text-amber-900"}`}>
+                    {kpis.totalEnInicio}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* 4. Ordenamiento */}
             <div className="space-y-1">
               <label className="text-[9px] font-bold uppercase text-slate-500 block">
                 ORDEN:
@@ -852,19 +916,20 @@ export default function AdminPremiosCanjesPage() {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-50 text-[9px] font-black text-[#03246b] uppercase tracking-wider border-b border-slate-200">
-                    <th className="py-2 px-2.5 w-[28%]">Premio / Imagen</th>
-                    <th className="py-2 px-1.5 w-[15%]">Categoría</th>
+                    <th className="py-2 px-2.5 w-[26%]">Premio / Imagen</th>
+                    <th className="py-2 px-1.5 w-[14%]">Categoría</th>
                     <th className="py-2 px-1.5 w-[10%]">Marca</th>
-                    <th className="py-2 px-2 text-right w-[14%]">Puntos / Valor</th>
-                    <th className="py-2 px-1.5 text-center w-[15%]">Stock para Usuarios</th>
-                    <th className="py-2 px-1.5 text-center w-[9%]">Cupón Base</th>
-                    <th className="py-2 px-1.5 text-center w-[9%]">Acciones</th>
+                    <th className="py-2 px-2 text-right w-[13%]">Puntos / Valor</th>
+                    <th className="py-2 px-1.5 text-center w-[13%]">Stock</th>
+                    <th className="py-2 px-1.5 text-center w-[8%]">Cupón Base</th>
+                    <th className="py-2 px-1 text-center w-[8%]">En Inicio</th>
+                    <th className="py-2 px-1.5 text-center w-[8%]">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {premiosFiltrados.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400 space-y-1">
+                      <td colSpan={8} className="py-8 text-center text-slate-400 space-y-1">
                         <Package className="w-7 h-7 text-slate-300 mx-auto" />
                         <p className="font-bold text-slate-600 text-xs">No se encontraron premios con los filtros aplicados</p>
                         <p className="text-[10px] text-slate-400">Intenta con otro término o selecciona otra categoría.</p>
@@ -1036,6 +1101,23 @@ export default function AdminPremiosCanjesPage() {
                             <span className="font-mono font-bold text-orange-600 bg-orange-50 px-1 py-0.5 rounded border border-orange-200 text-[9px] inline-block truncate max-w-[85px]" title={premio.codigoCupon}>
                               {premio.codigoCupon}
                             </span>
+                          </td>
+
+                          {/* En Inicio (Toggle rápido) */}
+                          <td className="py-1 px-1 text-center whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleMostrarEnInicio(premio)}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold border transition cursor-pointer ${
+                                premio.mostrarEnInicio
+                                  ? "bg-amber-500 text-white border-amber-600 shadow-2xs hover:bg-amber-600"
+                                  : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200 hover:text-slate-800"
+                              }`}
+                              title={premio.mostrarEnInicio ? "Visible en Inicio. Clic para ocultar" : "Clic para mostrar en el carrusel de Inicio"}
+                            >
+                              <Sparkles className="w-2.5 h-2.5" />
+                              <span>{premio.mostrarEnInicio ? "En Inicio" : "No"}</span>
+                            </button>
                           </td>
 
                           {/* Acciones */}
@@ -1517,6 +1599,49 @@ export default function AdminPremiosCanjesPage() {
                     />
                     <div className="w-9 h-5 bg-slate-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600"></div>
                   </label>
+                </div>
+
+                {/* Mostrar en Página de Inicio (Club Rappipuntos) */}
+                <div className="p-3 rounded-xl bg-orange-50/70 border border-orange-200 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center shrink-0 mt-0.5 border border-orange-200 shadow-2xs">
+                        <Flame className="w-4 h-4 fill-orange-500 text-orange-500" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-orange-950 text-xs block">
+                          Mostrar en el Carrusel de la Página de Inicio
+                        </span>
+                        <span className="text-[10px] text-orange-900/80 leading-relaxed block">
+                          Este producto se mostrará en la sección <strong>Club de Recompensas Rappipuntos</strong> de la portada principal.
+                        </span>
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                      <input
+                        type="checkbox"
+                        checked={formData.mostrarEnInicio}
+                        onChange={(e) => setFormData({ ...formData, mostrarEnInicio: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-slate-300 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-600"></div>
+                    </label>
+                  </div>
+
+                  {formData.mostrarEnInicio && (
+                    <div className="pt-2 border-t border-orange-200/60 pl-10">
+                      <label className="text-[10px] font-bold text-orange-900 block mb-1">
+                        Etiqueta destacada en Inicio (ej: MÁS PEDIDO, CANJE RÁPIDO, PREMIO ESTRELLA):
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.badgeInicio}
+                        onChange={(e) => setFormData({ ...formData, badgeInicio: e.target.value.toUpperCase() })}
+                        placeholder="MÁS PEDIDO"
+                        className="w-full text-xs font-bold px-2.5 py-1.5 rounded-lg border border-orange-300 bg-white focus:outline-hidden focus:border-orange-500 text-orange-950"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 

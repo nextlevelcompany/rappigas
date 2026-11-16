@@ -214,6 +214,38 @@ public class AutenticacionServicio {
         );
     }
 
+    @Transactional
+    public UsuarioDetalleDto actualizarPerfil(String email, ActualizarPerfilDto dto) {
+        Usuario usuario = usuarioRepositorio.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado."));
+
+        if (dto.nombres() != null && !dto.nombres().isBlank()) {
+            usuario.setNombres(dto.nombres().trim());
+        }
+        if (dto.apellidos() != null && !dto.apellidos().isBlank()) {
+            usuario.setApellidos(dto.apellidos().trim());
+        }
+        if (dto.telefono() != null) {
+            usuario.setTelefono(dto.telefono().trim());
+        }
+        if (dto.nuevaPassword() != null && !dto.nuevaPassword().isBlank()) {
+            usuario.setPasswordHash(passwordEncoder.encode(dto.nuevaPassword().trim()));
+        }
+
+        usuarioRepositorio.save(usuario);
+
+        return new UsuarioDetalleDto(
+                usuario.getPublicId(),
+                usuario.getEmail(),
+                usuario.getNombres(),
+                usuario.getApellidos(),
+                usuario.getTelefono(),
+                usuario.getRol().name(),
+                usuario.getEstado().name(),
+                usuario.getCreatedAt()
+        );
+    }
+
     @Transactional(readOnly = true)
     public List<UsuarioDetalleDto> listarUsuariosAdmin(RolUsuario rol) {
         List<Usuario> lista;

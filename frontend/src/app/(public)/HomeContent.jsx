@@ -11,7 +11,6 @@ import SobreRappigasSection from "./_inicio/HomeSobreNosotros";
 import AppRecompensasSection from "./_inicio/AppDownloadCTA";
 import ComoFuncionaSection from "./_inicio/HomeComoFunciona";
 import ClubRappipuntosSection from "./_inicio/ClubRappipuntosPremios";
-import CatalogoBalonesSection from "./_inicio/HomeCatalogoPrecios";
 import GuiaCrearCuentaSection from "./_inicio/HowToCreateAccount";
 
 const HomeContent = () => {
@@ -47,12 +46,7 @@ const HomeContent = () => {
                 <ClubRappipuntosSection />
             </section>
 
-            {/* 7. SECCIÓN CATÁLOGO: Balones de 10kg, Premium Click-On y Precios de Planta */}
-            <section id="inicio-catalogo-balones" aria-label="Catálogo de Balones de Gas y Precios">
-                <CatalogoBalonesSection />
-            </section>
-
-            {/* 8. SECCIÓN GUÍA: ¿Cómo creo mi cuenta en la RappiGas App? (Flujo de 4 Pasos) */}
+            {/* 7. SECCIÓN GUÍA: ¿Cómo creo mi cuenta en la RappiGas App? (Flujo de 4 Pasos) */}
             <section id="inicio-guia-crear-cuenta" aria-label="Guía para Crear Cuenta en la App">
                 <GuiaCrearCuentaSection />
             </section>

@@ -37,6 +37,7 @@ import {
   obtenerCuponGas,
   obtenerDireccionGas,
   guardarDireccionGas,
+  obtenerMetodosPagoDistribuidor,
 } from "@/librerias/carrito-gas";
 import {
   pedidosApi,
@@ -84,6 +85,17 @@ export default function CheckoutClientePage() {
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
   const [pedidoConfirmado, setPedidoConfirmado] = useState<PedidoDetalle | null>(null);
 
+  // Métodos de pago configurados por la distribuidora seleccionada
+  const metodosPagoDistribuidor = useMemo(() => {
+    return obtenerMetodosPagoDistribuidor(empresa);
+  }, [empresa]);
+
+  useEffect(() => {
+    if (metodosPagoDistribuidor.length > 0 && !metodosPagoDistribuidor.includes(metodoPago)) {
+      setMetodoPago(metodosPagoDistribuidor[0]);
+    }
+  }, [metodosPagoDistribuidor, metodoPago]);
+
   // Cargar datos del carrito y preferencias guardadas
   useEffect(() => {
     const gas = obtenerCarritoGas();
@@ -94,14 +106,21 @@ export default function CheckoutClientePage() {
     setItemsGas(gas);
     setCupon(cup);
 
-    if (emp) {
-      setEmpresa(emp);
-    } else if (gas.length > 0 && gas[0].empresaPublicId) {
+    // Priorizar la distribuidora del carrito para garantizar que el pedido salga exactamente acorde a los productos seleccionados
+    if (gas.length > 0 && gas[0].empresaPublicId) {
       empresasApi.listarEmpresasPublicas().then((emps) => {
         const encontrada = emps.find((e) => e.publicId === gas[0].empresaPublicId);
-        if (encontrada) setEmpresa(encontrada);
-        else if (emps.length > 0) setEmpresa(emps[0]);
+        if (encontrada) {
+          setEmpresa(encontrada);
+          guardarEmpresaSeleccionada(encontrada);
+        } else if (emp) {
+          setEmpresa(emp);
+        } else if (emps.length > 0) {
+          setEmpresa(emps[0]);
+        }
       });
+    } else if (emp) {
+      setEmpresa(emp);
     } else {
       empresasApi.listarEmpresasPublicas().then((emps) => {
         if (emps.length > 0) {
@@ -598,71 +617,89 @@ export default function CheckoutClientePage() {
               </p>
             </div>
 
-            {/* Grid de opciones de pago */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <button
-                type="button"
-                onClick={() => setMetodoPago("YAPE")}
-                className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
-                  metodoPago === "YAPE"
-                    ? "border-purple-600 bg-purple-50/50 ring-1 ring-purple-400"
-                    : "border-slate-200 hover:border-slate-300 bg-white"
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
-                  Y
-                </div>
-                <span className="text-xs font-black text-slate-800">Yape</span>
-                <span className="text-[10px] text-purple-700 font-bold">QR / Celular</span>
-              </button>
+            {/* Grid de opciones de pago configuradas por el distribuidor */}
+            <div
+              className={`grid gap-2.5 ${
+                metodosPagoDistribuidor.length === 1
+                  ? "grid-cols-1"
+                  : metodosPagoDistribuidor.length === 2
+                  ? "grid-cols-2"
+                  : metodosPagoDistribuidor.length === 3
+                  ? "grid-cols-3"
+                  : "grid-cols-2 sm:grid-cols-4"
+              }`}
+            >
+              {metodosPagoDistribuidor.includes("YAPE") && (
+                <button
+                  type="button"
+                  onClick={() => setMetodoPago("YAPE")}
+                  className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                    metodoPago === "YAPE"
+                      ? "border-purple-600 bg-purple-50/50 ring-1 ring-purple-400"
+                      : "border-slate-200 hover:border-slate-300 bg-white"
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
+                    Y
+                  </div>
+                  <span className="text-xs font-black text-slate-800">Yape</span>
+                  <span className="text-[10px] text-purple-700 font-bold">QR / Celular</span>
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => setMetodoPago("PLIN")}
-                className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
-                  metodoPago === "PLIN"
-                    ? "border-sky-600 bg-sky-50/50 ring-1 ring-sky-400"
-                    : "border-slate-200 hover:border-slate-300 bg-white"
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-sky-500 text-white flex items-center justify-center font-black text-xs shadow-xs">
-                  P
-                </div>
-                <span className="text-xs font-black text-slate-800">Plin</span>
-                <span className="text-[10px] text-sky-700 font-bold">Sin comisión</span>
-              </button>
+              {metodosPagoDistribuidor.includes("PLIN") && (
+                <button
+                  type="button"
+                  onClick={() => setMetodoPago("PLIN")}
+                  className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                    metodoPago === "PLIN"
+                      ? "border-sky-600 bg-sky-50/50 ring-1 ring-sky-400"
+                      : "border-slate-200 hover:border-slate-300 bg-white"
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-lg bg-sky-500 text-white flex items-center justify-center font-black text-xs shadow-xs">
+                    P
+                  </div>
+                  <span className="text-xs font-black text-slate-800">Plin</span>
+                  <span className="text-[10px] text-sky-700 font-bold">Sin comisión</span>
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => setMetodoPago("EFECTIVO")}
-                className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
-                  metodoPago === "EFECTIVO"
-                    ? "border-emerald-600 bg-emerald-50/50 ring-1 ring-emerald-400"
-                    : "border-slate-200 hover:border-slate-300 bg-white"
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-                  <Banknote className="w-4 h-4" />
-                </div>
-                <span className="text-xs font-black text-slate-800">Efectivo</span>
-                <span className="text-[10px] text-emerald-700 font-bold">Contra Entrega</span>
-              </button>
+              {metodosPagoDistribuidor.includes("EFECTIVO") && (
+                <button
+                  type="button"
+                  onClick={() => setMetodoPago("EFECTIVO")}
+                  className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                    metodoPago === "EFECTIVO"
+                      ? "border-emerald-600 bg-emerald-50/50 ring-1 ring-emerald-400"
+                      : "border-slate-200 hover:border-slate-300 bg-white"
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                    <Banknote className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-black text-slate-800">Efectivo</span>
+                  <span className="text-[10px] text-emerald-700 font-bold">Contra Entrega</span>
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => setMetodoPago("TARJETA")}
-                className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
-                  metodoPago === "TARJETA"
-                    ? "border-orange-600 bg-orange-50/50 ring-1 ring-orange-400"
-                    : "border-slate-200 hover:border-slate-300 bg-white"
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-orange-600 text-white flex items-center justify-center shadow-xs">
-                  <CreditCard className="w-4 h-4" />
-                </div>
-                <span className="text-xs font-black text-slate-800">POS Tarjeta</span>
-                <span className="text-[10px] text-orange-700 font-bold">Visa / Master</span>
-              </button>
+              {metodosPagoDistribuidor.includes("TARJETA") && (
+                <button
+                  type="button"
+                  onClick={() => setMetodoPago("TARJETA")}
+                  className={`p-3 rounded-xl border text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                    metodoPago === "TARJETA"
+                      ? "border-orange-600 bg-orange-50/50 ring-1 ring-orange-400"
+                      : "border-slate-200 hover:border-slate-300 bg-white"
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-lg bg-orange-600 text-white flex items-center justify-center shadow-xs">
+                    <CreditCard className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-black text-slate-800">POS Tarjeta</span>
+                  <span className="text-[10px] text-orange-700 font-bold">Visa / Master</span>
+                </button>
+              )}
             </div>
 
             {/* Sub-paneles interactivos por método de pago */}

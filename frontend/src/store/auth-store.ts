@@ -16,6 +16,7 @@ interface EstadoAutenticacion {
   cargando: boolean;
 
   establecerSesion: (datos: RespuestaAutenticacion) => void;
+  actualizarUsuario: (nuevosDatos: Partial<NonNullable<EstadoAutenticacion["usuario"]>>) => void;
   cerrarSesion: () => void;
   cargarSesionDesdeStorage: () => void;
 }
@@ -58,6 +59,17 @@ export const useAuthStore = create<EstadoAutenticacion>((set) => ({
       },
       estaAutenticado: true,
       cargando: false,
+    });
+  },
+
+  actualizarUsuario: (nuevosDatos) => {
+    set((state) => {
+      if (!state.usuario) return state;
+      const actualizado = { ...state.usuario, ...nuevosDatos };
+      if (typeof window !== "undefined") {
+        localStorage.setItem("pidegas_usuario", JSON.stringify(actualizado));
+      }
+      return { usuario: actualizado };
     });
   },
 

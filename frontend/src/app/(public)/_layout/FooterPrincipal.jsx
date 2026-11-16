@@ -44,9 +44,12 @@ export default function FooterPrincipal() {
         }
 
         .rappigas-main-footer .footer-container {
-          max-width: 1240px;
-          margin: 0 auto;
-          padding: 48px 24px 28px;
+          width: 100%;
+          max-width: 1320px;
+          margin-left: auto;
+          margin-right: auto;
+          padding: 48px 15px 28px;
+          box-sizing: border-box;
         }
 
         /* ========================================================= */
@@ -507,7 +510,7 @@ export default function FooterPrincipal() {
 
         @media (max-width: 640px) {
           .rappigas-main-footer .footer-container {
-            padding: 36px 16px 20px;
+            padding: 36px 15px 20px;
           }
           .rappigas-main-footer .service-strip {
             grid-template-columns: 1fr;
@@ -543,7 +546,7 @@ export default function FooterPrincipal() {
         }
       ` }} />
 
-      <div className="footer-container">
+      <div className="footer-container container">
         {/* ========================================================= */}
         {/* FRANJA DE SERVICIO SUPERIOR (SOLIDA, SIN DEGRADADOS)      */}
         {/* ========================================================= */}

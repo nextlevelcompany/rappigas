@@ -44,6 +44,7 @@ import { useAuthStore } from '@/store/auth-store';
 import {
   sincronizarCarritoGasDesdeTienda,
   guardarEmpresaSeleccionada,
+  obtenerEmpresaSeleccionada,
   guardarDireccionGas,
 } from '@/librerias/carrito-gas';
 
@@ -710,13 +711,27 @@ export default function ProductosContent() {
     }).sort((a, b) => (a.distanciaKm || 0) - (b.distanciaKm || 0));
   }, [empresasReales, DISTRIBUIDORAS_FALLBACK, latitud, longitud, distritoSeleccionado]);
 
+  // Restaurar distribuidora elegida desde Cobertura o Tienda
+  useEffect(() => {
+    const guardada = obtenerEmpresaSeleccionada();
+    if (guardada) {
+      setDistribuidoraSeleccionada(guardada);
+      if (typeof guardada.latitud === 'number' && guardada.latitud !== 0) {
+        setLatitud(guardada.latitud);
+      }
+      if (typeof guardada.longitud === 'number' && guardada.longitud !== 0) {
+        setLongitud(guardada.longitud);
+      }
+    }
+  }, []);
+
   // Sincronizar distribuidor seleccionado por defecto si cambia la lista
   useEffect(() => {
     if (distribuidorasMapa.length > 0) {
       const existe = distribuidorasMapa.find(
         (d) => d.publicId === distribuidoraSeleccionada?.publicId
       );
-      if (!existe) {
+      if (!existe && !distribuidoraSeleccionada) {
         setDistribuidoraSeleccionada(distribuidorasMapa[0]);
       }
     }
@@ -917,55 +932,61 @@ export default function ProductosContent() {
       </div>
 
       {/* --------------------------------------------------------------------- */}
-      {/* 2. BÚSQUEDA DE PRODUCTOS POR UBIGEO & DISTRIBUIDOR ASIGNADO           */}
+      {/* 2. BÚSQUEDA POR UBICACIÓN EN PERÚ (COMPACTO)                          */}
       {/* --------------------------------------------------------------------- */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs space-y-3.5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 border border-orange-200">
-              <MapPin className="w-4 h-4 text-orange-600" />
+      <div className="relative z-10 bg-white rounded-2xl border border-slate-200/90 shadow-xs p-2.5 sm:p-3 space-y-2">
+        {/* Fila 1: Título Compacto + Cobertura + Distribuidor + Botón Ver Mapa */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-1.5 border-b border-slate-100">
+          <div className="flex items-center gap-2 flex-wrap min-w-0 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base" role="img" aria-label="Perú">🇵🇪</span>
+              <span className="text-xs font-black text-slate-900">Ubicación:</span>
+              <span className="text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-lg">
+                {distritoSeleccionado}, {provinciaSeleccionada} ({deptoSeleccionado})
+              </span>
             </div>
-            <div>
-              <h2 className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
-                <span>Búsqueda por Ubicación en Perú</span>
-                <span className="text-base" role="img" aria-label="Perú">🇵🇪</span>
-              </h2>
-              <p className="text-[11px] text-slate-500">
-                Selecciona tu departamento, provincia y distrito para calcular tiempos de despacho y el distribuidor que te vende.
-              </p>
+
+            <span className="text-slate-300 hidden md:inline">•</span>
+
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-700">
+              <span className="flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                ⚡ {distribuidoraSeleccionada?.tiempoMin || 20}-{distribuidoraSeleccionada?.tiempoMax || 30} min
+              </span>
+              <span className="text-slate-500">Distribuidor:</span>
+              <strong className="text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                {distribuidoraSeleccionada?.nombreComercial || 'Solgas Express'}
+              </strong>
             </div>
           </div>
 
-          {cargandoUbigeo && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-orange-600 font-bold bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-200 animate-pulse self-start sm:self-center">
-              <RefreshCw className="w-3 h-3 animate-spin" />
-              Actualizando cobertura...
-            </span>
-          )}
+          <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+            {cargandoUbigeo && (
+              <span className="inline-flex items-center gap-1 text-[10px] text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-md animate-pulse">
+                <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+                <span className="hidden sm:inline">Actualizando...</span>
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => setVistaPrincipal(vistaPrincipal === 'mapa' ? 'catalogo' : 'mapa')}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#03246b] hover:bg-blue-900 text-white text-[11px] font-bold transition shadow-2xs cursor-pointer"
+            >
+              <MapIcon className="w-3.5 h-3.5 text-sky-300" />
+              <span>{vistaPrincipal === 'mapa' ? 'Ver Catálogo' : '🗺️ Ver Mapa y Distribuidores'}</span>
+            </button>
+          </div>
         </div>
 
-        {/* Selector Cascada de Ubigeo */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-          {/* País (Perú Fijo) */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
-              1. País
-            </label>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-xs font-bold shadow-2xs">
-              <span className="text-base">🇵🇪</span>
-              <span className="truncate">Perú (Nacional)</span>
-            </div>
-          </div>
-
-          {/* Departamento */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
-              2. Departamento
-            </label>
+        {/* Fila 2: Selectores Cascada (Depto, Prov, Dist) + Dirección Exacta + GPS */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 text-xs">
+          {/* 1. Departamento */}
+          <div>
             <select
               value={deptoSeleccionado}
               onChange={(e) => setDeptoSeleccionado(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-bold focus:outline-hidden focus:ring-2 focus:ring-orange-500 shadow-2xs cursor-pointer hover:border-orange-400 transition"
+              className="w-full px-2 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-900 text-[11px] font-bold focus:ring-1 focus:ring-orange-500 hover:border-orange-400 transition shadow-2xs cursor-pointer"
+              title="Selecciona Departamento"
             >
               {departamentos.map((dep) => (
                 <option key={dep} value={dep}>
@@ -975,16 +996,14 @@ export default function ProductosContent() {
             </select>
           </div>
 
-          {/* Provincia */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
-              3. Provincia
-            </label>
+          {/* 2. Provincia */}
+          <div>
             <select
               value={provinciaSeleccionada}
               onChange={(e) => setProvinciaSeleccionada(e.target.value)}
               disabled={provincias.length === 0}
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-bold focus:outline-hidden focus:ring-2 focus:ring-orange-500 shadow-2xs cursor-pointer hover:border-orange-400 transition disabled:bg-slate-100"
+              className="w-full px-2 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-900 text-[11px] font-bold focus:ring-1 focus:ring-orange-500 hover:border-orange-400 transition disabled:bg-slate-100 shadow-2xs cursor-pointer"
+              title="Selecciona Provincia"
             >
               {provincias.map((prov) => (
                 <option key={prov} value={prov}>
@@ -994,16 +1013,14 @@ export default function ProductosContent() {
             </select>
           </div>
 
-          {/* Distrito */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
-              4. Distrito
-            </label>
+          {/* 3. Distrito */}
+          <div>
             <select
               value={distritoSeleccionado}
               onChange={(e) => setDistritoSeleccionado(e.target.value)}
               disabled={distritos.length === 0}
-              className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-bold focus:outline-hidden focus:ring-2 focus:ring-orange-500 shadow-2xs cursor-pointer hover:border-orange-400 transition disabled:bg-slate-100"
+              className="w-full px-2 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-900 text-[11px] font-bold focus:ring-1 focus:ring-orange-500 hover:border-orange-400 transition disabled:bg-slate-100 shadow-2xs cursor-pointer"
+              title="Selecciona Distrito"
             >
               {distritos.map((dist) => (
                 <option key={dist} value={dist}>
@@ -1012,144 +1029,45 @@ export default function ProductosContent() {
               ))}
             </select>
           </div>
-        </div>
 
-        {/* Opción arriba de poner la ubicación exacta / dirección con GPS */}
-        <div className="pt-2 border-t border-slate-100 flex flex-col md:flex-row md:items-center gap-2.5">
-          <div className="flex-1 space-y-1">
-            <label className="text-[10px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-orange-600" />
-              <span>5. Poner Ubicación / Dirección Exacta de Entrega</span>
-            </label>
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                value={direccionExacta}
-                onChange={(e) => setDireccionExacta(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleBuscarDireccion();
-                  }
-                }}
-                placeholder="Ej. Av. Antúnez de Mayolo 1234, o calle y número..."
-                className="w-full pl-3.5 pr-24 py-2 text-xs font-bold rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-orange-500 hover:border-orange-400 transition shadow-2xs"
-              />
-              <button
-                type="button"
-                onClick={() => handleBuscarDireccion()}
-                disabled={buscandoDireccion || !direccionExacta.trim()}
-                className="absolute right-1 px-2.5 py-1 rounded-lg bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white text-[11px] font-black transition cursor-pointer shadow-2xs flex items-center gap-1"
-                title="Localizar dirección en el mapa"
-              >
-                {buscandoDireccion ? (
-                  <RefreshCw className="w-3 h-3 animate-spin" />
-                ) : (
-                  <Search className="w-3 h-3" />
-                )}
-                <span>Ubicar</span>
-              </button>
-            </div>
+          {/* 4. Dirección Exacta (Ocupa 2 columnas en lg) */}
+          <div className="col-span-2 relative flex items-center">
+            <input
+              type="text"
+              value={direccionExacta}
+              onChange={(e) => setDireccionExacta(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleBuscarDireccion();
+                }
+              }}
+              placeholder="Ej. Av. Antúnez de Mayolo 1234..."
+              className="w-full pl-2.5 pr-16 py-1.5 text-[11px] font-medium rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-orange-500 hover:border-orange-400 transition shadow-2xs"
+            />
+            <button
+              type="button"
+              onClick={() => handleBuscarDireccion()}
+              disabled={buscandoDireccion || !direccionExacta.trim()}
+              className="absolute right-1 px-2 py-0.5 rounded-md bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white text-[10px] font-bold transition cursor-pointer shadow-2xs flex items-center gap-0.5"
+              title="Ubicar dirección exacta"
+            >
+              {buscandoDireccion ? <RefreshCw className="w-2.5 h-2.5 animate-spin" /> : <Search className="w-2.5 h-2.5" />}
+              <span>Ubicar</span>
+            </button>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 md:self-end">
+          {/* 5. Botón GPS */}
+          <div>
             <button
               type="button"
               onClick={handleUsarGps}
               disabled={obteniendoGps}
-              className="px-3 py-2 rounded-xl border border-orange-200 bg-orange-50 hover:bg-orange-100 text-orange-800 text-xs font-black flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
-              title="Detectar automáticamente mi ubicación actual mediante GPS"
+              className="w-full px-2 py-1.5 rounded-lg border border-orange-200 bg-orange-50 hover:bg-orange-100 text-orange-800 text-[11px] font-bold flex items-center justify-center gap-1 transition cursor-pointer shadow-2xs"
+              title="Detectar ubicación actual por GPS"
             >
-              <Navigation className={`w-3.5 h-3.5 text-orange-600 ${obteniendoGps ? 'animate-spin' : ''}`} />
-              <span>{obteniendoGps ? 'Obteniendo GPS...' : '📍 Mi GPS'}</span>
-            </button>
-
-            {vistaPrincipal !== 'mapa' && (
-              <button
-                type="button"
-                onClick={() => setVistaPrincipal('mapa')}
-                className="px-3 py-2 rounded-xl bg-[#03246b] hover:bg-blue-900 text-white text-xs font-black flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
-                title="Abrir mapa interactivo en esta ubicación"
-              >
-                <MapIcon className="w-3.5 h-3.5 text-sky-300" />
-                <span>Ver en Mapa</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Barra de Cobertura y DISTRIBUIDOR ASIGNADO QUE VENDE */}
-        <div className="p-3 bg-gradient-to-r from-orange-50 via-amber-50/60 to-emerald-50/50 rounded-xl border border-orange-200/90 space-y-2.5 text-xs">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping shrink-0" />
-              <div className="min-w-0">
-                <span className="font-extrabold text-slate-900 block truncate">
-                  ⚡ Cobertura Activa en {distritoSeleccionado}, {provinciaSeleccionada} ({deptoSeleccionado})
-                </span>
-                <p className="text-[11px] text-slate-600">
-                  Tiempo de llegada: <strong>{distribuidoraSeleccionada?.tiempoMin || 20} a {distribuidoraSeleccionada?.tiempoMax || 30} minutos</strong> • <strong>{distribuidorasMapa.length} plantas autorizadas</strong> en red.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 flex items-center gap-1">
-                <Check className="w-3 h-3 text-emerald-700" />
-                Delivery Express Disponible
-              </span>
-              <button
-                type="button"
-                onClick={() => setVistaPrincipal(vistaPrincipal === 'mapa' ? 'catalogo' : 'mapa')}
-                className={`group relative inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all duration-300 cursor-pointer shadow-md hover:scale-105 active:scale-95 ${
-                  vistaPrincipal === 'mapa'
-                    ? 'bg-[#03246b] text-white hover:bg-blue-900 border border-blue-400/50 shadow-blue-900/30'
-                    : 'bg-gradient-to-r from-[#03246b] via-blue-700 to-indigo-800 text-white ring-4 ring-blue-400/60 animate-pulse hover:animate-none hover:shadow-lg hover:shadow-blue-600/40 hover:ring-blue-500'
-                }`}
-                title="Haz clic para ver las plantas y distribuidores autorizados en el mapa interactivo"
-              >
-                {/* Ping dot parpadeante animado azul/celeste */}
-                {vistaPrincipal !== 'mapa' && (
-                  <span className="relative flex h-2.5 w-2.5 shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-300 opacity-90" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-400 shadow-xs" />
-                  </span>
-                )}
-                <MapIcon className="w-4 h-4 text-sky-200 group-hover:rotate-12 transition-transform duration-200 shrink-0" />
-                <span className="tracking-tight whitespace-nowrap text-white">
-                  {vistaPrincipal === 'mapa' ? 'Ver Catálogo de Balones' : '🗺️ Ver Mapa y Distribuidores'}
-                </span>
-                {vistaPrincipal !== 'mapa' && (
-                  <span className="bg-sky-400/30 border border-sky-300/40 text-sky-100 text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider backdrop-blur-xs shrink-0 animate-bounce">
-                    ¡Click Aquí!
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Nombre Destacado del Distribuidor que Vende */}
-          <div className="pt-2 border-t border-orange-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/70 p-2 rounded-lg">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider shrink-0">
-                Distribuidor que te vende:
-              </span>
-              <span className="text-xs font-black text-orange-700 bg-orange-100/80 border border-orange-300 px-2.5 py-0.5 rounded-lg shadow-2xs flex items-center gap-1.5 truncate">
-                <Store className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-                <span className="truncate">{distribuidoraSeleccionada?.nombreComercial || 'Solgas Express'}</span>
-              </span>
-              <span className="text-[10px] text-slate-500 font-mono hidden md:inline">
-                RUC: {distribuidoraSeleccionada?.ruc || '20609876543'}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setVistaPrincipal(vistaPrincipal === 'mapa' ? 'catalogo' : 'mapa')}
-              className="text-[11px] font-extrabold text-[#03246b] hover:text-blue-800 hover:underline flex items-center gap-1.5 shrink-0 self-end sm:self-center cursor-pointer bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-lg transition"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-[#03246b]" />
-              <span>{vistaPrincipal === 'mapa' ? 'Ocultar Mapa' : '🗺️ Cambiar distribuidor en el mapa'}</span>
+              <Navigation className={`w-3 h-3 text-orange-600 ${obteniendoGps ? 'animate-spin' : ''}`} />
+              <span className="truncate">{obteniendoGps ? 'GPS...' : '📍 Mi GPS'}</span>
             </button>
           </div>
         </div>
@@ -1626,16 +1544,25 @@ export default function ProductosContent() {
           </div>
         </div>
 
-        {/* COLUMNA DERECHA: RESUMEN DEL PEDIDO (STICKY SIDE PANEL) */}
-        <div className="lg:col-span-4 xl:col-span-4 space-y-4">
-          <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs space-y-3.5 sticky top-[95px]">
-            {/* Cabecera del Resumen */}
-            <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-              <h2 className="font-black text-slate-900 text-sm flex items-center gap-2">
-                <ShoppingBag className="w-4 h-4 text-orange-600" />
-                <span>Resumen del Pedido</span>
-              </h2>
-              <span className="text-[10px] font-black text-orange-700 bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200">
+        {/* COLUMNA DERECHA: RESUMEN DEL PEDIDO (STICKY SIDE PANEL CON COLOR DISTINTIVO) */}
+        <div className="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-[115px] xl:top-[120px] self-start z-20">
+          <div className="bg-gradient-to-b from-orange-50/80 via-amber-50/30 to-white rounded-2xl border-2 border-orange-300/80 shadow-lg p-4 sm:p-5 space-y-3.5 max-h-[calc(100vh-140px)] overflow-y-auto">
+            {/* Header Distintivo de Resumen con Color Propio */}
+            <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 -mx-4 -mt-4 sm:-mx-5 sm:-mt-5 p-3.5 rounded-t-2xl text-white flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/20 shadow-inner">
+                  <ShoppingBag className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h2 className="font-black text-white text-xs sm:text-sm leading-tight flex items-center gap-1.5">
+                    Resumen del Pedido
+                  </h2>
+                  <p className="text-[10px] text-orange-100 leading-none mt-0.5">
+                    Despacho Exprés RappiGas
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-black text-amber-950 bg-amber-300 px-2.5 py-1 rounded-lg shadow-xs font-mono">
                 {totalItems} {totalItems === 1 ? 'balón' : 'balones'}
               </span>
             </div>
@@ -1661,15 +1588,15 @@ export default function ProductosContent() {
 
             {/* Lista de Items en el Resumen */}
             {totalItems === 0 ? (
-              <div className="p-5 text-center space-y-2 border border-dashed rounded-xl bg-slate-50">
-                <ShoppingBag className="w-8 h-8 text-slate-300 mx-auto" />
+              <div className="p-5 text-center space-y-2 border border-dashed border-orange-200 rounded-xl bg-white/90 shadow-2xs">
+                <ShoppingBag className="w-8 h-8 text-orange-300 mx-auto" />
                 <p className="text-xs font-bold text-slate-700">Tu pedido está vacío</p>
                 <p className="text-[11px] text-slate-400">
                   Haz clic en "Pedir Balón" en el catálogo para agregarlo a tu resumen.
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 max-h-56 overflow-y-auto pr-1 space-y-1">
+              <div className="bg-white rounded-xl p-2.5 border border-orange-100 shadow-2xs divide-y divide-slate-100 max-h-56 overflow-y-auto pr-1 space-y-1">
                 {Object.entries(carrito).map(([id, cant]) => {
                   const prod = PRODUCTOS_CATALOGO.find((p) => p.publicId === id);
                   if (!prod) return null;
@@ -1744,7 +1671,7 @@ export default function ProductosContent() {
             )}
 
             {/* Desglose de Precios */}
-            <div className="space-y-1.5 text-xs pt-2 border-t border-slate-100">
+            <div className="space-y-1.5 text-xs p-3 bg-white/90 rounded-xl border border-orange-100 shadow-2xs">
               <div className="flex justify-between text-slate-500 text-[11px]">
                 <span>Subtotal balones:</span>
                 <span className="font-mono">S/ {subtotal.toFixed(2)}</span>
