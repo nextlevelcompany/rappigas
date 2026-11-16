@@ -1,6 +1,6 @@
 # Nixpacks build plan for RappiGas (Spring Boot + Next.js)
 [phases.setup]
-nixPkgs = ["nodejs_20", "jdk21_headless", "maven"]
+nixPkgs = ["nodejs_22", "jdk21_headless", "maven"]
 
 [phases.install]
 cmds = [

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Eye,
   EyeOff,
@@ -33,8 +33,17 @@ export function RegistroClienteForm({
   onSwitchToLogin?: () => void;
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const returnUrl = searchParams.get("redirect") || "/cliente/tienda";
+  const [returnUrl, setReturnUrl] = useState("/cliente/tienda");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+      if (redirect) {
+        setReturnUrl(redirect);
+      }
+    }
+  }, []);
   const establecerSesion = useAuthStore((state) => state.establecerSesion);
 
   const [nombres, setNombres] = useState("");

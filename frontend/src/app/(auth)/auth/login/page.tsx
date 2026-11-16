@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { LoginForm } from "@/components/login-form";
 import { RegistroClienteForm } from "@/components/registro-cliente-form";
 import { BrandLogo } from "@/components/brand-logo";
@@ -12,14 +11,16 @@ import { ShieldCheck, UserPlus, LogIn, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function LoginPage() {
-  const searchParams = useSearchParams();
   const [tabActiva, setTabActiva] = useState<"login" | "registro">("login");
 
   useEffect(() => {
-    if (searchParams.get("modo") === "registro") {
-      setTabActiva("registro");
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("modo") === "registro") {
+        setTabActiva("registro");
+      }
     }
-  }, [searchParams]);
+  }, []);
 
   return (
     <TooltipProvider delayDuration={200}>
