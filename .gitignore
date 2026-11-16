@@ -14,6 +14,16 @@ target/
 *.class
 *.jar
 *.war
+*.apk
+*.ap_
+*.aab
+*.keystore
+*.jks
+local.properties
+.gradle/
+
+# Uploads
+uploads/
 
 # Environment variables & secrets
 .env

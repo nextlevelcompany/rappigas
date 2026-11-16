@@ -1,4 +1,9 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+function obtenerApiUrl(): string {
+  if (typeof window !== "undefined") {
+    return "/api/v1";
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+}
 
 interface OpcionesPeticion extends RequestInit {
   datos?: unknown;
@@ -22,7 +27,7 @@ export async function peticionHttp<T>(
 ): Promise<T> {
   const { datos, headers, ...restoOpciones } = opciones;
 
-  const url = `${API_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+  const url = `${obtenerApiUrl()}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
 
   const encabezados = new Headers(headers);
   if (!encabezados.has("Content-Type") && !(datos instanceof FormData)) {

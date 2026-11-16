@@ -1,0 +1,15 @@
+# RappiGas - cPanel Subdomain Reverse Proxy
+# Colocar este archivo en el DocumentRoot de rappigas.nextlevel.pe en cPanel
+
+RewriteEngine On
+
+# 1. Proxy para APIs REST al backend Spring Boot (puerto 8080)
+RewriteRule ^api/(.*)$ http://127.0.0.1:8080/api/$1 [P,L]
+
+# 2. Proxy para WebSockets en tiempo real
+RewriteCond %{HTTP:Upgrade} websocket [NC]
+RewriteCond %{HTTP:Connection} upgrade [NC]
+RewriteRule ^ws/(.*)$ ws://127.0.0.1:8080/ws/$1 [P,L]
+
+# 3. Proxy para la aplicación web / operativa al frontend Next.js (puerto 3000)
+RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]

@@ -1,0 +1,19 @@
+[Unit]
+Description=RappiGas Spring Boot Backend Service
+After=syslog.target network.target postgresql.service
+
+[Service]
+SuccessExitStatus=143
+User=root
+Type=simple
+WorkingDirectory=/opt/rappigas
+ExecStart=/usr/bin/java -jar /opt/rappigas/rappigas-backend.jar --spring.profiles.active=prod
+Restart=always
+RestartSec=10
+Environment="SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/rappigas_db"
+Environment="SPRING_DATASOURCE_USERNAME=postgres"
+Environment="SPRING_DATASOURCE_PASSWORD=tu_password_aqui"
+Environment="JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
+
+[Install]
+WantedBy=multi-user.target

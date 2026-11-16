@@ -2,6 +2,18 @@ import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  async rewrites() {
+    return [
+      {
+        source: '/api/v1/:path*',
+        destination: 'http://127.0.0.1:8080/api/v1/:path*',
+      },
+      {
+        source: '/ws/:path*',
+        destination: 'http://127.0.0.1:8080/ws/:path*',
+      },
+    ];
+  },
   async redirects() {
     return [
       { source: '/about', destination: '/nosotros', permanent: true },

@@ -19,7 +19,13 @@ class GestorWebSocketPedidos {
       return;
     }
 
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080/ws";
+    const wsUrl =
+      typeof window !== "undefined" &&
+      window.location.hostname &&
+      window.location.hostname !== "localhost" &&
+      window.location.hostname !== "127.0.0.1"
+        ? `ws://${window.location.hostname}:8080/ws`
+        : process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080/ws";
 
     this.cliente = new Client({
       brokerURL: wsUrl,

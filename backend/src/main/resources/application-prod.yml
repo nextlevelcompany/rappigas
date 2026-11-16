@@ -18,3 +18,7 @@ logging:
   level:
     com.pidegas: INFO
     org.springframework.security: WARN
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://rappigas.nextlevel.pe,http://localhost:3000}

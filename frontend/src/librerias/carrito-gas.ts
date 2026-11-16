@@ -402,7 +402,7 @@ export function obtenerImagenProductoGas(prod: {
   if (prod.imagenUrl && prod.imagenUrl.trim() !== "") {
     let url = prod.imagenUrl.trim();
     if (url.startsWith("/api/v1/archivos/ver/")) {
-      return `http://localhost:8080${url}`;
+      return url;
     }
     // Si la URL apunta a un SVG anterior de balón, priorizar la foto PNG de alta calidad
     if (url.endsWith(".svg") && url.includes("/products/balon-")) {
