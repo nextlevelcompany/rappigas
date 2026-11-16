@@ -1,0 +1,10 @@
+{
+  "name": "rappigas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RappiGas Monorepo",
+  "scripts": {
+    "build": "cd backend && mvn clean package -DskipTests && cd ../frontend && npm install && npm run build",
+    "start": "sh -c 'java -jar backend/target/*.jar & cd frontend && npm start'"
+  }
+}
