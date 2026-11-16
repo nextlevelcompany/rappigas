@@ -3,14 +3,15 @@ import type { NextConfig } from "next"
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   async rewrites() {
+    const backendUrl = process.env.BACKEND_INTERNAL_URL || "http://backend:8080";
     return [
       {
         source: '/api/v1/:path*',
-        destination: 'http://127.0.0.1:8080/api/v1/:path*',
+        destination: `${backendUrl}/api/v1/:path*`,
       },
       {
         source: '/ws/:path*',
-        destination: 'http://127.0.0.1:8080/ws/:path*',
+        destination: `${backendUrl}/ws/:path*`,
       },
     ];
   },
