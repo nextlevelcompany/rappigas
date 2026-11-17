@@ -272,20 +272,6 @@ fun RappiGasAppContainer(
             )
         }
 
-        // Floating settings button in top right
-        IconButton(
-            onClick = {
-                inputUrl = currentUrl
-                showSettingsDialog = true
-            },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(8.dp)
-                .background(Color(0x88000000), shape = androidx.compose.foundation.shape.CircleShape)
-        ) {
-            Text("⚙️", fontSize = 18.sp)
-        }
-
         // Connection Error Screen with Retry
         if (hasError) {
             Box(
