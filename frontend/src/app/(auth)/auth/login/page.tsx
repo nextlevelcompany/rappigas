@@ -35,12 +35,12 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-background/65 dark:bg-background/85 backdrop-blur-[2px]" />
 
         {/* Cabecera superior con Logo y badge pill */}
-        <header className="relative z-10 flex shrink-0 items-center justify-between px-6 py-4 lg:px-10">
+        <header className="relative z-10 flex shrink-0 items-center justify-between px-3 py-2.5 sm:px-6 sm:py-4 lg:px-10">
           <Link href="/" title="Ir a RappiGas" className="flex items-center gap-2 hover:opacity-90 transition">
-            <BrandLogo size="md" />
+            <BrandLogo size="sm" />
           </Link>
-          <div className="flex items-center gap-3">
-            <p className="rounded-full border border-border bg-background/80 px-4 py-2 text-xs sm:text-sm text-muted-foreground backdrop-blur-sm shadow-xs flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <p className="hidden sm:flex rounded-full border border-border bg-background/80 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur-sm shadow-xs items-center gap-1.5">
               <span>¿Distribuidor?</span>
               <Link
                 href="/auth/registro-empresa"
@@ -54,18 +54,18 @@ export default function LoginPage() {
         </header>
 
         {/* Contenedor central con la tarjeta */}
-        <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-6 sm:px-6">
+        <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-3 py-3 sm:px-6 sm:py-6">
           <div
-            className="w-full max-w-[460px] rounded-xl p-6 sm:p-7 shadow-2xl border border-border bg-background mx-auto transition-all"
-            style={{ maxWidth: "460px", width: "100%" }}
+            className="w-full max-w-[420px] rounded-2xl p-4 sm:p-6 shadow-2xl border border-border/80 bg-background/95 backdrop-blur-md mx-auto transition-all"
+            style={{ maxWidth: "420px", width: "100%" }}
           >
             {/* Pestañas para alternar entre Iniciar Sesión y Crear Cuenta */}
-            <div className="grid grid-cols-2 p-1 bg-muted/60 dark:bg-neutral-800/60 rounded-xl mb-5 text-xs font-semibold">
+            <div className="grid grid-cols-2 p-1 bg-muted/60 dark:bg-neutral-800/60 rounded-xl mb-3.5 text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => setTabActiva("login")}
                 className={cn(
-                  "py-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer",
+                  "py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer",
                   tabActiva === "login"
                     ? "bg-background text-foreground shadow-xs font-bold"
                     : "text-muted-foreground hover:text-foreground"
@@ -78,7 +78,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => setTabActiva("registro")}
                 className={cn(
-                  "py-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer",
+                  "py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer",
                   tabActiva === "registro"
                     ? "bg-background text-orange-600 dark:text-orange-400 shadow-xs font-bold"
                     : "text-muted-foreground hover:text-foreground"
@@ -86,23 +86,23 @@ export default function LoginPage() {
               >
                 <UserPlus className="size-3.5" />
                 <span>Crear Cuenta</span>
-                <span className="text-[9.5px] bg-orange-500/15 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded-full font-bold">
+                <span className="text-[9px] bg-orange-500/15 text-orange-600 dark:text-orange-400 px-1.5 py-0.2 rounded-full font-bold">
                   Puntos
                 </span>
               </button>
             </div>
 
             {/* Cabecera del formulario */}
-            <div className="mb-4 text-center">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            <div className="mb-3 text-center">
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
                 {tabActiva === "login"
                   ? "Iniciar Sesión en RappiGas"
                   : "Crear Cuenta de Cliente"}
               </h1>
-              <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+              <p className="mt-0.5 text-[11px] sm:text-xs text-muted-foreground">
                 {tabActiva === "login"
                   ? "Ingresa tus credenciales para acceder a la plataforma"
-                  : "Regístrate gratis para pedir gas, acumular puntos y canjear premios"}
+                  : "Regístrate gratis para pedir gas y acumular puntos"}
               </p>
             </div>
 

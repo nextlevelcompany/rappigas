@@ -177,6 +177,7 @@ fun RappiGasAppContainer(
                         allowFileAccess = true
                         loadWithOverviewMode = true
                         useWideViewPort = true
+                        textZoom = 100
                         cacheMode = WebSettings.LOAD_DEFAULT
                         mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                         userAgentString = "$userAgentString RappiGasApp/1.0"
