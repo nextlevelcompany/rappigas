@@ -11,7 +11,6 @@ import { AppLauncherDropdown } from "@/components/appLauncher-dropdown"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { GlobalSearch } from "@/components/global-search"
 import { UserDropdown } from "@/components/UserDropdown"
-import { AdminConfigDropdown } from "@/components/AdminConfigDropdown"
 import { CartDropdown } from "@/components/CartDropdown"
 import { RoleSwitcher } from "@/components/layout/role-switcher"
 import { useAuthStore } from "@/store/auth-store"
@@ -103,7 +102,6 @@ function LayoutContent({
           <AppLauncherDropdown />
           <NotificationDropdown />
           <CartDropdown />
-          <AdminConfigDropdown />
           <UserDropdown />
         </div>
       </header>
