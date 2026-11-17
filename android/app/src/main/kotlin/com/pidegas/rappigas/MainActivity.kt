@@ -60,7 +60,7 @@ import com.pidegas.rappigas.ui.theme.RappiGasTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val defaultServerUrl = "https://rappigas.nextlevel.pe/auth/login"
+    private val defaultServerUrl = "https://rappigas.nextlevel.pe/app"
     private val prefsKey = "rappigas_server_url"
 
     private val locationPermissionLauncher =
@@ -110,8 +110,8 @@ class MainActivity : ComponentActivity() {
     private fun getServerUrl(): String {
         val prefs = getSharedPreferences("rappigas_prefs", Context.MODE_PRIVATE)
         val saved = prefs.getString(prefsKey, defaultServerUrl) ?: defaultServerUrl
-        // Si tenía guardada una URL antigua o túneles de prueba, reemplazar por el dominio oficial
-        if (saved.startsWith("http://192.168.") || saved.contains("trycloudflare.com")) {
+        // Migrar automáticamente si tenía la pantalla antigua de login o servidores temporales
+        if (saved.contains("/auth/login") || saved.startsWith("http://192.168.") || saved.contains("trycloudflare.com")) {
             saveServerUrl(defaultServerUrl)
             return defaultServerUrl
         }
