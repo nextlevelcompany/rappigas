@@ -13,6 +13,7 @@ import { GlobalSearch } from "@/components/global-search"
 import { UserDropdown } from "@/components/UserDropdown"
 import { CartDropdown } from "@/components/CartDropdown"
 import { RoleSwitcher } from "@/components/layout/role-switcher"
+import { BottomNavCliente } from "@/components/layout/BottomNavCliente"
 import { useAuthStore } from "@/store/auth-store"
 
 import Footer from "@/components/layout/Footer"
@@ -106,11 +107,15 @@ function LayoutContent({
         </div>
       </header>
 
-      <div className="flex flex-1 flex-col bg-muted w-full max-w-full min-w-0 overflow-x-clip mx-0 text-xs app-content-scoped">
+      <div className="flex flex-1 flex-col bg-muted w-full max-w-full min-w-0 overflow-x-clip mx-0 text-xs app-content-scoped pb-16 md:pb-0">
         {children}
       </div>
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
+
+      <BottomNavCliente />
     </SidebarInset>
   )
 }

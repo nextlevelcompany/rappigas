@@ -2236,34 +2236,34 @@ export default function TiendaClienteGasPage() {
         </div>
       </div>
 
-      {/* Barra Flotante Inferior de Carrito (visible solo en móviles/tablets para no tapar el catálogo en escritorio) */}
+      {/* Barra Flotante Inferior de Carrito estilo Uber (visible solo en móviles/tablets sobre el bottom nav) */}
       {Object.keys(carrito).length > 0 && subtotal > 0 && (
-        <div className="lg:hidden fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 z-40 animate-in slide-in-from-bottom-5">
-          <div className="bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-2xl border border-slate-800 flex items-center justify-between gap-3">
+        <div className="lg:hidden fixed bottom-16 left-3 right-3 sm:left-auto sm:right-6 sm:w-96 z-40 animate-in slide-in-from-bottom-5">
+          <div className="bg-neutral-900/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-2xl border border-neutral-800 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center shrink-0 shadow-xs">
-                <ShoppingBag className="w-5 h-5 text-white" />
+                <Flame className="w-5 h-5 text-white" />
               </div>
               <div className="min-w-0">
-                <span className="text-[10px] text-slate-400 font-bold block uppercase">
-                  {Object.values(carrito).reduce((a, b) => a + b, 0)} balones seleccionados
+                <span className="text-[10px] text-neutral-400 font-bold block uppercase tracking-wider">
+                  {Object.values(carrito).reduce((a, b) => a + b, 0)} balones • S/ {totalPagar.toFixed(2)}
                 </span>
-                <span className="text-xs font-black text-orange-400 font-mono">
-                  S/ {totalPagar.toFixed(2)}
+                <span className="text-xs font-black text-white truncate block">
+                  {distribuidoraActiva?.nombreComercial || "Distribuidora Oficial"}
                 </span>
               </div>
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
-              <Link href="/cliente/carrito">
-                <Button
-                  size="sm"
-                  className="bg-orange-600 hover:bg-orange-700 text-white font-black text-xs rounded-xl shadow-md px-3.5 h-8 gap-1.5 cursor-pointer"
-                >
-                  <span>Ver Carrito</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Button>
-              </Link>
+              <button
+                type="button"
+                onClick={handleConfirmarPedido}
+                disabled={isPending || distribuidoraSinCobertura || !empresaSeleccionada}
+                className="bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-xs rounded-xl shadow-md px-3.5 h-9 gap-1.5 cursor-pointer flex items-center justify-center transition-all"
+              >
+                <span>{isPending ? "Pidiendo..." : "Pedir Balón"}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         </div>

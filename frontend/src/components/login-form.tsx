@@ -90,7 +90,7 @@ export function LoginForm({
       // Redirección inteligente según el rol del usuario
       switch (respuesta.rol) {
         case "CLIENTE":
-          router.push("/cliente/pedidos");
+          router.push("/cliente/tienda");
           break;
         case "EMPRESA":
           router.push("/empresa/dashboard");
