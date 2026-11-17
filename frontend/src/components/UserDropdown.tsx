@@ -63,8 +63,8 @@ export function UserDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div id="header-user-trigger" className="flex items-center gap-3 cursor-pointer px-3 border-r border-l h-16 ml-3 hover:bg-muted/50 transition">
-          <Avatar className="h-9 w-9 bg-orange-600 text-white font-bold text-xs flex items-center justify-center">
+        <div id="header-user-trigger" className="flex items-center gap-2 sm:gap-3 cursor-pointer px-2 sm:px-3 border-r border-l h-14 sm:h-16 ml-1 sm:ml-3 hover:bg-muted/50 transition shrink-0">
+          <Avatar className="h-9 w-9 bg-orange-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
             <AvatarFallback className="bg-orange-600 text-white">
               {iniciales}
             </AvatarFallback>

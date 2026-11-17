@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -11,17 +12,37 @@ import {
 import { Button } from "@/components/ui/button";
 import { Settings, Users, Shield, Database, RefreshCcw, FileCog, Code, Key, Server, Palette } from "lucide-react";
 import Link from "next/link";
+import { useAuthStore } from "@/store/auth-store";
 
 export function AdminConfigDropdown() {
+  const { usuario } = useAuthStore();
+  const [montado, setMontado] = useState(false);
+
+  useEffect(() => {
+    setMontado(true);
+  }, []);
+
+  // Solo se muestra para el Administrador General y en pantallas medianas/grandes para no saturar la cabecera
+  if (!montado || usuario?.rol !== "ADMIN") {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button id="header-adminconfig-trigger" variant="ghost" size="icon" className="h-10 w-10">
-          <Settings className="size-5" />
+        <Button
+          id="header-adminconfig-trigger"
+          variant="ghost"
+          size="icon"
+          title="Configuración de Administrador"
+          aria-label="Configuración de Administrador"
+          className="hidden md:inline-flex h-9 w-9 text-muted-foreground hover:text-foreground"
+        >
+          <Settings className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 p-2 rounded-xl shadow-xl">
-        <DropdownMenuLabel className="font-semibold">Configuración</DropdownMenuLabel>
+        <DropdownMenuLabel className="font-semibold">Configuración Maestro</DropdownMenuLabel>
         {/* Primary items */}
         <DropdownMenuItem asChild>
           <Link href="/admin/configuracion" className="flex items-center gap-2">
